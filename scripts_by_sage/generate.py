@@ -4,7 +4,7 @@ import sage.misc.randstate as randstate
 from sage.misc.prandom import randint
 
 from other_problems import (
-    SumProblemGenerator
+    SumProblemGenerator,
 )  # GCDProblemGenerator, ProductProblemGenerator, PartialProdProblemGenerator
 
 from calt import PolynomialSampler, DatasetGenerator, DatasetWriter
@@ -18,7 +18,9 @@ class PartialSumProblemGenerator:
     and the output is a list of polynomials G = [g_1, g_2, ..., g_n], where g_i = f_1 + f_2 + ... + f_i.
     """
 
-    def __init__(self, sampler: PolynomialSampler, max_polynomials: int, min_polynomials: int):
+    def __init__(
+        self, sampler: PolynomialSampler, max_polynomials: int, min_polynomials: int
+    ):
         """
         Initialize polynomial partial sum generator.
 
@@ -116,13 +118,19 @@ def main():
     #     min_polynomials=2,
     # )
 
-    dataset_generator = DatasetGenerator(problem_type="polynomial", ring=ring, n_jobs=-1, verbose=True, root_seed=42)
+    dataset_generator = DatasetGenerator(
+        problem_type="polynomial", ring=ring, n_jobs=-1, verbose=True, root_seed=42
+    )
 
     # Generate training set
-    train_samples, train_stats = dataset_generator.run(num_samples=100000, train=True, problem_generator=problem_generator)
+    train_samples, train_stats = dataset_generator.run(
+        num_samples=100000, train=True, problem_generator=problem_generator
+    )
 
     # Generate test set
-    test_samples, test_stats = dataset_generator.run(num_samples=1000, train=False, problem_generator=problem_generator)
+    test_samples, test_stats = dataset_generator.run(
+        num_samples=1000, train=False, problem_generator=problem_generator
+    )
 
     # Initialize writer
     dataset_writer = DatasetWriter(save_dir)
