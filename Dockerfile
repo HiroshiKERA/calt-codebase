@@ -41,7 +41,7 @@ RUN sage -pip install \
 #     --extra-index-url https://download.pytorch.org/whl/cu124 \
 #     "torch==2.6.0"
 
-# 4) Editable install of transformer_algebra
+# 4) Editable install of calt
 COPY . /app/
 RUN sage -pip install -e /app
 

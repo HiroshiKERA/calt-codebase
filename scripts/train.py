@@ -1,11 +1,11 @@
 from omegaconf import OmegaConf
 from transformers import BartConfig, TrainingArguments
 from transformers import BartForConditionalGeneration as Transformer
-from transformer_algebra import (
+from calt import (
     PolynomialTrainer,
     count_cuda_devices,
 )
-from transformer_algebra import data_loader
+from calt import data_loader
 import wandb
 
 
@@ -50,9 +50,7 @@ def main():
         warmup_ratio=cfg.train.warmup_ratio,
         per_device_train_batch_size=cfg.train.batch_size // count_cuda_devices(),
         per_device_eval_batch_size=cfg.train.test_batch_size // count_cuda_devices(),
-        lr_scheduler_type="constant"
-        if cfg.train.lr_scheduler_type == "constant"
-        else "linear",
+        lr_scheduler_type="constant" if cfg.train.lr_scheduler_type == "constant" else "linear",
         max_grad_norm=cfg.train.max_grad_norm,
         optim=cfg.train.optimizer,  # Set optimizer type
         # Dataloader settings

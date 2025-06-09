@@ -7,7 +7,7 @@ from other_problems import (
     SumProblemGenerator
 )  # GCDProblemGenerator, ProductProblemGenerator, PartialProdProblemGenerator
 
-from transformer_algebra import PolynomialSampler, DatasetGenerator, DatasetWriter
+from calt import PolynomialSampler, DatasetGenerator, DatasetWriter
 
 
 class PartialSumProblemGenerator:
