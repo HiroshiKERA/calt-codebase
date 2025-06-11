@@ -82,28 +82,28 @@ class PolyStatisticsCalculator(BaseStatisticsCalculator):
 
     def __call__(
         self,
-        problem_input: Union[List[PolyElement], PolyElement],
-        problem_output: Union[List[PolyElement], PolyElement],
+        input: Union[List[PolyElement], PolyElement],
+        target: Union[List[PolyElement], PolyElement],
     ) -> Dict[str, Any]:
         """
         Calculate statistics for a single generated sample.
 
         Args:
-            problem_input: Input problem (a list of polynomials or a single polynomial)
-            problem_output: Output solution (a list of polynomials or a single polynomial)
+            input: Problem (a list of polynomials or a single polynomial)
+            target: Solution (a list of polynomials or a single polynomial)
 
         Returns:
             Dictionary containing statistics about the sample
         """
 
-        if isinstance(problem_input, list):
-            input_stats = self.poly_system_stats(problem_input)
+        if isinstance(input, list):
+            input_stats = self.poly_system_stats(input)
         else:
-            input_stats = self.poly_system_stats([problem_input])
-        if isinstance(problem_output, list):
-            output_stats = self.poly_system_stats(problem_output)
+            input_stats = self.poly_system_stats([input])
+        if isinstance(target, list):
+            output_stats = self.poly_system_stats(target)
         else:
-            output_stats = self.poly_system_stats([problem_output])
+            output_stats = self.poly_system_stats([target])
 
         return {
             "input": input_stats,
@@ -120,7 +120,7 @@ class PolyStatisticsCalculator(BaseStatisticsCalculator):
         Returns:
             Dictionary containing statistical information about the polynomials
         """
-        num_polys = len(polys)
+        num_polys = len(polys) # Number of polynomials in the system
 
         if num_polys == 0:
             return {"num_polynomials": 0, "total_degree": 0, "total_terms": 0}
@@ -131,7 +131,7 @@ class PolyStatisticsCalculator(BaseStatisticsCalculator):
         coeffs = []
         for p in polys:
             if self.coeff_field == QQ:
-                # For QQ, consider both numerators(分子) and denominators(分母)
+                # For QQ, consider both numerators and denominators
                 coeffs.extend([abs(float(c.numerator)) for c in p.coeffs()])
                 coeffs.extend([abs(float(c.denominator)) for c in p.coeffs()])
             elif self.coeff_field == RR:
@@ -146,27 +146,44 @@ class PolyStatisticsCalculator(BaseStatisticsCalculator):
 
         stats = {
             # System size statistics
-            "num_polynomials": num_polys,
-            "total_degree": sum(degrees),
-            "total_terms": sum(num_terms),
+            "num_polynomials": num_polys, # Number of polynomials in the system
             # Degree statistics
-            "max_degree": max(degrees),
-            "min_degree": min(degrees),
+            "sum_total_degree": sum(degrees), # Sum of total degrees of all polynomials in the system
+            "max_total_degree": max(degrees), # Maximum degree of any polynomial in the system
+            "min_total_degree": min(degrees), # Minimum degree of any polynomial in the system
             # Term count statistics
-            "max_terms": max(num_terms),
-            "min_terms": min(num_terms),
+            "sum_num_terms": sum(num_terms), # Total number of terms across all polynomials in the system
+            "max_num_terms": max(num_terms), # Maximum number of terms in any polynomial in the system
+            "min_num_terms": min(num_terms), # Minimum number of terms in any polynomial in the system
             # Coefficient statistics
-            "max_coeff": max(coeffs) if coeffs else 0,
-            "min_coeff": min(coeffs) if coeffs else 0,
+            "max_abs_coeff": max(coeffs) if coeffs else 0, # Maximum absolute coefficient value in the system
+            "min_abs_coeff": min(coeffs) if coeffs else 0, # Minimum absolute coefficient value in the system
             # Additional system properties
-            "density": float(sum(num_terms))
-            / (num_polys * (1 + max(degrees)) ** self.num_vars),
+            "density": float(sum(num_terms)) / (num_polys * (1 + max(degrees)) ** self.num_vars), # Density of the system (ratio of total terms to maximum possible terms))
         }
 
         return stats
 
     def total_degree(self, poly: PolyElement) -> int:
-        """Compute total degree of a polynomial"""
+        """Compute total degree of a polynomial.
+
+        The total degree of a polynomial is the maximum sum of exponents among all 
+        monomials in the polynomial. For example, in x**2*y + x*y, the total degree
+        is 3 (from x**2*y where 2+1=3).
+        
+        Args:
+            poly: Polynomial
+
+        Returns:
+            Total degree of the polynomial
+
+        Examples:
+            >>> R, x, y = ring("x,y", ZZ)
+            >>> calc = PolyStatisticsCalculator(R)
+            >>> p = x**2*y + x*y**2 + x + y
+            >>> calc.total_degree(p)
+            3
+        """
         if poly.is_zero:
             return 0
         else:
