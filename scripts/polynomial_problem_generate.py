@@ -14,7 +14,7 @@ class PartialSumProblemGenerator:
     """
     Problem generator for partial sum problems involving polynomials.
 
-    This generator generates problems in which the input is a list of polynomials F = [f_1, f_2, ..., f_n],
+    This generator creates problems in which the input is a list of polynomials F = [f_1, f_2, ..., f_n],
     and the output is a list of polynomials G = [g_1, g_2, ..., g_n], where g_i = f_1 + f_2 + ... + f_i.
     """
 
@@ -59,11 +59,7 @@ class PartialSumProblemGenerator:
         F = self.sampler.sample(num_samples=num_polys)
 
         # Generate partial sums for output
-        G = []
-        current_sum = 0
-        for f in F:
-            current_sum += f
-            G.append(current_sum)
+        G = [sum(F[: i + 1]) for i in range(len(F))]
 
         return F, G
 
@@ -209,9 +205,8 @@ def main():
 
     # Initialize dataset generator
     dataset_generator = DatasetGenerator(
-        ring=R,
         backend="multiprocessing",
-        n_jobs=1,  # warning
+        n_jobs=1,  # warning: the current version with Sympy backend only supports n_jobs=1.
         verbose=True,
         root_seed=100,
     )
