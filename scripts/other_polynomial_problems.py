@@ -1,13 +1,14 @@
 from typing import Any, List, Tuple
 import random
 from calt import PolynomialSampler
+from sympy.polys.polyclasses import PolyElement
 
 
 class SumProblemGenerator:
     """
     Problem generator for polynomial sum problems.
 
-    This generator generates problems in which the input is a list of polynomials F = [f_1, f_2, ..., f_n],
+    This generator creates problems in which the input is a list of polynomials F = [f_1, f_2, ..., f_n],
     and the output is a single polynomial g = f_1 + f_2 + ... + f_n.
     """
 
@@ -26,7 +27,7 @@ class SumProblemGenerator:
         self.max_polynomials = max_polynomials
         self.min_polynomials = min_polynomials
 
-    def __call__(self, seed: int) -> Tuple[List[Any], Any]:
+    def __call__(self, seed: int) -> Tuple[List[PolyElement], PolyElement]:
         """
         Generate a single sample.
 
@@ -55,7 +56,7 @@ class GCDProblemGenerator:
     """
     Problem generator for polynomial GCD problems.
 
-    This generator generates problems in which the input is a pair of polynomials F = [f_1, f_2],
+    This generator creates problems in which the input is a pair of polynomials F = [f_1, f_2],
     and the output is a single polynomial g = GCD(f_1, f_2).
     """
 
@@ -68,7 +69,7 @@ class GCDProblemGenerator:
         """
         self.sampler = sampler
 
-    def __call__(self, seed: int) -> Tuple[List[Any], Any]:
+    def __call__(self, seed: int) -> Tuple[List[PolyElement], PolyElement]:
         """
         Generate a single sample.
 
@@ -103,7 +104,7 @@ class ProductProblemGenerator:
     """
     Problem generator for polynomial product problems.
 
-    This generator generates problems in which the input is a list of polynomials F = [f_1, f_2, ..., f_n],
+    This generator creates problems in which the input is a list of polynomials F = [f_1, f_2, ..., f_n],
     and the output is a single polynomial g = f_1 * f_2 * ... * f_n.
     """
 
@@ -122,7 +123,7 @@ class ProductProblemGenerator:
         self.max_polynomials = max_polynomials
         self.min_polynomials = min_polynomials
 
-    def __call__(self, seed: int) -> Tuple[List[Any], Any]:
+    def __call__(self, seed: int) -> Tuple[List[PolyElement], PolyElement]:
         """
         Generate a single sample.
 
@@ -156,7 +157,7 @@ class PartialProdProblemGenerator:
     """
     Problem generator for polynomial product problems.
 
-    This generator generates problems in which the input is a list of polynomials F = [f_1, f_2, ..., f_n],
+    This generator creates problems in which the input is a list of polynomials F = [f_1, f_2, ..., f_n],
     and the output is a list of polynomials G = [g_1, g_2, ..., g_n], where g_i = f_1 * f_2 * ... * f_i.
     """
 
@@ -175,7 +176,7 @@ class PartialProdProblemGenerator:
         self.max_polynomials = max_polynomials
         self.min_polynomials = min_polynomials
 
-    def __call__(self, seed: int) -> Tuple[List[Any], List[Any]]:
+    def __call__(self, seed: int) -> Tuple[List[PolyElement], List[PolyElement]]:
         """
         Generate a single sample.
 
