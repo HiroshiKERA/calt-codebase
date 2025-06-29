@@ -92,11 +92,13 @@ memory_agent = Agent(
     tools=[mem0_memory, use_llm],
 )
 
+
 # Initialize some demo memories
 def initialize_demo_memories():
     """Initialize some demo memories to showcase functionality."""
     content = """My name is Alex. I like to travel and stay in Airbnbs rather than hotels. I am planning a trip to Japan next spring. I enjoy hiking and outdoor photography as hobbies. I have a dog named Max. My favorite cuisine is Italian food."""  # noqa
     memory_agent.tool.mem0_memory(action="store", content=content, user_id=USER_ID)
+
 
 # Example usage
 if __name__ == "__main__":

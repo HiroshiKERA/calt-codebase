@@ -2,7 +2,7 @@
 """
 # Knowledge Base Agent
 
-This example demonstrates a Strands agent that can intelligently determine 
+This example demonstrates a Strands agent that can intelligently determine
 whether to store information to a knowledge base or retrieve information from it
 based on the user's query.
 
@@ -34,7 +34,9 @@ KB_ID = os.environ.get("STRANDS_KNOWLEDGE_BASE_ID")
 
 if not KB_ID:
     print("\n⚠️  Warning: STRANDS_KNOWLEDGE_BASE_ID environment variable is not set!")
-    print("To use a real knowledge base, please set the STRANDS_KNOWLEDGE_BASE_ID environment variable.")
+    print(
+        "To use a real knowledge base, please set the STRANDS_KNOWLEDGE_BASE_ID environment variable."
+    )
     print("For example: export STRANDS_KNOWLEDGE_BASE_ID=your_kb_id")
     print(f"Using DEFAULT_KB_ID '{DEFAULT_KB_ID}' for demonstration purposes only.")
     KB_ID = DEFAULT_KB_ID
@@ -96,29 +98,30 @@ Example response for missing information:
 "I don't have any information about your birthday stored."
 """
 
+
 def determine_action(agent, query):
     """Determine if the query is a store or retrieve action."""
     result = agent.tool.use_llm(
-        prompt=f"Query: {query}",
-        system_prompt=ACTION_SYSTEM_PROMPT
+        prompt=f"Query: {query}", system_prompt=ACTION_SYSTEM_PROMPT
     )
-    
+
     # Clean and extract the action
     action_text = str(result).lower().strip()
-    
+
     # Default to retrieve if response isn't clear
     if "store" in action_text:
         return "store"
     else:
         return "retrieve"
 
+
 def run_kb_agent(query):
     """Process a user query with the knowledge base agent."""
     agent = Agent(tools=[memory, use_llm])
-    
+
     # Determine the action - store or retrieve
     action = determine_action(agent, query)
-    
+
     if action == "store":
         # For store actions, store the full query
         agent.tool.memory(action="store", content=query)
@@ -126,29 +129,32 @@ def run_kb_agent(query):
     else:
         # For retrieve actions, query the knowledge base with appropriate parameters
         result = agent.tool.memory(
-            action="retrieve", 
+            action="retrieve",
             query=query,
             min_score=0.4,  # Set reasonable minimum score threshold
-            max_results=9   # Retrieve a good number of results
+            max_results=9,  # Retrieve a good number of results
         )
         # Convert the result to a string to extract just the content text
         result_str = str(result)
-        
+
         # Generate a clear, conversational answer using the retrieved information
         answer = agent.tool.use_llm(
-            prompt=f"User question: \"{query}\"\n\nInformation from knowledge base:\n{result_str}\n\nStart your answer with newline character and provide a helpful answer based on this information:",
-            system_prompt=ANSWER_SYSTEM_PROMPT
+            prompt=f'User question: "{query}"\n\nInformation from knowledge base:\n{result_str}\n\nStart your answer with newline character and provide a helpful answer based on this information:',
+            system_prompt=ANSWER_SYSTEM_PROMPT,
         )
+
 
 if __name__ == "__main__":
     # Print welcome message
     print("\n🧠 Knowledge Base Agent 🧠\n")
-    print("This agent helps you store and retrieve information from your knowledge base.")
+    print(
+        "This agent helps you store and retrieve information from your knowledge base."
+    )
     print("Try commands like:")
-    print("- \"Remember that my birthday is on July 25\"")
-    print("- \"What day is my birthday?\"")
+    print('- "Remember that my birthday is on July 25"')
+    print('- "What day is my birthday?"')
     print("\nType your request below or 'exit' to quit:")
-    
+
     # Interactive loop
     while True:
         try:
@@ -156,14 +162,14 @@ if __name__ == "__main__":
             if user_input.lower() in ["exit", "quit"]:
                 print("\nGoodbye! 👋")
                 break
-            
+
             if not user_input.strip():
                 continue
-                
+
             # Process the input through the knowledge base agent
             print("Processing...")
             run_kb_agent(user_input)
-            
+
         except KeyboardInterrupt:
             print("\n\nExecution interrupted. Exiting...")
             break

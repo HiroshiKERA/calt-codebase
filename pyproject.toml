@@ -7,3 +7,17 @@ requires-python = ">=3.10,<3.13"
 dependencies = [
     "calt-x>=0.1.0",
 ]
+
+[dependency-groups]
+dev = [
+    "mypy>=1.15.0",
+    "ruff>=0.9.9",
+    "pydantic>=2.10.6",
+    "pytest>=8.3.5",
+]
+
+[tool.ruff]
+lint.per-file-ignores = {"src/calt/__init__.py" = ["F401"], "src/calt/data_loader/__init__.py" = ["F401"],"src/calt/generate/__init__.py" = ["F401"],"src/calt/generate_by_sage/__init__.py" = ["F401"],"src/calt/trainer/__init__.py" = ["F401"],"src/calt/data_loader/utils/__init__.py" = ["F401"],"src/calt/generator/__init__.py" = ["F401"],"src/calt/generator/sagemath/__init__.py" = ["F401"],"src/calt/generator/sympy/__init__.py" = ["F401"]}
+exclude = [
+    "docs/**",
+]

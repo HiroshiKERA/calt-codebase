@@ -9,7 +9,6 @@ A specialized Strands agent that is the orchestrator to utilize sub-agents and t
 """
 
 from strands import Agent
-from strands_tools import file_read, file_write, editor
 from english_assistant import english_assistant
 from language_assistant import language_assistant
 from math_assistant import math_assistant
@@ -49,7 +48,13 @@ Always confirm your understanding before routing to ensure accurate assistance.
 teacher_agent = Agent(
     system_prompt=TEACHER_SYSTEM_PROMPT,
     callback_handler=None,
-    tools=[math_assistant, language_assistant, english_assistant, computer_science_assistant, general_assistant],
+    tools=[
+        math_assistant,
+        language_assistant,
+        english_assistant,
+        computer_science_assistant,
+        general_assistant,
+    ],
 )
 
 
@@ -68,13 +73,13 @@ if __name__ == "__main__":
                 break
 
             response = teacher_agent(
-                user_input, 
+                user_input,
             )
-            
+
             # Extract and print only the relevant content from the specialized agent's response
             content = str(response)
             print(content)
-            
+
         except KeyboardInterrupt:
             print("\n\nExecution interrupted. Exiting...")
             break
