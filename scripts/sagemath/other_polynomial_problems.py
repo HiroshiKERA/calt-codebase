@@ -13,7 +13,9 @@ class SumProblemGenerator:
     and the solution is a single polynomial g = f_1 + f_2 + ... + f_n.
     """
 
-    def __init__(self, sampler: PolynomialSampler, max_polynomials: int, min_polynomials: int):
+    def __init__(
+        self, sampler: PolynomialSampler, max_polynomials: int, min_polynomials: int
+    ):
         """
         Initialize polynomial sum generator.
 
@@ -26,7 +28,9 @@ class SumProblemGenerator:
         self.max_polynomials = max_polynomials
         self.min_polynomials = min_polynomials
 
-    def __call__(self, seed: int) -> Tuple[List[MPolynomial_libsingular], MPolynomial_libsingular]:
+    def __call__(
+        self, seed: int
+    ) -> Tuple[List[MPolynomial_libsingular], MPolynomial_libsingular]:
         """
         Generate a single sample.
 
@@ -75,7 +79,9 @@ class GCDProblemGenerator:
         self.sampler = sampler
         self.ring = sampler.ring
 
-    def __call__(self, seed: int) -> Tuple[List[MPolynomial_libsingular], MPolynomial_libsingular]:
+    def __call__(
+        self, seed: int
+    ) -> Tuple[List[MPolynomial_libsingular], MPolynomial_libsingular]:
         """
         Generate a single sample.
 
@@ -113,7 +119,9 @@ class ProductProblemGenerator:
     and the solution is a single polynomial g = f_1 * f_2 * ... * f_n.
     """
 
-    def __init__(self, sampler: PolynomialSampler, max_polynomials: int, min_polynomials: int):
+    def __init__(
+        self, sampler: PolynomialSampler, max_polynomials: int, min_polynomials: int
+    ):
         """
         Initialize polynomial product generator.
 
@@ -128,7 +136,9 @@ class ProductProblemGenerator:
         self.max_polynomials = max_polynomials
         self.min_polynomials = min_polynomials
 
-    def __call__(self, seed: int) -> Tuple[List[MPolynomial_libsingular], MPolynomial_libsingular]:
+    def __call__(
+        self, seed: int
+    ) -> Tuple[List[MPolynomial_libsingular], MPolynomial_libsingular]:
         """
         Generate a single sample.
 
@@ -168,7 +178,9 @@ class PartialProdProblemGenerator:
     and the solution is a list of polynomials G = [g_1, g_2, ..., g_n], where g_i = f_1 * f_2 * ... * f_i.
     """
 
-    def __init__(self, sampler: PolynomialSampler, max_polynomials: int, min_polynomials: int):
+    def __init__(
+        self, sampler: PolynomialSampler, max_polynomials: int, min_polynomials: int
+    ):
         """
         Initialize polynomial product generator.
 

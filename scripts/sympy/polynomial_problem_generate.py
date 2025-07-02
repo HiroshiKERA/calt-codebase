@@ -157,20 +157,39 @@ class PolyStatisticsCalculator(BaseStatisticsCalculator):
 
         stats = {
             # System size statistics
-            "num_polynomials": num_polys, # Number of polynomials in the system
+            "num_polynomials": num_polys,  # Number of polynomials in the system
             # Degree statistics
-            "sum_total_degree": sum(degrees), # Sum of total degrees of all polynomials in the system
-            "max_total_degree": max(degrees), # Maximum degree of any polynomial in the system
-            "min_total_degree": min(degrees), # Minimum degree of any polynomial in the system
+            "sum_total_degree": sum(
+                degrees
+            ),  # Sum of total degrees of all polynomials in the system
+            "max_total_degree": max(
+                degrees
+            ),  # Maximum degree of any polynomial in the system
+            "min_total_degree": min(
+                degrees
+            ),  # Minimum degree of any polynomial in the system
             # Term count statistics
-            "sum_num_terms": sum(num_terms), # Total number of terms across all polynomials in the system
-            "max_num_terms": max(num_terms), # Maximum number of terms in any polynomial in the system
-            "min_num_terms": min(num_terms), # Minimum number of terms in any polynomial in the system
+            "sum_num_terms": sum(
+                num_terms
+            ),  # Total number of terms across all polynomials in the system
+            "max_num_terms": max(
+                num_terms
+            ),  # Maximum number of terms in any polynomial in the system
+            "min_num_terms": min(
+                num_terms
+            ),  # Minimum number of terms in any polynomial in the system
             # Coefficient statistics
-            "max_abs_coeff": max(coeffs) if coeffs else 0, # Maximum absolute coefficient value in the system
-            "min_abs_coeff": min(coeffs) if coeffs else 0, # Minimum absolute coefficient value in the system
+            "max_abs_coeff": max(coeffs)
+            if coeffs
+            else 0,  # Maximum absolute coefficient value in the system
+            "min_abs_coeff": min(coeffs)
+            if coeffs
+            else 0,  # Minimum absolute coefficient value in the system
             # Additional system properties
-            "density": float(sum(num_terms)) / (num_polys * (1 + max(degrees)) ** self.num_vars), # Density of the system (ratio of total terms to maximum possible terms))
+            "density": float(sum(num_terms))
+            / (
+                num_polys * (1 + max(degrees)) ** self.num_vars
+            ),  # Density of the system (ratio of total terms to maximum possible terms))
         }
 
         return stats
