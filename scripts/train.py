@@ -50,9 +50,7 @@ def main():
         warmup_ratio=cfg.train.warmup_ratio,
         per_device_train_batch_size=cfg.train.batch_size // count_cuda_devices(),
         per_device_eval_batch_size=cfg.train.test_batch_size // count_cuda_devices(),
-        lr_scheduler_type="constant"
-        if cfg.train.lr_scheduler_type == "constant"
-        else "linear",
+        lr_scheduler_type="constant" if cfg.train.lr_scheduler_type == "constant" else "linear",
         max_grad_norm=cfg.train.max_grad_norm,
         optim=cfg.train.optimizer,  # Set optimizer type
         # Dataloader settings
