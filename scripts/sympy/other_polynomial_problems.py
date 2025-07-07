@@ -1,4 +1,3 @@
-from typing import List, Tuple
 import random
 from calt.generator.sympy import PolynomialSampler
 from sympy.polys.rings import PolyElement
@@ -9,7 +8,7 @@ class SumProblemGenerator:
     Problem generator for polynomial sum problems.
 
     This generator creates problems in which the problem is a list of polynomials F = [f_1, f_2, ..., f_n],
-    and the solution is a single polynomial g = f_1 + f_2 + .c. + f_n.
+    and the solution is a single polynomial g = f_1 + f_2 + ... + f_n.
     """
 
     def __init__(
@@ -27,7 +26,7 @@ class SumProblemGenerator:
         self.max_polynomials = max_polynomials
         self.min_polynomials = min_polynomials
 
-    def __call__(self, seed: int) -> Tuple[List[PolyElement], PolyElement]:
+    def __call__(self, seed: int) -> tuple[list[PolyElement], PolyElement]:
         """
         Generate a single sample.
 
@@ -41,6 +40,7 @@ class SumProblemGenerator:
         Returns:
             Tuple containing (F, g)
         """
+        # Set random seed
         random.seed(seed)
 
         # Choose number of polynomials for this sample
@@ -72,7 +72,7 @@ class GCDProblemGenerator:
         """
         self.sampler = sampler
 
-    def __call__(self, seed: int) -> Tuple[List[PolyElement], PolyElement]:
+    def __call__(self, seed: int) -> tuple[list[PolyElement], PolyElement]:
         """
         Generate a single sample.
 
@@ -86,6 +86,7 @@ class GCDProblemGenerator:
         Returns:
             Tuple containing (F, g)
         """
+        # Set random seed
         random.seed(seed)
 
         # Generate problem polynomials using sampler
@@ -126,7 +127,7 @@ class ProductProblemGenerator:
         self.max_polynomials = max_polynomials
         self.min_polynomials = min_polynomials
 
-    def __call__(self, seed: int) -> Tuple[List[PolyElement], PolyElement]:
+    def __call__(self, seed: int) -> tuple[list[PolyElement], PolyElement]:
         """
         Generate a single sample.
 
@@ -140,7 +141,11 @@ class ProductProblemGenerator:
         Returns:
             Tuple containing (F, g)
         """
+        # Set random seed
         random.seed(seed)
+
+        # get polynomial ring
+        ring = self.sampler.get_ring()
 
         # Choose number of polynomials for this sample
         num_polys = random.randint(self.min_polynomials, self.max_polynomials)
@@ -149,7 +154,7 @@ class ProductProblemGenerator:
         F = self.sampler.sample(num_samples=num_polys)
 
         # Generate solution polynomial g (product of F)
-        g = 1
+        g = ring.one
         for f in F:
             g *= f
 
@@ -179,7 +184,7 @@ class PartialProdProblemGenerator:
         self.max_polynomials = max_polynomials
         self.min_polynomials = min_polynomials
 
-    def __call__(self, seed: int) -> Tuple[List[PolyElement], List[PolyElement]]:
+    def __call__(self, seed: int) -> tuple[list[PolyElement], list[PolyElement]]:
         """
         Generate a single sample.
 
@@ -193,7 +198,11 @@ class PartialProdProblemGenerator:
         Returns:
             Tuple containing (F, G)
         """
+        # Set random seed
         random.seed(seed)
+
+        # get polynomial ring
+        ring = self.sampler.get_ring()
 
         # Choose number of polynomials for this sample
         num_polys = random.randint(self.min_polynomials, self.max_polynomials)
@@ -203,7 +212,7 @@ class PartialProdProblemGenerator:
 
         # Generate partial products for solution
         G = []
-        current_prod = 1
+        current_prod = ring.one
         for f in F:
             current_prod *= f
             G.append(current_prod)

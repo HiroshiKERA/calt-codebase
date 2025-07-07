@@ -1,8 +1,9 @@
-from typing import List, Tuple, Any, Dict, Union
-import random
+from typing import Any
 import numpy as np
-from sympy import primerange
-from calt.generator.sympy import (
+import sage.misc.randstate as randstate
+from sage.misc.prandom import randint, choice
+from sage.all import prime_range
+from calt.generator.sagemath import (
     DatasetGenerator,
     DatasetWriter,
     BaseStatisticsCalculator,
@@ -32,9 +33,9 @@ class IntFactorProblemGenerator:
         self.min_factors = min_factors
         self.max_factors = max_factors
 
-        self.prime_lst = list(primerange(2, self.prime_upper_bound + 1))
+        self.prime_lst = list(prime_range(2, self.prime_upper_bound + 1))
 
-    def __call__(self, seed: int) -> Tuple[int, List[int]]:
+    def __call__(self, seed: int) -> tuple[int, list[int]]:
         """
         Generate a single sample.
 
@@ -48,14 +49,14 @@ class IntFactorProblemGenerator:
         Returns:
             Tuple containing (n, factors)
         """
-        # Set random seed
-        random.seed(seed)
+        # Set random seed for SageMath's random state
+        randstate.set_random_seed(seed)
 
         # Choose number of factors for this sample
-        num_factors = random.randint(self.min_factors, self.max_factors)
+        num_factors = randint(self.min_factors, self.max_factors)
 
         # Generate random prime factors
-        factors = random.choices(self.prime_lst, k=num_factors)
+        factors = [choice(self.prime_lst) for _ in range(num_factors)]
 
         # Sort factors in ascending order
         factors.sort()
@@ -68,13 +69,13 @@ class IntFactorProblemGenerator:
         return n, factors
 
 
-class NumericalStatisticsCalculator(BaseStatisticsCalculator):
+class ArithmeticStatisticsCalculator(BaseStatisticsCalculator):
     """
-    Statistics calculator for numerical computation problems.
+    Statistics calculator for arithmetic computation problems.
 
     This calculator computes descriptive statistics for problems involving
     numerical data, such as integer factorization, arithmetic operations,
-    or other mathematical computations with numerical inputs and outputs.
+    or other mathematical computations with arithmetic problems and solutions.
 
     The calculator handles both single numerical values and lists of
     numerical values, automatically converting them to appropriate formats
@@ -83,9 +84,9 @@ class NumericalStatisticsCalculator(BaseStatisticsCalculator):
 
     def __call__(
         self,
-        problem: Union[List[Any], Any],
-        solution: Union[List[Any], Any],
-    ) -> Dict[str, Dict[str, Union[int, float]]]:
+        problem: list[Any] | Any,
+        solution: list[Any] | Any,
+    ) -> dict[str, Any]:
         """
         Calculate statistics for a single generated sample.
 
@@ -94,7 +95,7 @@ class NumericalStatisticsCalculator(BaseStatisticsCalculator):
             solution: Either a list of numerical values or a single numerical value
 
         Returns:
-            Dictionary with keys "input" and "output", each mapping to a sub-dictionary
+            Dictionary with keys "problem" and "solution", each mapping to a sub-dictionary
             containing descriptive statistics including:
             - num_values: Number of values in the data
             - max_value: Maximum value in the data
@@ -104,34 +105,29 @@ class NumericalStatisticsCalculator(BaseStatisticsCalculator):
             - sum_value: Sum of all values in the data
 
         Examples:
-            >>> calc = NumericalStatisticsCalculator()
+            >>> calc = ArithmeticStatisticsCalculator()
             >>> stats = calc(problem=42, solution=[2, 3, 7])
-            >>> stats['input']['num_values']
+            >>> stats['problem']['num_values']
             1
-            >>> stats['output']['num_values']
+            >>> stats['solution']['num_values']
             3
         """
 
-        if isinstance(problem, list):
-            problem_stats = self.numerical_stats(problem)
-        else:
-            problem_stats = self.numerical_stats([problem])
-        if isinstance(solution, list):
-            solution_stats = self.numerical_stats(solution)
-        else:
-            solution_stats = self.numerical_stats([solution])
-
         return {
-            "input": problem_stats,
-            "output": solution_stats,
+            "problem": self.numerical_stats(
+                problem if isinstance(problem, list) else [problem]
+            ),
+            "solution": self.numerical_stats(
+                solution if isinstance(solution, list) else [solution]
+            ),
         }
 
-    def numerical_stats(self, data: List[Any]) -> Dict[str, Union[int, float]]:
+    def numerical_stats(self, data: list[Any]) -> dict[str, Any]:
         """
-        Calculate descriptive statistics for a list of numerical values.
+        Calculate statistics for a list of numbers.
 
         Args:
-            data: List of numerical values
+            data: List of numbers
 
         Returns:
             Dictionary containing statistical information about the numbers
@@ -140,10 +136,10 @@ class NumericalStatisticsCalculator(BaseStatisticsCalculator):
             raise ValueError("Cannot calculate statistics for empty data list")
 
         # Convert to float for calculations
-        values = [float(d) for d in data]
+        values = [float(n) for n in data]
 
         stats = {
-            "num_values": len(values),
+            "num_values": len(data),
             "max_value": max(values),
             "min_value": min(values),
             "mean_value": float(np.mean(values)),
@@ -155,7 +151,7 @@ class NumericalStatisticsCalculator(BaseStatisticsCalculator):
 
 
 def main():
-    save_dir = "dataset/integer_factorization_problem"
+    save_dir = "dataset/sagemath/integer_factorization_problem"
 
     # Initialize problem generator
     problem_generator = IntFactorProblemGenerator(
@@ -165,7 +161,7 @@ def main():
     )
 
     # Initialize statistics calculator
-    statistics_calculator = NumericalStatisticsCalculator()
+    statistics_calculator = ArithmeticStatisticsCalculator()
 
     # Initialize dataset generator
     dataset_generator = DatasetGenerator(
@@ -175,28 +171,21 @@ def main():
         root_seed=42,
     )
 
-    # Generate training set
-    train_samples, train_stats = dataset_generator.run(
-        train=True,
-        num_samples=100000,
-        problem_generator=problem_generator,
-        statistics_calculator=statistics_calculator,
-    )
-
-    # Generate test set
-    test_samples, test_stats = dataset_generator.run(
-        train=False,
-        num_samples=1000,
-        problem_generator=problem_generator,
-        statistics_calculator=statistics_calculator,
-    )
-
     # Initialize writer
-    dataset_writer = DatasetWriter(save_dir)
+    dataset_writer = DatasetWriter(
+        save_dir=save_dir,
+        save_text=True,  # whether to save raw text files
+        save_json=True,  # whether to save JSON files
+    )
 
-    # Save datasets
-    dataset_writer.save_dataset(train_samples, train_stats, "train")
-    dataset_writer.save_dataset(test_samples, test_stats, "test")
+    # Generate datasets with batch processing
+    dataset_generator.run(
+        dataset_sizes={"train": 100000, "test": 1000},
+        batch_size=100000,  # set batch size
+        problem_generator=problem_generator,
+        statistics_calculator=statistics_calculator,
+        dataset_writer=dataset_writer,
+    )
 
 
 if __name__ == "__main__":

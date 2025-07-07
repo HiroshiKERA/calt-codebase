@@ -1,4 +1,4 @@
-from typing import Any, List, Tuple
+from typing import Any
 import sage.misc.randstate as randstate
 from sage.misc.prandom import randint
 from sage.rings.polynomial.multi_polynomial_libsingular import MPolynomial_libsingular
@@ -13,7 +13,9 @@ class SumProblemGenerator:
     and the solution is a single polynomial g = f_1 + f_2 + ... + f_n.
     """
 
-    def __init__(self, sampler: PolynomialSampler, max_polynomials: int, min_polynomials: int):
+    def __init__(
+        self, sampler: PolynomialSampler, max_polynomials: int, min_polynomials: int
+    ):
         """
         Initialize polynomial sum generator.
 
@@ -26,7 +28,9 @@ class SumProblemGenerator:
         self.max_polynomials = max_polynomials
         self.min_polynomials = min_polynomials
 
-    def __call__(self, seed: int) -> Tuple[List[MPolynomial_libsingular], MPolynomial_libsingular]:
+    def __call__(
+        self, seed: int
+    ) -> tuple[list[MPolynomial_libsingular], MPolynomial_libsingular]:
         """
         Generate a single sample.
 
@@ -73,9 +77,10 @@ class GCDProblemGenerator:
         """
 
         self.sampler = sampler
-        self.ring = sampler.ring
 
-    def __call__(self, seed: int) -> Tuple[List[MPolynomial_libsingular], MPolynomial_libsingular]:
+    def __call__(
+        self, seed: int
+    ) -> tuple[list[MPolynomial_libsingular], MPolynomial_libsingular]:
         """
         Generate a single sample.
 
@@ -89,6 +94,8 @@ class GCDProblemGenerator:
         Returns:
             Tuple containing (F, g)
         """
+        # Get ring from sampler
+        ring = self.sampler.get_ring()
 
         # Set random seed for SageMath's random state
         randstate.set_random_seed(seed)
@@ -98,9 +105,9 @@ class GCDProblemGenerator:
 
         # Generate solution polynomial g (GCD of F)
         _gcd = q1.gcd(q2)
-        gcd, q1, q2 = gcd * _gcd, self.ring(q1 / _gcd), self.ring(q2 / _gcd)
+        gcd, q1, q2 = gcd * _gcd, ring(q1 / _gcd), ring(q2 / _gcd)
         F = [gcd * q1, gcd * q2]
-        g = self.ring(gcd / gcd.lc())
+        g = ring(gcd / gcd.lc())
 
         return F, g
 
@@ -113,7 +120,9 @@ class ProductProblemGenerator:
     and the solution is a single polynomial g = f_1 * f_2 * ... * f_n.
     """
 
-    def __init__(self, sampler: PolynomialSampler, max_polynomials: int, min_polynomials: int):
+    def __init__(
+        self, sampler: PolynomialSampler, max_polynomials: int, min_polynomials: int
+    ):
         """
         Initialize polynomial product generator.
 
@@ -124,11 +133,12 @@ class ProductProblemGenerator:
         """
 
         self.sampler = sampler
-        self.ring = sampler.ring
         self.max_polynomials = max_polynomials
         self.min_polynomials = min_polynomials
 
-    def __call__(self, seed: int) -> Tuple[List[MPolynomial_libsingular], MPolynomial_libsingular]:
+    def __call__(
+        self, seed: int
+    ) -> tuple[list[MPolynomial_libsingular], MPolynomial_libsingular]:
         """
         Generate a single sample.
 
@@ -142,6 +152,8 @@ class ProductProblemGenerator:
         Returns:
             Tuple containing (F, g)
         """
+        # Get ring from sampler
+        ring = self.sampler.get_ring()
 
         # Set random seed for SageMath's random state
         randstate.set_random_seed(seed)
@@ -153,7 +165,7 @@ class ProductProblemGenerator:
         F = self.sampler.sample(num_samples=num_polys)
 
         # Generate solution polynomial g (product of F)
-        g = self.ring(1)
+        g = ring(1)
         for f in F:
             g *= f
 
@@ -168,7 +180,9 @@ class PartialProdProblemGenerator:
     and the solution is a list of polynomials G = [g_1, g_2, ..., g_n], where g_i = f_1 * f_2 * ... * f_i.
     """
 
-    def __init__(self, sampler: PolynomialSampler, max_polynomials: int, min_polynomials: int):
+    def __init__(
+        self, sampler: PolynomialSampler, max_polynomials: int, min_polynomials: int
+    ):
         """
         Initialize polynomial product generator.
 
@@ -179,11 +193,10 @@ class PartialProdProblemGenerator:
         """
 
         self.sampler = sampler
-        self.ring = sampler.ring
         self.max_polynomials = max_polynomials
         self.min_polynomials = min_polynomials
 
-    def __call__(self, seed: int) -> Tuple[List[Any], List[Any]]:
+    def __call__(self, seed: int) -> tuple[list[Any], list[Any]]:
         """
         Generate a single sample.
 
@@ -197,6 +210,8 @@ class PartialProdProblemGenerator:
         Returns:
             Tuple containing (F, G)
         """
+        # Get ring from sampler
+        ring = self.sampler.get_ring()
 
         # Set random seed for SageMath's random state
         randstate.set_random_seed(seed)
@@ -209,7 +224,7 @@ class PartialProdProblemGenerator:
 
         # Generate partial products for solution
         G = []
-        current_prod = self.ring(1)
+        current_prod = ring(1)
         for f in F:
             current_prod *= f
             G.append(current_prod)
