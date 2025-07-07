@@ -6,8 +6,6 @@ from sage.rings.polynomial.multi_polynomial_libsingular import MPolynomial_libsi
 from calt.generator.sagemath import (
     PolynomialSampler,
     DatasetGenerator,
-    PolynomialSampler,
-    DatasetGenerator,
     DatasetWriter,
     BaseStatisticsCalculator,
 )
@@ -64,7 +62,6 @@ class PartialSumProblemGenerator:
         F = self.sampler.sample(num_samples=num_polys)
 
         # Generate partial sums for solution
-        G = [sum(F[: i + 1]) for i in range(len(F))]
         G = [sum(F[: i + 1]) for i in range(len(F))]
 
         return F, G
@@ -142,9 +139,6 @@ class PolyStatisticsCalculator(BaseStatisticsCalculator):
         ring = polys[0].parent()
         num_vars = ring.ngens()
 
-        degrees = [
-            max(p.total_degree(), 0) for p in polys
-        ]  # if polynomial p is zero, then p.total_degree() is -1, so we need to set it to 0
         degrees = [
             max(p.total_degree(), 0) for p in polys
         ]  # if polynomial p is zero, then p.total_degree() is -1, so we need to set it to 0
