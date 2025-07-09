@@ -3,7 +3,7 @@ import numpy as np
 import sage.misc.randstate as randstate
 from sage.misc.prandom import randint, choice
 from sage.all import prime_range
-from calt.generator.sagemath import (
+from calt.dataset_generator.sagemath import (
     DatasetGenerator,
     DatasetWriter,
     BaseStatisticsCalculator,

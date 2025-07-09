@@ -3,7 +3,7 @@ from sage.all import ZZ, QQ, RR
 import sage.misc.randstate as randstate
 from sage.misc.prandom import randint
 from sage.rings.polynomial.multi_polynomial_libsingular import MPolynomial_libsingular
-from calt.generator.sagemath import (
+from calt.dataset_generator.sagemath import (
     PolynomialSampler,
     DatasetGenerator,
     DatasetWriter,

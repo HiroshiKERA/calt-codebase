@@ -2,7 +2,7 @@ from typing import Any
 import sage.misc.randstate as randstate
 from sage.misc.prandom import randint
 from sage.rings.polynomial.multi_polynomial_libsingular import MPolynomial_libsingular
-from calt.generator.sagemath import PolynomialSampler
+from calt.dataset_generator.sagemath import PolynomialSampler
 
 
 class SumProblemGenerator:
