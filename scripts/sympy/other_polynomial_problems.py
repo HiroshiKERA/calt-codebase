@@ -1,5 +1,5 @@
 import random
-from calt.generator.sympy import PolynomialSampler
+from calt.dataset_generator.sympy import PolynomialSampler
 from sympy.polys.rings import PolyElement
 
 

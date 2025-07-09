@@ -1,7 +1,7 @@
 import random
 from sympy import QQ, RR, ZZ
 from sympy.polys.rings import PolyElement
-from calt.generator.sympy import (
+from calt.dataset_generator.sympy import (
     PolynomialSampler,
     DatasetGenerator,
     DatasetWriter,

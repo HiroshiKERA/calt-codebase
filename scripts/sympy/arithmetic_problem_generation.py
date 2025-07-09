@@ -2,7 +2,7 @@ import random
 import numpy as np
 from typing import Any
 from sympy import primerange
-from calt.generator.sympy import (
+from calt.dataset_generator.sympy import (
     DatasetGenerator,
     DatasetWriter,
     BaseStatisticsCalculator,
