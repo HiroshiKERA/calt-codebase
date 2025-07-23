@@ -174,6 +174,7 @@ class PolyStatisticsCalculator(BaseStatisticsCalculator):
 
 def main():
     save_dir = "dataset/sagemath/partial_sum_problem/GF7_n=3"
+    n_jobs = 32  # set the number of jobs for parallel processing (check your machine's capacity by command `nproc`)
 
     # Initialize polynomial sampler
     sampler = PolynomialSampler(
@@ -204,7 +205,7 @@ def main():
     # Initialize dataset generator
     dataset_generator = DatasetGenerator(
         backend="multiprocessing",
-        n_jobs=-1,
+        n_jobs=n_jobs,
         verbose=True,
         root_seed=100,
     )
@@ -219,7 +220,7 @@ def main():
     # Generate datasets with batch processing
     dataset_generator.run(
         dataset_sizes={"train": 100000, "test": 1000},
-        batch_size=100000,  # set batch size
+        batch_size=10000,  # set batch size
         problem_generator=problem_generator,
         statistics_calculator=statistics_calculator,
         dataset_writer=dataset_writer,
