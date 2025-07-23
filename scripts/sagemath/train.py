@@ -8,6 +8,10 @@ from calt import (
 from calt import data_loader
 import wandb
 
+# Uncomment this to use the custom trainer from src/custom_trainer.py
+# import sys
+# sys.path.append('src')
+# from custom_trainer import PolynomialTrainerPlus as PolynomialTrainer
 
 def main():
     cfg = OmegaConf.load("config/train_example.yaml")
