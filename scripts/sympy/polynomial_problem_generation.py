@@ -1,8 +1,7 @@
-from typing import Any, List, Tuple, Dict, Union
 import random
-from sympy import GF, QQ, RR, ZZ
-from sympy.polys.rings import ring, PolyRing, PolyElement
-from calt.generator.sympy import (
+from sympy import QQ, RR, ZZ
+from sympy.polys.rings import PolyElement
+from calt.dataset_generator.sympy import (
     PolynomialSampler,
     DatasetGenerator,
     DatasetWriter,
@@ -34,7 +33,7 @@ class PartialSumProblemGenerator:
         self.max_polynomials = max_polynomials
         self.min_polynomials = min_polynomials
 
-    def __call__(self, seed: int) -> Tuple[List[PolyElement], List[PolyElement]]:
+    def __call__(self, seed: int) -> tuple[list[PolyElement], list[PolyElement]]:
         """
         Generate a single sample.
 
@@ -69,22 +68,11 @@ class PolyStatisticsCalculator(BaseStatisticsCalculator):
     Statistics calculator for polynomial problems.
     """
 
-    def __init__(self, ring: PolyRing):
-        """
-        Initialize polynomial statistics calculator.
-
-        Args:
-            ring: Polynomial ring
-        """
-        self.ring = ring
-        self.num_vars = ring.ngens
-        self.coeff_field = ring.domain
-
     def __call__(
         self,
-        problem: Union[List[PolyElement], PolyElement],
-        solution: Union[List[PolyElement], PolyElement],
-    ) -> Dict[str, Any]:
+        problem: list[PolyElement] | PolyElement,
+        solution: list[PolyElement] | PolyElement,
+    ) -> dict[str, dict[str, int | float]]:
         """
         Calculate statistics for a single generated sample.
 
@@ -93,7 +81,7 @@ class PolyStatisticsCalculator(BaseStatisticsCalculator):
             solution: Either a list of polynomials or a single polynomial
 
         Returns:
-            Dictionary with keys "input" and "output", each mapping to a sub-dictionary
+            Dictionary with keys "problem" and "solution", each mapping to a sub-dictionary
             containing descriptive statistics including:
             - num_polynomials: Number of polynomials in the system
             - sum_total_degree: Sum of total degrees of all polynomials in the system
@@ -106,22 +94,29 @@ class PolyStatisticsCalculator(BaseStatisticsCalculator):
             - min_abs_coeff: Minimum absolute coefficient value in the system
             - density: Density of the system (ratio of total terms to maximum possible terms)
         """
-
-        if isinstance(problem, list):
-            problem_stats = self.poly_system_stats(problem)
-        else:
-            problem_stats = self.poly_system_stats([problem])
-        if isinstance(solution, list):
-            solution_stats = self.poly_system_stats(solution)
-        else:
-            solution_stats = self.poly_system_stats([solution])
-
         return {
-            "input": problem_stats,
-            "output": solution_stats,
+            "problem": self.poly_system_stats(
+                problem if isinstance(problem, list) else [problem]
+            ),
+            "solution": self.poly_system_stats(
+                solution if isinstance(solution, list) else [solution]
+            ),
         }
 
-    def poly_system_stats(self, polys: List[PolyElement]) -> Dict[str, Any]:
+    def _extract_coefficients(self, poly: PolyElement) -> list[float]:
+        """Extract coefficients from polynomial based on field type."""
+        coeff_field = poly.ring.domain
+        if coeff_field == QQ:
+            return [abs(float(c.numerator)) for c in poly.coeffs()] + [
+                abs(float(c.denominator)) for c in poly.coeffs()
+            ]
+        elif coeff_field in (RR, ZZ):
+            return [abs(float(c)) for c in poly.coeffs()]
+        elif coeff_field.is_FiniteField:
+            return [int(c) for c in poly.coeffs()]
+        return []
+
+    def poly_system_stats(self, polys: list[PolyElement]) -> dict[str, int | float]:
         """
         Calculate statistics for a list of polynomials.
 
@@ -131,68 +126,45 @@ class PolyStatisticsCalculator(BaseStatisticsCalculator):
         Returns:
             Dictionary containing statistical information about the polynomials
         """
-        num_polys = len(polys)  # Number of polynomials in the system
+        if not polys:
+            raise ValueError(
+                "Cannot calculate statistics for empty list of polynomials"
+            )
 
-        if num_polys == 0:
-            return {"num_polynomials": 0, "total_degree": 0, "total_terms": 0}
+        # Get system properties from first polynomial
+        ring = polys[0].ring
+        num_vars = ring.ngens
 
+        # Calculate basic statistics
         degrees = [self.total_degree(p) for p in polys]
         num_terms = [len(p.terms()) for p in polys]
+        coeffs = [c for p in polys for c in self._extract_coefficients(p)]
 
-        coeffs = []
-        for p in polys:
-            if self.coeff_field == QQ:
-                # For QQ, consider both numerators and denominators
-                coeffs.extend([abs(float(c.numerator)) for c in p.coeffs()])
-                coeffs.extend([abs(float(c.denominator)) for c in p.coeffs()])
-            elif self.coeff_field == RR:
-                # For RR, take absolute values
-                coeffs.extend([abs(float(c)) for c in p.coeffs()])
-            elif self.coeff_field == ZZ:
-                # For ZZ, take absolute values
-                coeffs.extend([abs(int(c)) for c in p.coeffs()])
-            elif self.coeff_field.is_FiniteField:  # GF
-                # For finite fields, just take the values
-                coeffs.extend([int(c) for c in p.coeffs()])
+        # Calculate density
+        max_possible_terms = len(polys) * (1 + max(degrees)) ** num_vars
+        density = (
+            float(sum(num_terms)) / max_possible_terms
+            if max_possible_terms > 0
+            else 0.0
+        )
 
-        stats = {
+        return {
             # System size statistics
-            "num_polynomials": num_polys,  # Number of polynomials in the system
+            "num_polynomials": len(polys),
             # Degree statistics
-            "sum_total_degree": sum(
-                degrees
-            ),  # Sum of total degrees of all polynomials in the system
-            "max_total_degree": max(
-                degrees
-            ),  # Maximum degree of any polynomial in the system
-            "min_total_degree": min(
-                degrees
-            ),  # Minimum degree of any polynomial in the system
+            "sum_total_degree": sum(degrees),
+            "max_total_degree": max(degrees),
+            "min_total_degree": min(degrees),
             # Term count statistics
-            "sum_num_terms": sum(
-                num_terms
-            ),  # Total number of terms across all polynomials in the system
-            "max_num_terms": max(
-                num_terms
-            ),  # Maximum number of terms in any polynomial in the system
-            "min_num_terms": min(
-                num_terms
-            ),  # Minimum number of terms in any polynomial in the system
+            "sum_num_terms": sum(num_terms),
+            "max_num_terms": max(num_terms),
+            "min_num_terms": min(num_terms),
             # Coefficient statistics
-            "max_abs_coeff": max(coeffs)
-            if coeffs
-            else 0,  # Maximum absolute coefficient value in the system
-            "min_abs_coeff": min(coeffs)
-            if coeffs
-            else 0,  # Minimum absolute coefficient value in the system
+            "max_abs_coeff": max(coeffs) if coeffs else 0,
+            "min_abs_coeff": min(coeffs) if coeffs else 0,
             # Additional system properties
-            "density": float(sum(num_terms))
-            / (
-                num_polys * (1 + max(degrees)) ** self.num_vars
-            ),  # Density of the system (ratio of total terms to maximum possible terms))
+            "density": density,
         }
-
-        return stats
 
     def total_degree(self, poly: PolyElement) -> int:
         """Compute total degree of a polynomial.
@@ -208,8 +180,7 @@ class PolyStatisticsCalculator(BaseStatisticsCalculator):
             Total degree of the polynomial
 
         Examples:
-            >>> R, x, y = ring("x,y", ZZ)
-            >>> calc = PolyStatisticsCalculator(R)
+            >>> calc = PolyStatisticsCalculator()
             >>> p = x**2*y + x*y**2 + x + y
             >>> calc.total_degree(p)
             3
@@ -217,18 +188,17 @@ class PolyStatisticsCalculator(BaseStatisticsCalculator):
         if poly.is_zero:
             return 0
         else:
-            return max(list(sum(monom) for monom in poly.monoms()))
+            return max(sum(monom) for monom in poly.monoms())
 
 
 def main():
-    save_dir = "dataset/partial_sum_problem/GF7_n=2"
-
-    # set up polynomial ring
-    R, *gens = ring("x,y", GF(7), order="grevlex")
+    save_dir = "dataset/sympy/partial_sum_problem/GF7_n=3"
 
     # Initialize polynomial sampler
     sampler = PolynomialSampler(
-        ring=R,
+        symbols="x, y, z",  # "x, y, z, ... " or "x0, x1, x2, ... "
+        field_str="GF(7)",  # "QQ", "RR", "ZZ", "GF(p)", "GFp", where p is a prime number
+        order="grevlex",  # "lex", "grevlex", "grlex", "ilex", "igrevlex", "igrlex"
         max_num_terms=5,
         max_degree=10,
         min_degree=1,
@@ -236,8 +206,9 @@ def main():
         term_sampling="uniform",  # "uniform" or "fixed"
         max_coeff=None,  # Used for RR and ZZ
         num_bound=None,  # Used for QQ
-        strictly_conditioned=False,
+        strictly_conditioned=True,
         nonzero_instance=True,
+        max_attempts=1000,
     )
 
     # Initialize problem generator
@@ -248,38 +219,31 @@ def main():
     )
 
     # Initialize statistics calculator
-    statistics_calculator = PolyStatisticsCalculator(ring=R)
+    statistics_calculator = PolyStatisticsCalculator()
 
     # Initialize dataset generator
     dataset_generator = DatasetGenerator(
         backend="multiprocessing",
-        n_jobs=1,  # warning: the current version with Sympy backend only supports n_jobs=1.
-        verbose=True,
+        n_jobs=-1,
+        verbose=True,  # Whether to show progress
         root_seed=100,
     )
 
-    # Generate training set
-    train_samples, train_stats = dataset_generator.run(
-        train=True,
-        num_samples=100000,
-        problem_generator=problem_generator,
-        statistics_calculator=statistics_calculator,
-    )
-
-    # Generate test set
-    test_samples, test_stats = dataset_generator.run(
-        train=False,
-        num_samples=1000,
-        problem_generator=problem_generator,
-        statistics_calculator=statistics_calculator,
-    )
-
     # Initialize writer
-    dataset_writer = DatasetWriter(save_dir)
+    dataset_writer = DatasetWriter(
+        save_dir=save_dir,
+        save_text=True,  # whether to save raw text files
+        save_json=True,  # whether to save JSON files
+    )
 
-    # Save datasets
-    dataset_writer.save_dataset(train_samples, train_stats, "train")
-    dataset_writer.save_dataset(test_samples, test_stats, "test")
+    # Generate datasets with batch processing
+    dataset_generator.run(
+        dataset_sizes={"train": 1000000, "test": 1000},  # train: 100000 samples, test: 1000 samples
+        batch_size=1000000,  # set batch size
+        problem_generator=problem_generator,
+        statistics_calculator=statistics_calculator,
+        dataset_writer=dataset_writer,
+    )
 
 
 if __name__ == "__main__":
