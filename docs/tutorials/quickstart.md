@@ -27,7 +27,7 @@ The codebase is ready to generate a simple dataset and train a Transformer. You 
 ### 1. Dataset Construction
 
 ```bash
-python scripts/sagemath/polynomial_problem_generator.py
+python scripts/sagemath/polynomial_problem_generation.py
 ```
 
 By default, this generates train and test sets of polynomial sum task in `dataset/polynomial_sum`.
@@ -46,7 +46,7 @@ This trains a Transformer model with the setup described in `config/train_exampl
 
 Now you can create custom script files for your own project. In `scripts/sagemath/`, you can find three script files for dataset construction as examples: one for numerical tasks, another for polynomial tasks, and the last for other tasks.
 
-Let's take `polynomial_problem_generator.py` as an example. You can find two classes: `PartialSumProblemGenerator` and `PolyStatisticsCalculator`. The former is the main part of instance generation, and the latter computes statistics of generated instances.
+Let's take `polynomial_problem_generation.py` as an example. You can find two classes: `PartialSumProblemGenerator` and `PolyStatisticsCalculator`. The former is the main part of instance generation, and the latter computes statistics of generated instances.
 
 Here, the task input is a list of polynomials $F = [f_1, ..., f_s]$, and the expected output is the list of cumulative sums $G = [g_1, ..., g_s]$, where $g_k = f_1 + \cdots + f_k$.
 
