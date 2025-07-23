@@ -68,6 +68,12 @@ extra_javascript:
 nav:
   - User Guide:
     - Welcome: README.md
+    - Tutorials:
+      - Overview: tutorials/README.md
+      - Getting Started: tutorials/getting-started.md
+      - Dataset Generation: tutorials/dataset-generation.md
+      - Model Training: tutorials/model-training.md
+      - Advanced Examples: tutorials/advanced-examples.md
   #   - Quickstart: user-guide/quickstart.md
   #   - Concepts:
   #     - Agents:
