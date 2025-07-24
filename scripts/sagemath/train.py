@@ -17,9 +17,7 @@ from calt import (
 from calt import data_loader
 import wandb
 
-from training_utils import fix_seeds
-from custom_trainer import PolynomialTrainerPlus as PolynomialTrainer
-from callbacks.log_callbacks import CustomLoggingCallback
+from utils.training_utils import fix_seeds
 
 @click.command()
 @click.option("--config", type=str, default="config/train.yaml")
@@ -144,7 +142,6 @@ def main(config, dryrun, no_wandb):
         data_collator=data_collator,
         train_dataset=dataset["train"],
         eval_dataset=dataset["test"],
-        callbacks=[CustomLoggingCallback()],
     )
 
     # Execute training and evaluation

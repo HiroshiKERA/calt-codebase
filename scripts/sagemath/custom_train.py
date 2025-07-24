@@ -11,14 +11,13 @@ from omegaconf import OmegaConf
 from transformers import BartConfig, TrainingArguments
 from transformers import BartForConditionalGeneration as Transformer
 from calt import (
-    PolynomialTrainer,
     count_cuda_devices,
 )
 from calt import data_loader
 import wandb
 
-from training_utils import fix_seeds
-from custom_trainer import PolynomialTrainerPlus as PolynomialTrainer
+from utils.training_utils import fix_seeds
+from custom_trainer import CustomPolynomialTrainer
 from callbacks.log_callbacks import CustomLoggingCallback
 
 @click.command()
@@ -137,14 +136,14 @@ def main(config, dryrun, no_wandb):
         seed=cfg.train.seed,
         disable_tqdm=True,
     )
-    trainer = PolynomialTrainer(
+    trainer = CustomPolynomialTrainer(
         args=args,
         model=model,
         tokenizer=tokenizer,
         data_collator=data_collator,
         train_dataset=dataset["train"],
         eval_dataset=dataset["test"],
-        # callbacks=[CustomLoggingCallback()],
+        callbacks=[CustomLoggingCallback()],
     )
 
     # Execute training and evaluation
