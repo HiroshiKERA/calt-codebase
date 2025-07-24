@@ -1,6 +1,6 @@
 # CALT codebase
 
-The CALT codebase provides a template for generating arithmetic and symbolic computation instances and training Transformer models using the [CALT library](https://github.com/HiroshiKERA/calt).
+The CALT codebase provides a template for generating arithmetic and symbolic computation instances and training Transformer models using the [CALT (Computer ALgebra with Transformer) library](https://github.com/HiroshiKERA/calt).
 
 While CALT can be installed via `pip`, the following is the simplest setup your experiment with all dependencies:
 
