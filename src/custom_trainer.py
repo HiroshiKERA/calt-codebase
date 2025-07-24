@@ -46,6 +46,13 @@ class PolynomialTrainerPlus(PolynomialTrainer):
 
         return (loss, outputs) if return_outputs else loss
     
+
+    def compute_custom_loss(self, outputs, inputs):
+        '''
+        This method is called to compute the custom loss.
+        '''
+        NotImplementedError("compute_custom_loss is not implemented")
+    
     
     def log_metrics(self, outputs, inputs, model, ignore_index=-100):
 

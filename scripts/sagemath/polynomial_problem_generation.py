@@ -3,6 +3,10 @@ from sage.all import ZZ, QQ, RR
 import sage.misc.randstate as randstate
 from sage.misc.prandom import randint
 from sage.rings.polynomial.multi_polynomial_libsingular import MPolynomial_libsingular
+
+import click
+import warnings
+
 from calt.dataset_generator.sagemath import (
     PolynomialSampler,
     DatasetGenerator,
@@ -183,7 +187,7 @@ def main(save_dir, n_jobs):
 
     # Initialize polynomial sampler
     sampler = PolynomialSampler(
-        symbols="x, y, z",  # "x, y, z, ... " or "x0, x1, x2, ... "
+        symbols="x0, x1, x2",  # "x, y, z, ... " or "x0, x1, x2, ... "
         field_str="GF7",  # "QQ", "RR", "ZZ", "GF(p)", "GFp", where p is a prime number
         order="degrevlex",  # "lex", "degrevlex", "deglex"
         max_num_terms=5,

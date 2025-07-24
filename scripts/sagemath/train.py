@@ -14,28 +14,69 @@ from calt import (
     PolynomialTrainer,
     count_cuda_devices,
 )
-from calt import data_loader
+from calt import load_data
 import wandb
 
 from training_utils import fix_seeds
 
 @click.command()
 @click.option("--config", type=str, default="config/train.yaml")
-def main(config):
+@click.option("--dryrun", is_flag=True)
+@click.option("--no_wandb", is_flag=True)
+def main(config, dryrun, no_wandb):
+    
+    # Load config
     cfg = OmegaConf.load(config)
-
+    
     fix_seeds(cfg.train.seed)
+    
+    # Override config if dryrun or no_wandb is set in command line
+    cfg.train.dryrun = dryrun if dryrun else cfg.train.dryrun
+    cfg.wandb.no_wandb = no_wandb if no_wandb else cfg.wandb.no_wandb
 
-    dataset, tokenizer, data_collator = data_loader(
-        train_dataset_path=cfg.train_dataset_path,
-        test_dataset_path=cfg.test_dataset_path,
-        field=cfg.field,
-        num_variables=cfg.num_variables,
-        max_degree=cfg.max_degree,
-        max_coeff=cfg.max_coeff,
+    if cfg.train.dryrun:
+        cfg.train.num_train_epochs = 1
+        cfg.data.num_train_samples = 1000
+        cfg.wandb.group = "dryrun"
+        cfg.train.output_dir = "results/dryrun"
+
+        print('-'*100)
+        print('dryrun mode is enabled. The training setup is modified as follows:')
+        print('-'*100)
+        print(f'output_dir: {cfg.train.output_dir}')
+        print(f'num_train_epochs: {cfg.train.num_train_epochs}')
+        print(f'num_train_samples: {cfg.data.num_train_samples}')
+        if not cfg.wandb.no_wandb:
+            print(f'wandb.project: {cfg.wandb.project}')
+            print(f'wandb.group: {cfg.wandb.group}')
+            print(f'wandb.name: {cfg.wandb.name}')
+            
+        print('-'*100)
+
+    # set up wandb
+    if not cfg.wandb.no_wandb:
+        wandb.init(
+            project=cfg.wandb.project,
+            group=cfg.wandb.group,
+            name=cfg.wandb.name,
+        )
+
+
+    # Load dataset
+    dataset, tokenizer, data_collator = load_data(
+        train_dataset_path=cfg.data.train_dataset_path,
+        test_dataset_path=cfg.data.test_dataset_path,
+        field=cfg.data.field,
+        num_variables=cfg.data.num_variables,
+        max_degree=cfg.data.max_degree,
+        max_coeff=cfg.data.max_coeff,
         max_length=cfg.model.max_sequence_length,
+        num_train_samples=cfg.data.num_train_samples,
+        num_test_samples=cfg.data.num_test_samples,
     )
 
+
+    # Load model
     model_cfg = BartConfig(
         encoder_layers=cfg.model.num_encoder_layers,
         encoder_attention_heads=cfg.model.num_encoder_heads,
@@ -56,6 +97,7 @@ def main(config):
     )
     model = Transformer(config=model_cfg)
 
+    # Set up trainer 
     args = TrainingArguments(
         output_dir=cfg.train.output_dir,
         num_train_epochs=cfg.train.num_train_epochs,
