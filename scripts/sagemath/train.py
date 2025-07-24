@@ -1,3 +1,12 @@
+import os 
+import sys
+sys.path.append('src')
+
+# Environment variables for reproducibility
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
+
+import click
 from omegaconf import OmegaConf
 from transformers import BartConfig, TrainingArguments
 from transformers import BartForConditionalGeneration as Transformer
@@ -8,13 +17,14 @@ from calt import (
 from calt import data_loader
 import wandb
 
-# Uncomment this to use the custom trainer from src/custom_trainer.py
-# import sys
-# sys.path.append('src')
-# from custom_trainer import PolynomialTrainerPlus as PolynomialTrainer
+from training_utils import fix_seeds
 
-def main():
-    cfg = OmegaConf.load("config/train_example.yaml")
+@click.command()
+@click.option("--config", type=str, default="config/train.yaml")
+def main(config):
+    cfg = OmegaConf.load(config)
+
+    fix_seeds(cfg.train.seed)
 
     dataset, tokenizer, data_collator = data_loader(
         train_dataset_path=cfg.train_dataset_path,
