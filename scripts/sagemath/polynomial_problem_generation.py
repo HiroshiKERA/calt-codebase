@@ -9,6 +9,14 @@ import warnings
 import sys
 import os
 
+# use calt in local dir, not from library
+# Add the path to the calt library
+current_dir = os.path.dirname(os.path.abspath(__file__))
+calt_path = os.path.join(current_dir, '../../../calt/src')
+print(f'calt_path: {calt_path}')
+sys.path.insert(0, calt_path)  # Insert at beginning to prioritize local calt
+
+# Import from local calt library (prioritized over pip-installed calt)
 from calt.dataset_generator.sagemath import (
     PolynomialSampler,
     DatasetGenerator,
@@ -230,7 +238,7 @@ def main(save_dir, n_jobs):
 
     # Generate datasets with batch processing
     dataset_generator.run(
-        dataset_sizes={"train": 100000, "test": 1000},
+        dataset_sizes={"train": 1000, "test": 1000},
         batch_size=10000,  # set batch size
         problem_generator=problem_generator,
         statistics_calculator=statistics_calculator,

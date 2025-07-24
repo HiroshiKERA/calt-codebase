@@ -37,7 +37,7 @@ def main(config, dryrun, no_wandb):
     cfg.wandb.no_wandb = no_wandb if no_wandb else cfg.wandb.no_wandb
 
     if cfg.train.dryrun:
-        cfg.train.num_train_epochs = 1
+        cfg.train.num_train_epochs = 8
         cfg.data.num_train_samples = 1000
         cfg.wandb.group = "dryrun"
         cfg.train.output_dir = "results/dryrun"
@@ -144,7 +144,7 @@ def main(config, dryrun, no_wandb):
         data_collator=data_collator,
         train_dataset=dataset["train"],
         eval_dataset=dataset["test"],
-        callbacks=[CustomLoggingCallback()],
+        # callbacks=[CustomLoggingCallback()],
     )
 
     # Execute training and evaluation
@@ -155,8 +155,8 @@ def main(config, dryrun, no_wandb):
     metrics = train_results.metrics
     eval_metrics = trainer.evaluate()
     metrics.update(eval_metrics)
-    success_rate = trainer.evaluate_and_save_generation()
-    metrics["test_success_rate"] = success_rate 
+    acc = trainer.generate_evaluation()
+    metrics["test_accuracy"] = acc
 
     trainer.save_metrics("all", metrics)
     wandb.log(metrics)
