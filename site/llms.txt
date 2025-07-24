@@ -1,0 +1,14 @@
+# CALT codebase documentation
+
+> Documentation for CALT, a codebase for generating math problems
+
+## User Guide
+
+- [Welcome](https://calt.ai/index.md)
+
+## Examples
+
+
+## API Reference
+
+
