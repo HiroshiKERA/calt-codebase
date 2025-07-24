@@ -1,10 +1,12 @@
-# Getting Started with CALT
+# Quick Start
 
-This tutorial will guide you through the basic usage of the CALT library.
+This tutorial provides a minimal introduction on how to build your own project to experiment with the CALT library.
 
 ## Setup
 
 CALT is based on Python and several popular frameworks including SageMath, PyTorch, and HuggingFace. We provide a conda environment that offers a simple setup.
+
+First, install conda enviroment from [Anaconda](https://www.anaconda.com/docs/getting-started/anaconda/install#macos-linux-installation) or [Miniconda](https://www.anaconda.com/docs/getting-started/miniconda/install#linux). Then, clone this repository and create an conda enviroment with our enviroment.yml. 
 
 ```bash
 git clone https://github.com/HiroshiKERA/calt-codebase.git
@@ -30,15 +32,15 @@ The codebase is ready to generate a simple dataset and train a Transformer. You 
 python scripts/sagemath/polynomial_problem_generation.py
 ```
 
-By default, this generates train and test sets of polynomial sum task in `dataset/polynomial_sum`.
+By default, this generates train and test sets of the partial polynomial sum task. The generated dataset can be found in `dataset/partial_sum`.
 
 ### 2. Training Transformer
 
 ```bash
-python scripts/sagemath/train.py --setup_file config/train_example.yaml
+python scripts/sagemath/train.py --config config/train_partial_sum.yaml
 ```
 
-This trains a Transformer model with the setup described in `config/train_example.yaml`. This file specifies training parameters, Transformer architecture, paths to load data, and the directory to save the results and logs. The training process can also be viewed in the WandB platform (the URL is printed in the log).
+This trains a Transformer model with the setup described in `config/train_partial_sum.yaml`. This file specifies training parameters, Transformer architecture, paths to load data, and the directory to save the results and logs. The training process can also be viewed in the WandB platform (the link will be printed once training starts).
 
 **Note**: Initial runs may require your WandB API key. Visit [WandB](https://wandb.ai/), create your account, and copy & paste your API key to the terminal as required.
 
@@ -77,7 +79,9 @@ This includes three essential components:
 - `seed` for reproducibility. Make sure you have this argument in your custom problem generators
 - `__call__` for generating an instance. The expected output is a pair of input and output
 
-Define your own class by renaming the class and redefining `__call__`. Rewrite `main()` accordingly. If your instance generation requires a sophisticated process, you can add subroutines in the class, and further add files that include subroutines in `src/`.
+Define your own class by renaming the class and redefining `__call__`. If needed, also define your own PolyStatisticsCalculator for dataset analysis. Finally, rewrite `main()` accordingly. 
+
+If your instance generation requires a sophisticated process, you may add subroutines in the class, and further add some utility files in `src/`. Below is an example. 
 
 ```python
 class GroebnerProblemGenerator:

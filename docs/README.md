@@ -1,20 +1,13 @@
 # CALT codebase
 
-## Environment Setup
-To set up the environment using conda, run the following command:
+The CALT codebase provides a template for generating arithmetic and symbolic computation instances and training Transformer models using the [CALT library](https://github.com/HiroshiKERA/calt).
+
+While CALT can be installed via `pip`, the following is the simplest setup your experiment with all dependencies:
 
 ```bash
-conda env create -f environment.yml
+git clone https://github.com/HiroshiKERA/calt-codebase.git
+cd calt-codebase
+conda env create -f environment.yml 
 ```
 
-To activate the environment, run:
-
-```bash
-conda activate sage-env
-```
-
-To install the calt library:
-
-```bash
-pip install calt
-```
+The documentation of the CALT codebase provides a quickstart guide and tips for organizing your own projects. For detailed usage of the CALT library, please refer to the [CALT documentation](https://hiroshikera.github.io/calt/).

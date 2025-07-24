@@ -1,4 +1,4 @@
-name: sage-env
+name: calt-env
 channels:
   - conda-forge
   - defaults

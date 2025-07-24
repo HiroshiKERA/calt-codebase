@@ -171,10 +171,15 @@ class PolyStatisticsCalculator(BaseStatisticsCalculator):
             "density": density,
         }
 
-
-def main():
-    save_dir = "dataset/sagemath/partial_sum_problem/GF7_n=3"
-    n_jobs = 32  # set the number of jobs for parallel processing (check your machine's capacity by command `nproc`)
+@click.command()
+@click.option("--save_dir", type=str, default="")
+@click.option("--n_jobs", type=int, default=32)  # set the number of jobs for parallel processing (check your machine's capacity by command `nproc`)
+def main(save_dir, n_jobs):
+    
+    if save_dir == "":
+        # warning 
+        save_dir = "dataset/sagemath/partial_sum/GF7_n=3"
+        warnings.warn(f"No save directory provided. Using default save directory {save_dir}.")
 
     # Initialize polynomial sampler
     sampler = PolynomialSampler(
