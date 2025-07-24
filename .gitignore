@@ -180,6 +180,10 @@ wandb/
 dataset/
 results/
 
+# Files and folders starting with underscore
+_*
+!__init__.py
+
 # docs build
 *.DS_Store
 .cache/

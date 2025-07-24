@@ -6,6 +6,8 @@ from sage.rings.polynomial.multi_polynomial_libsingular import MPolynomial_libsi
 
 import click
 import warnings
+import sys
+import os
 
 from calt.dataset_generator.sagemath import (
     PolynomialSampler,
