@@ -24,8 +24,8 @@ train:
   dryrun: False
 
 data:
-  train_dataset_path: dataset/sagemath/partial_sum/GF7_n=3/train_raw.txt
-  test_dataset_path: dataset/sagemath/partial_sum/GF7_n=3/test_raw.txt
+  train_dataset_path: dataset/partial_sum/GF7_n=3/train_raw.txt
+  test_dataset_path: dataset/partial_sum/GF7_n=3/test_raw.txt
   num_variables: 3
   max_degree: 14
   max_coeff: 10

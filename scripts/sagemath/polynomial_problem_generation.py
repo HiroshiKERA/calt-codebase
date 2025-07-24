@@ -192,7 +192,7 @@ def main(save_dir, n_jobs):
     
     if save_dir == "":
         # warning 
-        save_dir = "dataset/sagemath/partial_sum/GF7_n=3"
+        save_dir = "dataset/partial_sum/GF7_n=3"
         warnings.warn(f"No save directory provided. Using default save directory {save_dir}.")
 
     # Initialize polynomial sampler
