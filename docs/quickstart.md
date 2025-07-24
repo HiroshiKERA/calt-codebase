@@ -37,10 +37,10 @@ By default, this generates train and test sets of the partial polynomial sum tas
 ### 2. Training Transformer
 
 ```bash
-python scripts/sagemath/train.py --config config/train_partial_sum.yaml
+python scripts/sagemath/train.py --config config/train_example.yaml
 ```
 
-This trains a Transformer model with the setup described in `config/train_partial_sum.yaml`. This file specifies training parameters, Transformer architecture, paths to load data, and the directory to save the results and logs. The training process can also be viewed in the WandB platform (the link will be printed once training starts).
+This trains a Transformer model with the setup described in `config/train_example.yaml`. This file specifies training parameters, Transformer architecture, paths to load data, and the directory to save the results and logs. The training process can also be viewed in the WandB platform (the link will be printed once training starts).
 
 **Note**: Initial runs may require your WandB API key. Visit [WandB](https://wandb.ai/), create your account, and copy & paste your API key to the terminal as required.
 
