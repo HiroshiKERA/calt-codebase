@@ -607,9 +607,9 @@ conda<span class="w"> </span>env<span class="w"> </span>create<span class="w"> <
 </code></pre></div>
 <p>By default, this generates train and test sets of the partial polynomial sum task. The generated dataset can be found in <code>dataset/partial_sum</code>.</p>
 <h3 id="2-training-transformer">2. Training Transformer<a class="headerlink" href="#2-training-transformer" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code>python<span class="w"> </span>scripts/sagemath/train.py<span class="w"> </span>--config<span class="w"> </span>config/train_example.yaml
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>scripts/sagemath/train.py<span class="w"> </span>--config<span class="w"> </span>config/train_partial_sum.yaml
 </code></pre></div>
-<p>This trains a Transformer model with the setup described in <code>config/train_example.yaml</code>. This file specifies training parameters, Transformer architecture, paths to load data, and the directory to save the results and logs. The training process can also be viewed in the WandB platform (the link will be printed once training starts).</p>
+<p>This trains a Transformer model with the setup described in <code>config/train_partial_sum.yaml</code>. This file specifies training parameters, Transformer architecture, paths to load data, and the directory to save the results and logs. The training process can also be viewed in the WandB platform (the link will be printed once training starts).</p>
 <p><strong>Note</strong>: Initial runs may require your WandB API key. Visit <a href="https://wandb.ai/">WandB</a>, create your account, and copy &amp; paste your API key to the terminal as required.</p>
 <h2 id="your-own-project">Your Own Project<a class="headerlink" href="#your-own-project" title="Permanent link">&para;</a></h2>
 <p>Now you can create custom script files for your own project. In <code>scripts/sagemath/</code>, you can find three script files for dataset construction as examples: one for numerical tasks, another for polynomial tasks, and the last for other tasks.</p>
