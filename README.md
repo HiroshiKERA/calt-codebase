@@ -9,7 +9,7 @@ The CALT codebase provides a template for generating arithmetic and symbolic com
 
 ## 🚀 Quick Start
 
-While CALT can be installed via `pip`, the following is the simplest setup for your experiment with all dependencies:
+CALT can be installed via `pip install calt-x`. The following is the simplest setup for your experiment with all dependencies:
 
 ```bash
 git clone https://github.com/HiroshiKERA/calt-codebase.git
