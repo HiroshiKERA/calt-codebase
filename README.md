@@ -21,7 +21,6 @@ conda env create -f environment.yml
 
 - **📚 [Full Documentation](https://hiroshikera.github.io/calt-codebase/)** - Complete guide with quickstart and project organization tips
 - **⚡ [Quickstart Guide](https://hiroshikera.github.io/calt-codebase/quickstart/)** - Get up and running quickly
-- **🔧 [API Reference](https://hiroshikera.github.io/calt-codebase/)** - Detailed API documentation
 
 For detailed usage of the CALT library, please refer to the [CALT documentation](https://hiroshikera.github.io/calt/).
 
