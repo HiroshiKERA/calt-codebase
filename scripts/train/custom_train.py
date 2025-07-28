@@ -1,7 +1,8 @@
-import os 
+import os
 import sys
-sys.path.insert(0, '../calt/src') # use calt in local dir, not from library
-sys.path.append('src')
+
+sys.path.insert(0, "../calt/src")  # use calt in local dir, not from library
+sys.path.append("src")
 
 # Environment variables for reproducibility
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -18,20 +19,20 @@ from calt import load_data
 import wandb
 
 from utils.training_utils import fix_seeds
-from custom_trainer import CustomPolynomialTrainer
+from custom_trainer import CustomTrainer
 from callbacks.log_callbacks import CustomLoggingCallback
+
 
 @click.command()
 @click.option("--config", type=str, default="config/train.yaml")
 @click.option("--dryrun", is_flag=True)
 @click.option("--no_wandb", is_flag=True)
 def main(config, dryrun, no_wandb):
-    
     # Load config
     cfg = OmegaConf.load(config)
-    
+
     fix_seeds(cfg.train.seed)
-    
+
     # Override config if dryrun or no_wandb is set in command line
     cfg.train.dryrun = dryrun if dryrun else cfg.train.dryrun
     cfg.wandb.no_wandb = no_wandb if no_wandb else cfg.wandb.no_wandb
@@ -42,22 +43,22 @@ def main(config, dryrun, no_wandb):
         cfg.wandb.group = "dryrun"
         cfg.train.output_dir = "results/dryrun"
 
-        print('-'*100)
-        print('Dryrun mode is enabled. The training setup is modified as follows:')
-        print('-'*100)
-        print(f'output_dir: {cfg.train.output_dir}')
-        print(f'num_train_epochs: {cfg.train.num_train_epochs}')
-        print(f'num_train_samples: {cfg.data.num_train_samples}')
+        print("-" * 100)
+        print("Dryrun mode is enabled. The training setup is modified as follows:")
+        print("-" * 100)
+        print(f"output_dir: {cfg.train.output_dir}")
+        print(f"num_train_epochs: {cfg.train.num_train_epochs}")
+        print(f"num_train_samples: {cfg.data.num_train_samples}")
         if not cfg.wandb.no_wandb:
-            print(f'wandb.project: {cfg.wandb.project}')
-            print(f'wandb.group: {cfg.wandb.group}')
-            print(f'wandb.name: {cfg.wandb.name}')
-            
-        print('-'*100)
-        
-    # Save config 
+            print(f"wandb.project: {cfg.wandb.project}")
+            print(f"wandb.group: {cfg.wandb.group}")
+            print(f"wandb.name: {cfg.wandb.name}")
+
+        print("-" * 100)
+
+    # Save config
     config_file_name = os.path.basename(config)
-    with open(os.path.join(cfg.train.output_dir, config_file_name), 'w') as f:
+    with open(os.path.join(cfg.train.output_dir, config_file_name), "w") as f:
         OmegaConf.save(cfg, f)
 
     # Set up wandb
@@ -81,7 +82,6 @@ def main(config, dryrun, no_wandb):
         num_test_samples=cfg.data.num_test_samples,
     )
 
-
     # Load model
     model_cfg = BartConfig(
         encoder_layers=cfg.model.num_encoder_layers,
@@ -103,7 +103,7 @@ def main(config, dryrun, no_wandb):
     )
     model = Transformer(config=model_cfg)
 
-    # Set up trainer 
+    # Set up trainer
     args = TrainingArguments(
         output_dir=cfg.train.output_dir,
         num_train_epochs=cfg.train.num_train_epochs,
@@ -137,7 +137,7 @@ def main(config, dryrun, no_wandb):
         seed=cfg.train.seed,
         disable_tqdm=True,
     )
-    trainer = CustomPolynomialTrainer(
+    trainer = CustomTrainer(
         args=args,
         model=model,
         tokenizer=tokenizer,
@@ -155,7 +155,7 @@ def main(config, dryrun, no_wandb):
     metrics = train_results.metrics
     eval_metrics = trainer.evaluate()
     metrics.update(eval_metrics)
-    acc = trainer.generate_evaluation()
+    acc = trainer.evaluate_and_save_generation()
     metrics["test_accuracy"] = acc
 
     trainer.save_metrics("all", metrics)
