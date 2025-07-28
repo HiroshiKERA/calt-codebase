@@ -628,16 +628,16 @@ conda<span class="w"> </span>env<span class="w"> </span>create<span class="w"> <
 <h2 id="first-run">First Run<a class="headerlink" href="#first-run" title="Permanent link">&para;</a></h2>
 <p>The codebase is ready to generate a simple dataset and train a Transformer. You can first try this to see if everything works properly.</p>
 <h3 id="1-dataset-construction">1. Dataset Construction<a class="headerlink" href="#1-dataset-construction" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code>python<span class="w"> </span>scripts/dataset_generation/sagemath/polynomial_problem_generation.py
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>scripts/sagemath/polynomial_problem_generation.py
 </code></pre></div>
 <p>By default, this generates train and test sets of the partial polynomial sum task. The generated dataset can be found in <code>dataset/partial_sum</code>.</p>
 <h3 id="2-training-transformer">2. Training Transformer<a class="headerlink" href="#2-training-transformer" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code>python<span class="w"> </span>scripts/train/train.py<span class="w"> </span>--config<span class="w"> </span>config/train_example.yaml
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>scripts/sagemath/train.py<span class="w"> </span>--config<span class="w"> </span>config/train_example.yaml
 </code></pre></div>
 <p>This trains a Transformer model with the setup described in <code>config/train_example.yaml</code>. This file specifies training parameters, Transformer architecture, paths to load data, and the directory to save the results and logs. The training process can also be viewed in the WandB platform (the link will be printed once training starts).</p>
 <p><strong>Note</strong>: Initial runs may require your WandB API key. Visit <a href="https://wandb.ai/">WandB</a>, create your account, and copy &amp; paste your API key to the terminal as required.</p>
 <h2 id="your-own-project">Your Own Project<a class="headerlink" href="#your-own-project" title="Permanent link">&para;</a></h2>
-<p>Now you can create custom script files for your own project. In <code>scripts/dataset_generation/sagemath/</code>, you can find three script files for dataset construction as examples: one for numerical tasks, another for polynomial tasks, and the last for other tasks.</p>
+<p>Now you can create custom script files for your own project. In <code>scripts/sagemath/</code>, you can find three script files for dataset construction as examples: one for numerical tasks, another for polynomial tasks, and the last for other tasks.</p>
 <p>Let's take <code>polynomial_problem_generation.py</code> as an example. You can find two classes: <code>PartialSumProblemGenerator</code> and <code>PolyStatisticsCalculator</code>. The former is the main part of instance generation, and the latter computes statistics of generated instances.</p>
 <p>Here, the task input is a list of polynomials $F = [f_1, ..., f_s]$, and the expected output is the list of cumulative sums $G = [g_1, ..., g_s]$, where $g_k = f_1 + \cdots + f_k$.</p>
 <div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">PartialSumProblemGenerator</span><span class="p">:</span>
