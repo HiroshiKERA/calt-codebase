@@ -12,8 +12,8 @@ import os
 # use calt in local dir, not from library
 # Add the path to the calt library
 current_dir = os.path.dirname(os.path.abspath(__file__))
-calt_path = os.path.join(current_dir, '../../../../calt/src')
-print(f'calt_path: {calt_path}')
+calt_path = os.path.join(current_dir, "../../../../calt/src")
+print(f"calt_path: {calt_path}")
 sys.path.insert(0, calt_path)  # Insert at beginning to prioritize local calt
 
 # Import from local calt library (prioritized over pip-installed calt)
@@ -110,7 +110,6 @@ class PolyStatisticsCalculator(BaseStatisticsCalculator):
             - min_num_terms: Minimum number of terms in any polynomial in the system
             - max_abs_coeff: Maximum absolute coefficient value in the system
             - min_abs_coeff: Minimum absolute coefficient value in the system
-            - density: Density of the system (ratio of total terms to maximum possible terms)
         """
         return {
             "problem": self.poly_system_stats(
@@ -149,23 +148,11 @@ class PolyStatisticsCalculator(BaseStatisticsCalculator):
                 "Cannot calculate statistics for empty list of polynomials"
             )
 
-        # Get system properties from first polynomial
-        ring = polys[0].parent()
-        num_vars = ring.ngens()
-
         degrees = [
             max(p.total_degree(), 0) for p in polys
         ]  # if polynomial p is zero, then p.total_degree() is -1, so we need to set it to 0
         num_terms = [len(p.monomials()) for p in polys]
         coeffs = [c for p in polys for c in self._extract_coefficients(p)]
-
-        # Calculate density
-        max_possible_terms = len(polys) * (1 + max(degrees)) ** num_vars
-        density = (
-            float(sum(num_terms)) / max_possible_terms
-            if max_possible_terms > 0
-            else 0.0
-        )
 
         return {
             # System size statistics
@@ -181,19 +168,21 @@ class PolyStatisticsCalculator(BaseStatisticsCalculator):
             # Coefficient statistics
             "max_abs_coeff": max(coeffs) if coeffs else 0,
             "min_abs_coeff": min(coeffs) if coeffs else 0,
-            # Additional system properties
-            "density": density,
         }
+
 
 @click.command()
 @click.option("--save_dir", type=str, default="")
-@click.option("--n_jobs", type=int, default=32)  # set the number of jobs for parallel processing (check your machine's capacity by command `nproc`)
+@click.option(
+    "--n_jobs", type=int, default=32
+)  # set the number of jobs for parallel processing (check your machine's capacity by command `nproc`)
 def main(save_dir, n_jobs):
-    
     if save_dir == "":
-        # warning 
+        # warning
         save_dir = "dataset/partial_sum/GF7_n=3"
-        warnings.warn(f"No save directory provided. Using default save directory {save_dir}.")
+        warnings.warn(
+            f"No save directory provided. Using default save directory {save_dir}."
+        )
 
     # Initialize polynomial sampler
     sampler = PolynomialSampler(

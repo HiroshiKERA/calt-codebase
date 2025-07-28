@@ -238,7 +238,10 @@ def main():
 
     # Generate datasets with batch processing
     dataset_generator.run(
-        dataset_sizes={"train": 1000000, "test": 1000},  # train: 100000 samples, test: 1000 samples
+        dataset_sizes={
+            "train": 1000000,
+            "test": 1000,
+        },  # train: 100000 samples, test: 1000 samples
         batch_size=1000000,  # set batch size
         problem_generator=problem_generator,
         statistics_calculator=statistics_calculator,
