@@ -30,8 +30,8 @@ data:
   max_degree: 14
   max_coeff: 10
   field: GF7
-  num_train_samples: -1
-  num_test_samples: -1
+  num_train_samples: 1000
+  num_test_samples: 1000
 
 wandb:
   project: calt-codebase
