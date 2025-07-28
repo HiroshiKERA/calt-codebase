@@ -29,7 +29,7 @@ The codebase is ready to generate a simple dataset and train a Transformer. You 
 ### 1. Dataset Construction
 
 ```bash
-python scripts/sagemath/polynomial_problem_generation.py
+python scripts/dataset_generation/sagemath/polynomial_problem_generation.py
 ```
 
 By default, this generates train and test sets of the partial polynomial sum task. The generated dataset can be found in `dataset/partial_sum`.
@@ -37,7 +37,7 @@ By default, this generates train and test sets of the partial polynomial sum tas
 ### 2. Training Transformer
 
 ```bash
-python scripts/sagemath/train.py --config config/train_example.yaml
+python scripts/train/train.py --config config/train_example.yaml
 ```
 
 This trains a Transformer model with the setup described in `config/train_example.yaml`. This file specifies training parameters, Transformer architecture, paths to load data, and the directory to save the results and logs. The training process can also be viewed in the WandB platform (the link will be printed once training starts).
@@ -46,7 +46,7 @@ This trains a Transformer model with the setup described in `config/train_exampl
 
 ## Your Own Project
 
-Now you can create custom script files for your own project. In `scripts/sagemath/`, you can find three script files for dataset construction as examples: one for numerical tasks, another for polynomial tasks, and the last for other tasks.
+Now you can create custom script files for your own project. In `scripts/dataset_generation/sagemath/`, you can find three script files for dataset construction as examples: one for numerical tasks, another for polynomial tasks, and the last for other tasks.
 
 Let's take `polynomial_problem_generation.py` as an example. You can find two classes: `PartialSumProblemGenerator` and `PolyStatisticsCalculator`. The former is the main part of instance generation, and the latter computes statistics of generated instances.
 
@@ -115,8 +115,8 @@ class GroebnerProblemGenerator:
 To train the Transformer model on the custom dataset, rewrite the path name and other dataset setup in `config/train_example.yaml`:
 
 ```yaml
-train_dataset_path: data/GB_problem/GF7_n=2/train_raw.txt
-test_dataset_path: data/GB_problem/GF7_n=2/test_raw.txt
+train_dataset_path: dataset/GB_problem/GF7_n=2/train_raw.txt
+test_dataset_path: dataset/GB_problem/GF7_n=2/test_raw.txt
 num_variables: 2
 max_degree: 14
 max_coeff: 10
