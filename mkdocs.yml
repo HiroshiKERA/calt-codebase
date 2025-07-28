@@ -69,6 +69,7 @@ nav:
   - User Guide:
     - Welcome: README.md
     - Quickstart: quickstart.md
+    - Polynomial Problems: polynomial_problems.md
   #   - Quickstart: user-guide/quickstart.md
   #   - Concepts:
   #     - Agents:
