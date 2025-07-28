@@ -1,6 +1,10 @@
 import random
 from sympy import QQ, RR, ZZ
 from sympy.polys.rings import PolyElement
+
+import click
+import warnings
+
 from calt.dataset_generator.sympy import (
     PolynomialSampler,
     DatasetGenerator,
@@ -92,7 +96,6 @@ class PolyStatisticsCalculator(BaseStatisticsCalculator):
             - min_num_terms: Minimum number of terms in any polynomial in the system
             - max_abs_coeff: Maximum absolute coefficient value in the system
             - min_abs_coeff: Minimum absolute coefficient value in the system
-            - density: Density of the system (ratio of total terms to maximum possible terms)
         """
         return {
             "problem": self.poly_system_stats(
@@ -131,22 +134,10 @@ class PolyStatisticsCalculator(BaseStatisticsCalculator):
                 "Cannot calculate statistics for empty list of polynomials"
             )
 
-        # Get system properties from first polynomial
-        ring = polys[0].ring
-        num_vars = ring.ngens
-
         # Calculate basic statistics
         degrees = [self.total_degree(p) for p in polys]
         num_terms = [len(p.terms()) for p in polys]
         coeffs = [c for p in polys for c in self._extract_coefficients(p)]
-
-        # Calculate density
-        max_possible_terms = len(polys) * (1 + max(degrees)) ** num_vars
-        density = (
-            float(sum(num_terms)) / max_possible_terms
-            if max_possible_terms > 0
-            else 0.0
-        )
 
         return {
             # System size statistics
@@ -162,8 +153,6 @@ class PolyStatisticsCalculator(BaseStatisticsCalculator):
             # Coefficient statistics
             "max_abs_coeff": max(coeffs) if coeffs else 0,
             "min_abs_coeff": min(coeffs) if coeffs else 0,
-            # Additional system properties
-            "density": density,
         }
 
     def total_degree(self, poly: PolyElement) -> int:
@@ -191,8 +180,18 @@ class PolyStatisticsCalculator(BaseStatisticsCalculator):
             return max(sum(monom) for monom in poly.monoms())
 
 
-def main():
-    save_dir = "dataset/sympy/partial_sum_problem/GF7_n=3"
+@click.command()
+@click.option("--save_dir", type=str, default="")
+@click.option(
+    "--n_jobs", type=int, default=32
+)  # set the number of jobs for parallel processing (check your machine's capacity by command `nproc`)
+def main(save_dir, n_jobs):
+    if save_dir == "":
+        # warning
+        save_dir = "dataset/sympy/partial_sum/GF7_n=3"
+        warnings.warn(
+            f"No save directory provided. Using default save directory {save_dir}."
+        )
 
     # Initialize polynomial sampler
     sampler = PolynomialSampler(
@@ -224,7 +223,7 @@ def main():
     # Initialize dataset generator
     dataset_generator = DatasetGenerator(
         backend="multiprocessing",
-        n_jobs=-1,
+        n_jobs=n_jobs,
         verbose=True,  # Whether to show progress
         root_seed=100,
     )
@@ -239,10 +238,10 @@ def main():
     # Generate datasets with batch processing
     dataset_generator.run(
         dataset_sizes={
-            "train": 1000000,
+            "train": 100000,
             "test": 1000,
         },  # train: 100000 samples, test: 1000 samples
-        batch_size=1000000,  # set batch size
+        batch_size=100000,  # set batch size
         problem_generator=problem_generator,
         statistics_calculator=statistics_calculator,
         dataset_writer=dataset_writer,

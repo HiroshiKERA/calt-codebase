@@ -3,6 +3,10 @@ import numpy as np
 import sage.misc.randstate as randstate
 from sage.misc.prandom import randint, choice
 from sage.all import prime_range
+
+import click
+import warnings
+
 from calt.dataset_generator.sagemath import (
     DatasetGenerator,
     DatasetWriter,
@@ -150,8 +154,18 @@ class ArithmeticStatisticsCalculator(BaseStatisticsCalculator):
         return stats
 
 
-def main():
-    save_dir = "dataset/integer_factorization_problem"
+@click.command()
+@click.option("--save_dir", type=str, default="")
+@click.option(
+    "--n_jobs", type=int, default=32
+)  # set the number of jobs for parallel processing (check your machine's capacity by command `nproc`)
+def main(save_dir, n_jobs):
+    if save_dir == "":
+        # warning
+        save_dir = "dataset/integer_factorization_problem"
+        warnings.warn(
+            f"No save directory provided. Using default save directory {save_dir}."
+        )
 
     # Initialize problem generator
     problem_generator = IntFactorProblemGenerator(
@@ -166,7 +180,7 @@ def main():
     # Initialize dataset generator
     dataset_generator = DatasetGenerator(
         backend="multiprocessing",
-        n_jobs=-1,
+        n_jobs=n_jobs,
         verbose=True,
         root_seed=42,
     )
