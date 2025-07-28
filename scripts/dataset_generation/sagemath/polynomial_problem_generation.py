@@ -227,8 +227,8 @@ def main(save_dir, n_jobs):
 
     # Generate datasets with batch processing
     dataset_generator.run(
-        dataset_sizes={"train": 1000, "test": 1000},
-        batch_size=10000,  # set batch size
+        dataset_sizes={"train": 100000, "test": 1000},
+        batch_size=100000,  # set batch size
         problem_generator=problem_generator,
         statistics_calculator=statistics_calculator,
         dataset_writer=dataset_writer,
