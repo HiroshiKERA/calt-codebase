@@ -151,7 +151,7 @@ class ArithmeticStatisticsCalculator(BaseStatisticsCalculator):
 
 
 def main():
-    save_dir = "dataset/sagemath/integer_factorization_problem"
+    save_dir = "dataset/integer_factorization_problem"
 
     # Initialize problem generator
     problem_generator = IntFactorProblemGenerator(

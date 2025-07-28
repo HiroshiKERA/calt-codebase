@@ -1,5 +1,6 @@
 import os 
 import sys
+sys.path.insert(0, '../calt/src') # use calt in local dir, not from library
 sys.path.append('src')
 
 # Environment variables for reproducibility
@@ -13,7 +14,7 @@ from transformers import BartForConditionalGeneration as Transformer
 from calt import (
     count_cuda_devices,
 )
-from calt import data_loader
+from calt import load_data
 import wandb
 
 from utils.training_utils import fix_seeds
@@ -68,7 +69,7 @@ def main(config, dryrun, no_wandb):
         )
 
     # Load dataset
-    dataset, tokenizer, data_collator = data_loader(
+    dataset, tokenizer, data_collator = load_data(
         train_dataset_path=cfg.data.train_dataset_path,
         test_dataset_path=cfg.data.test_dataset_path,
         field=cfg.data.field,
@@ -76,8 +77,8 @@ def main(config, dryrun, no_wandb):
         max_degree=cfg.data.max_degree,
         max_coeff=cfg.data.max_coeff,
         max_length=cfg.model.max_sequence_length,
-        # num_train_samples=cfg.data.num_train_samples,
-        # num_test_samples=cfg.data.num_test_samples,
+        num_train_samples=cfg.data.num_train_samples,
+        num_test_samples=cfg.data.num_test_samples,
     )
 
 

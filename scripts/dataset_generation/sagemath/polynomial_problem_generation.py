@@ -12,7 +12,7 @@ import os
 # use calt in local dir, not from library
 # Add the path to the calt library
 current_dir = os.path.dirname(os.path.abspath(__file__))
-calt_path = os.path.join(current_dir, '../../../calt/src')
+calt_path = os.path.join(current_dir, '../../../../calt/src')
 print(f'calt_path: {calt_path}')
 sys.path.insert(0, calt_path)  # Insert at beginning to prioritize local calt
 
