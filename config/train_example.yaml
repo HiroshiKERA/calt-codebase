@@ -9,7 +9,7 @@ model:
   max_sequence_length: 512
   
 train:
-  output_dir: results/debug
+  output_dir: results/partial_sum/GF7_n=3
   num_train_epochs: 100
   learning_rate: 0.0001
   weight_decay: 0.01
@@ -21,13 +21,20 @@ train:
   optimizer: adamw_torch
   num_workers: 4
   seed: 42
+  dryrun: False
 
+data:
+  train_dataset_path: dataset/partial_sum/GF7_n=3/train_raw.txt
+  test_dataset_path: dataset/partial_sum/GF7_n=3/test_raw.txt
+  num_variables: 3
+  max_degree: 14
+  max_coeff: 10
+  field: GF7
+  num_train_samples: -1
+  num_test_samples: -1
 
-# dataset path
-train_dataset_path: data/gcd_problem/GF7_n=2/train_raw.txt
-test_dataset_path: data/gcd_problem/GF7_n=2/test_raw.txt
-# problem config
-num_variables: 5
-max_degree: 14
-max_coeff: 10
-field: GF7
+wandb:
+  project: calt-codebase
+  group: partial_sum
+  name: GF7_n=3
+  no_wandb: False

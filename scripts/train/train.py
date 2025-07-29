@@ -1,27 +1,88 @@
+import os 
+import sys
+sys.path.append("src")
+
+# Environment variables for reproducibility
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
+
+import click
 from omegaconf import OmegaConf
 from transformers import BartConfig, TrainingArguments
 from transformers import BartForConditionalGeneration as Transformer
 from calt import (
-    PolynomialTrainer,
+    Trainer,
     count_cuda_devices,
 )
-from calt import data_loader
+from calt import load_data
 import wandb
 
+from utils.training_utils import fix_seeds
 
-def main():
-    cfg = OmegaConf.load("config/train_example.yaml")
 
-    dataset, tokenizer, data_collator = data_loader(
-        train_dataset_path=cfg.train_dataset_path,
-        test_dataset_path=cfg.test_dataset_path,
-        field=cfg.field,
-        num_variables=cfg.num_variables,
-        max_degree=cfg.max_degree,
-        max_coeff=cfg.max_coeff,
+@click.command()
+@click.option("--config", type=str, default="config/train.yaml")
+@click.option("--dryrun", is_flag=True)
+@click.option("--no_wandb", is_flag=True)
+def main(config, dryrun, no_wandb):
+    # Load config
+    cfg = OmegaConf.load(config)
+
+    fix_seeds(cfg.train.seed)
+
+    # Override config if dryrun or no_wandb is set in command line
+    cfg.train.dryrun = dryrun if dryrun else cfg.train.dryrun
+    cfg.wandb.no_wandb = no_wandb if no_wandb else cfg.wandb.no_wandb
+
+    if cfg.train.dryrun:
+        cfg.train.num_train_epochs = 1
+        cfg.data.num_train_samples = 1000
+        cfg.wandb.group = "dryrun"
+        cfg.train.output_dir = "results/dryrun"
+
+        print("-" * 100)
+        print("Dryrun mode is enabled. The training setup is modified as follows:")
+        print("-" * 100)
+        print(f"output_dir: {cfg.train.output_dir}")
+        print(f"num_train_epochs: {cfg.train.num_train_epochs}")
+        print(f"num_train_samples: {cfg.data.num_train_samples}")
+        if not cfg.wandb.no_wandb:
+            print(f"wandb.project: {cfg.wandb.project}")
+            print(f"wandb.group: {cfg.wandb.group}")
+            print(f"wandb.name: {cfg.wandb.name}")
+
+        print("-" * 100)
+
+    # Create output directory if it doesn't exist
+    os.makedirs(cfg.train.output_dir, exist_ok=True)
+
+    # Save config
+    config_file_name = os.path.basename(config)
+    with open(os.path.join(cfg.train.output_dir, config_file_name), "w") as f:
+        OmegaConf.save(cfg, f)
+
+    # Set up wandb
+    if not cfg.wandb.no_wandb:
+        wandb.init(
+            project=cfg.wandb.project,
+            group=cfg.wandb.group,
+            name=cfg.wandb.name,
+        )
+
+    # Load dataset
+    dataset, tokenizer, data_collator = load_data(
+        train_dataset_path=cfg.data.train_dataset_path,
+        test_dataset_path=cfg.data.test_dataset_path,
+        field=cfg.data.field,
+        num_variables=cfg.data.num_variables,
+        max_degree=cfg.data.max_degree,
+        max_coeff=cfg.data.max_coeff,
         max_length=cfg.model.max_sequence_length,
+        num_train_samples=cfg.data.num_train_samples,
+        num_test_samples=cfg.data.num_test_samples,
     )
 
+    # Load model
     model_cfg = BartConfig(
         encoder_layers=cfg.model.num_encoder_layers,
         encoder_attention_heads=cfg.model.num_encoder_heads,
@@ -42,6 +103,7 @@ def main():
     )
     model = Transformer(config=model_cfg)
 
+    # Set up trainer
     args = TrainingArguments(
         output_dir=cfg.train.output_dir,
         num_train_epochs=cfg.train.num_train_epochs,
@@ -50,7 +112,9 @@ def main():
         warmup_ratio=cfg.train.warmup_ratio,
         per_device_train_batch_size=cfg.train.batch_size // count_cuda_devices(),
         per_device_eval_batch_size=cfg.train.test_batch_size // count_cuda_devices(),
-        lr_scheduler_type="constant" if cfg.train.lr_scheduler_type == "constant" else "linear",
+        lr_scheduler_type="constant"
+        if cfg.train.lr_scheduler_type == "constant"
+        else "linear",
         max_grad_norm=cfg.train.max_grad_norm,
         optim=cfg.train.optimizer,  # Set optimizer type
         # Dataloader settings
@@ -73,7 +137,7 @@ def main():
         seed=cfg.train.seed,
         disable_tqdm=True,
     )
-    trainer = PolynomialTrainer(
+    trainer = Trainer(
         args=args,
         model=model,
         tokenizer=tokenizer,
@@ -90,8 +154,8 @@ def main():
     metrics = train_results.metrics
     eval_metrics = trainer.evaluate()
     metrics.update(eval_metrics)
-    acc = trainer.generate_evaluation()
-    metrics["test_accuracy"] = acc
+    success_rate = trainer.evaluate_and_save_generation()
+    metrics["test_success_rate"] = success_rate
 
     trainer.save_metrics("all", metrics)
     wandb.log(metrics)
