@@ -1,3 +1,8 @@
+import sys
+
+sys.path.insert(0, "../calt/src")  # use calt in local dir, not from library
+sys.path.append("src")
+
 from sage.all import ZZ, QQ, RR, GF, PolynomialRing
 import sage.misc.randstate as randstate
 from sage.misc.prandom import randint
@@ -13,7 +18,6 @@ from calt.dataset_generator.sagemath import (
     DatasetWriter,
     BaseStatisticsCalculator,
 )
-
 
 class PartialSumProblemGenerator:
     """

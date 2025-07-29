@@ -1,7 +1,4 @@
 import os
-import sys
-
-sys.path.insert(0, "../calt/src")  # use calt in local dir, not from library
 sys.path.append("src")
 
 # Environment variables for reproducibility
