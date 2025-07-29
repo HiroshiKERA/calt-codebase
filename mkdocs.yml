@@ -39,6 +39,7 @@ theme:
     - navigation.top
     - search.highlight
     - content.code.copy
+    - mathjax
 
 markdown_extensions:
   - admonition
@@ -56,6 +57,9 @@ markdown_extensions:
   - toc:
       title: On this page
       permalink: true
+  - pymdownx.arithmatex:
+      inline_syntax: ["$", "$"] 
+      generic: true        
 
 extra_css:
   - stylesheets/extra.css
@@ -63,6 +67,8 @@ extra_css:
 extra_javascript:
   # Workaround for site_url breaking mermaid rendering; see the following for more info:
   # https://github.com/squidfunk/mkdocs-material/issues/3742#issuecomment-1076068038
+  - javascripts/mathjax-config.js
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
   - https://unpkg.com/mermaid@11/dist/mermaid.min.js
 
 nav:
