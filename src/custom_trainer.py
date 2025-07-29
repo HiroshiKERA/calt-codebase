@@ -1,5 +1,4 @@
 import torch
-import wandb
 
 from calt import Trainer
 from calt.data_loader.utils.preprocessor import SymbolicToInternalProcessor
