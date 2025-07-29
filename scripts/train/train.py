@@ -12,7 +12,6 @@ from transformers import BartConfig, TrainingArguments
 from transformers import BartForConditionalGeneration as Transformer
 from calt import (
     Trainer,
-    Trainer,
     count_cuda_devices,
 )
 from calt import load_data

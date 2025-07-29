@@ -1,7 +1,6 @@
 import torch
 import wandb
 
-from transformers import Trainer
 from calt import Trainer
 from calt.data_loader.utils.preprocessor import SymbolicToInternalProcessor
 
