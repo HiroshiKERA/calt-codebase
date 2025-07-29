@@ -1,9 +1,6 @@
 import torch
-
-from calt import Trainer
-from calt.data_loader.utils.preprocessor import SymbolicToInternalProcessor
-
 import numpy as np
+from calt import Trainer
 
 
 class CustomTrainer(Trainer):
