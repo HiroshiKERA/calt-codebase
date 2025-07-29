@@ -1,4 +1,3 @@
-from typing import Any
 from sage.all import ZZ, QQ, RR
 import sage.misc.randstate as randstate
 from sage.misc.prandom import randint
@@ -90,7 +89,7 @@ class PolyStatisticsCalculator(BaseStatisticsCalculator):
         self,
         problem: list[MPolynomial_libsingular] | MPolynomial_libsingular,
         solution: list[MPolynomial_libsingular] | MPolynomial_libsingular,
-    ) -> dict[str, Any]:
+    ) -> dict[str, dict[str, int | float]]:
         """
         Calculate statistics for a single generated sample.
 
@@ -120,7 +119,7 @@ class PolyStatisticsCalculator(BaseStatisticsCalculator):
             ),
         }
 
-    def _extract_coefficients(self, poly: MPolynomial_libsingular) -> list[float]:
+    def _extract_coefficients(self, poly: MPolynomial_libsingular) -> list[float | int]:
         """Extract coefficients from polynomial based on field type."""
         coeff_field = poly.parent().base_ring()
         if coeff_field == QQ:
@@ -133,7 +132,7 @@ class PolyStatisticsCalculator(BaseStatisticsCalculator):
             return [int(c) for c in poly.coefficients()]
         return []
 
-    def poly_system_stats(self, polys: list[MPolynomial_libsingular]) -> dict[str, Any]:
+    def poly_system_stats(self, polys: list[MPolynomial_libsingular]) -> dict[str, int | float]:
         """
         Calculate statistics for a list of polynomials.
 

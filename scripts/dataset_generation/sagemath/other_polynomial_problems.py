@@ -1,4 +1,3 @@
-from typing import Any
 import sage.misc.randstate as randstate
 from sage.misc.prandom import randint
 from sage.rings.polynomial.multi_polynomial_libsingular import MPolynomial_libsingular
@@ -196,7 +195,7 @@ class PartialProdProblemGenerator:
         self.max_polynomials = max_polynomials
         self.min_polynomials = min_polynomials
 
-    def __call__(self, seed: int) -> tuple[list[Any], list[Any]]:
+    def __call__(self, seed: int) -> tuple[list[MPolynomial_libsingular], list[MPolynomial_libsingular]]:
         """
         Generate a single sample.
 

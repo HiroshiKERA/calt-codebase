@@ -106,7 +106,7 @@ class PolyStatisticsCalculator(BaseStatisticsCalculator):
             ),
         }
 
-    def _extract_coefficients(self, poly: PolyElement) -> list[float]:
+    def _extract_coefficients(self, poly: PolyElement) -> list[float | int]:
         """Extract coefficients from polynomial based on field type."""
         coeff_field = poly.ring.domain
         if coeff_field == QQ:

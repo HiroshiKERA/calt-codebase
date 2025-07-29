@@ -1,4 +1,3 @@
-from typing import Any
 import numpy as np
 import sage.misc.randstate as randstate
 from sage.misc.prandom import randint, choice
@@ -88,9 +87,9 @@ class ArithmeticStatisticsCalculator(BaseStatisticsCalculator):
 
     def __call__(
         self,
-        problem: list[Any] | Any,
-        solution: list[Any] | Any,
-    ) -> dict[str, Any]:
+        problem: list[int | float] | int | float,
+        solution: list[int | float] | int | float,
+    ) -> dict[str, dict[str, int | float]]:
         """
         Calculate statistics for a single generated sample.
 
@@ -126,7 +125,7 @@ class ArithmeticStatisticsCalculator(BaseStatisticsCalculator):
             ),
         }
 
-    def numerical_stats(self, data: list[Any]) -> dict[str, Any]:
+    def numerical_stats(self, data: list[int | float]) -> dict[str, int | float]:
         """
         Calculate statistics for a list of numbers.
 

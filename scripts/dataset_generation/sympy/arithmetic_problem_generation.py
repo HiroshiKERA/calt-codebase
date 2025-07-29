@@ -1,6 +1,5 @@
 import random
 import numpy as np
-from typing import Any
 from sympy import primerange
 
 import click
@@ -87,8 +86,8 @@ class ArithmeticStatisticsCalculator(BaseStatisticsCalculator):
 
     def __call__(
         self,
-        problem: list[Any] | Any,
-        solution: list[Any] | Any,
+        problem: list[int | float] | int | float,
+        solution: list[int | float] | int | float,
     ) -> dict[str, dict[str, int | float]]:
         """
         Calculate statistics for a single generated sample.
@@ -125,7 +124,7 @@ class ArithmeticStatisticsCalculator(BaseStatisticsCalculator):
             ),
         }
 
-    def numerical_stats(self, data: list[Any]) -> dict[str, int | float]:
+    def numerical_stats(self, data: list[int | float]) -> dict[str, int | float]:
         """
         Calculate statistics for a list of numbers.
 
