@@ -1,4 +1,5 @@
-import os
+import os 
+import sys
 sys.path.append("src")
 
 # Environment variables for reproducibility
@@ -10,6 +11,7 @@ from omegaconf import OmegaConf
 from transformers import BartConfig, TrainingArguments
 from transformers import BartForConditionalGeneration as Transformer
 from calt import (
+    Trainer,
     Trainer,
     count_cuda_devices,
 )

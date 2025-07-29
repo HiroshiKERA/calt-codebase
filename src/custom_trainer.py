@@ -1,11 +1,16 @@
 import torch
+import wandb
+
+from transformers import Trainer
 from calt import Trainer
+from calt.data_loader.utils.preprocessor import SymbolicToInternalProcessor
+
 import numpy as np
 
 
 class CustomTrainer(Trainer):
-    """
-    Trainer class is based on the HuggingFace Trainer class.
+    '''
+    Trainer class in CALT is based on the HuggingFace Trainer class. 
     Refer to the (official documentation)[https://huggingface.co/docs/transformers/en/main_classes/trainer] of HuggingFace Trainer class to see methods to override.
 
     Below are the methods that are typically overridden.
