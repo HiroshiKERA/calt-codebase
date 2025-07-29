@@ -8,7 +8,7 @@ import numpy as np
 
 
 class CustomTrainer(Trainer):
-    '''
+    """
     Trainer class in CALT is based on the HuggingFace Trainer class. 
     Refer to the (official documentation)[https://huggingface.co/docs/transformers/en/main_classes/trainer] of HuggingFace Trainer class to see methods to override.
 
@@ -17,7 +17,6 @@ class CustomTrainer(Trainer):
     - compute_metrics
     - evaluate
     - evaluate_and_save_generation  (particular to CALT)
-
     """
 
     def __init__(self, *args, **kwargs):
