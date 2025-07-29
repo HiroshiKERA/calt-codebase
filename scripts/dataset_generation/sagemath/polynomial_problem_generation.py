@@ -1,19 +1,10 @@
-from sage.all import ZZ, QQ, RR
+from sage.all import ZZ, QQ, RR, GF, PolynomialRing
 import sage.misc.randstate as randstate
 from sage.misc.prandom import randint
 from sage.rings.polynomial.multi_polynomial_libsingular import MPolynomial_libsingular
 
 import click
 import warnings
-import sys
-import os
-
-# use calt in local dir, not from library
-# Add the path to the calt library
-current_dir = os.path.dirname(os.path.abspath(__file__))
-calt_path = os.path.join(current_dir, "../../../../calt/src")
-print(f"calt_path: {calt_path}")
-sys.path.insert(0, calt_path)  # Insert at beginning to prioritize local calt
 
 # Import from local calt library (prioritized over pip-installed calt)
 from calt.dataset_generator.sagemath import (
@@ -33,20 +24,20 @@ class PartialSumProblemGenerator:
     """
 
     def __init__(
-        self, sampler: PolynomialSampler, max_polynomials: int, min_polynomials: int
+        self, sampler: PolynomialSampler, min_polynomials: int, max_polynomials: int
     ):
         """
         Initialize polynomial partial sum sampler.
 
         Args:
             sampler: Polynomial sampler
-            max_polynomials: Maximum number of polynomials in F
             min_polynomials: Minimum number of polynomials in F
+            max_polynomials: Maximum number of polynomials in F
         """
 
         self.sampler = sampler
-        self.max_polynomials = max_polynomials
         self.min_polynomials = min_polynomials
+        self.max_polynomials = max_polynomials
 
     def __call__(
         self, seed: int
@@ -102,13 +93,21 @@ class PolyStatisticsCalculator(BaseStatisticsCalculator):
             containing descriptive statistics including:
             - num_polynomials: Number of polynomials in the system
             - sum_total_degree: Sum of total degrees of all polynomials in the system
-            - max_total_degree: Maximum degree of any polynomial in the system
             - min_total_degree: Minimum degree of any polynomial in the system
+            - max_total_degree: Maximum degree of any polynomial in the system
             - sum_num_terms: Total number of terms across all polynomials in the system
-            - max_num_terms: Maximum number of terms in any polynomial in the system
             - min_num_terms: Minimum number of terms in any polynomial in the system
-            - max_abs_coeff: Maximum absolute coefficient value in the system
+            - max_num_terms: Maximum number of terms in any polynomial in the system
             - min_abs_coeff: Minimum absolute coefficient value in the system
+            - max_abs_coeff: Maximum absolute coefficient value in the system
+
+        Examples:
+            >>> stats_calculator = PolyStatisticsCalculator()
+            >>> stats = stats_calculator(problem=[x^2 + 1, x^3 + 2], solution=[x^2 + 1, x^3 + 2])
+            >>> stats['problem']['num_polynomials']
+            2
+            >>> stats['solution']['num_polynomials']
+            2
         """
         return {
             "problem": self.poly_system_stats(
@@ -132,7 +131,9 @@ class PolyStatisticsCalculator(BaseStatisticsCalculator):
             return [int(c) for c in poly.coefficients()]
         return []
 
-    def poly_system_stats(self, polys: list[MPolynomial_libsingular]) -> dict[str, int | float]:
+    def poly_system_stats(
+        self, polys: list[MPolynomial_libsingular]
+    ) -> dict[str, int | float]:
         """
         Calculate statistics for a list of polynomials.
 
@@ -158,15 +159,15 @@ class PolyStatisticsCalculator(BaseStatisticsCalculator):
             "num_polynomials": len(polys),
             # Degree statistics
             "sum_total_degree": sum(degrees),
-            "max_total_degree": max(degrees),
             "min_total_degree": min(degrees),
+            "max_total_degree": max(degrees),
             # Term count statistics
             "sum_num_terms": sum(num_terms),
-            "max_num_terms": max(num_terms),
             "min_num_terms": min(num_terms),
+            "max_num_terms": max(num_terms),
             # Coefficient statistics
-            "max_abs_coeff": max(coeffs) if coeffs else 0,
             "min_abs_coeff": min(coeffs) if coeffs else 0,
+            "max_abs_coeff": max(coeffs) if coeffs else 0,
         }
 
 
@@ -183,11 +184,12 @@ def main(save_dir, n_jobs):
             f"No save directory provided. Using default save directory {save_dir}."
         )
 
+    # Initialize polynomial ring
+    R = PolynomialRing(GF(7), 3, "x", order="degrevlex")
+
     # Initialize polynomial sampler
     sampler = PolynomialSampler(
-        symbols="x0, x1, x2",  # "x, y, z, ... " or "x0, x1, x2, ... "
-        field_str="GF7",  # "QQ", "RR", "ZZ", "GF(p)", "GFp", where p is a prime number
-        order="degrevlex",  # "lex", "degrevlex", "deglex"
+        ring=R,
         max_num_terms=5,
         max_degree=10,
         min_degree=1,
@@ -197,13 +199,14 @@ def main(save_dir, n_jobs):
         num_bound=None,  # Used for QQ
         strictly_conditioned=False,
         nonzero_instance=True,
+        nonzero_coeff=True,
     )
 
     # Initialize problem generator
     problem_generator = PartialSumProblemGenerator(
         sampler=sampler,
-        max_polynomials=5,
         min_polynomials=2,
+        max_polynomials=5,
     )
 
     # Initialize statistics calculator

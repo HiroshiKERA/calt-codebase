@@ -12,19 +12,19 @@ class SumProblemGenerator:
     """
 
     def __init__(
-        self, sampler: PolynomialSampler, max_polynomials: int, min_polynomials: int
+        self, sampler: PolynomialSampler, min_polynomials: int, max_polynomials: int
     ):
         """
         Initialize polynomial sum generator.
 
         Args:
             sampler: Polynomial sampler
-            max_polynomials: Maximum number of polynomials in F
             min_polynomials: Minimum number of polynomials in F
+            max_polynomials: Maximum number of polynomials in F
         """
         self.sampler = sampler
-        self.max_polynomials = max_polynomials
         self.min_polynomials = min_polynomials
+        self.max_polynomials = max_polynomials
 
     def __call__(self, seed: int) -> tuple[list[PolyElement], PolyElement]:
         """
@@ -113,19 +113,19 @@ class ProductProblemGenerator:
     """
 
     def __init__(
-        self, sampler: PolynomialSampler, max_polynomials: int, min_polynomials: int
+        self, sampler: PolynomialSampler, min_polynomials: int, max_polynomials: int
     ):
         """
         Initialize polynomial product generator.
 
         Args:
             sampler: Polynomial sampler
-            max_polynomials: Maximum number of polynomials in F
             min_polynomials: Minimum number of polynomials in F
+            max_polynomials: Maximum number of polynomials in F
         """
         self.sampler = sampler
-        self.max_polynomials = max_polynomials
         self.min_polynomials = min_polynomials
+        self.max_polynomials = max_polynomials
 
     def __call__(self, seed: int) -> tuple[list[PolyElement], PolyElement]:
         """
@@ -170,19 +170,19 @@ class PartialProdProblemGenerator:
     """
 
     def __init__(
-        self, sampler: PolynomialSampler, max_polynomials: int, min_polynomials: int
+        self, sampler: PolynomialSampler, min_polynomials: int, max_polynomials: int
     ):
         """
         Initialize polynomial product generator.
 
         Args:
             sampler: Polynomial sampler
-            max_polynomials: Maximum number of polynomials in F
             min_polynomials: Minimum number of polynomials in F
+            max_polynomials: Maximum number of polynomials in F
         """
         self.sampler = sampler
-        self.max_polynomials = max_polynomials
         self.min_polynomials = min_polynomials
+        self.max_polynomials = max_polynomials
 
     def __call__(self, seed: int) -> tuple[list[PolyElement], list[PolyElement]]:
         """

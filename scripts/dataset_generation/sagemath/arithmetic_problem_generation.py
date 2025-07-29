@@ -101,8 +101,8 @@ class ArithmeticStatisticsCalculator(BaseStatisticsCalculator):
             Dictionary with keys "problem" and "solution", each mapping to a sub-dictionary
             containing descriptive statistics including:
             - num_values: Number of values in the data
-            - max_value: Maximum value in the data
             - min_value: Minimum value in the data
+            - max_value: Maximum value in the data
             - mean_value: Arithmetic mean of the values
             - std_value: Standard deviation of the values
             - sum_value: Sum of all values in the data
@@ -143,8 +143,8 @@ class ArithmeticStatisticsCalculator(BaseStatisticsCalculator):
 
         stats = {
             "num_values": len(data),
-            "max_value": max(values),
             "min_value": min(values),
+            "max_value": max(values),
             "mean_value": float(np.mean(values)),
             "std_value": float(np.std(values)),
             "sum_value": sum(values),

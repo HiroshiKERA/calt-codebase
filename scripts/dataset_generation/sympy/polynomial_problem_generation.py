@@ -22,20 +22,20 @@ class PartialSumProblemGenerator:
     """
 
     def __init__(
-        self, sampler: PolynomialSampler, max_polynomials: int, min_polynomials: int
+        self, sampler: PolynomialSampler, min_polynomials: int, max_polynomials: int
     ):
         """
         Initialize polynomial partial sum sampler.
 
         Args:
             sampler: Polynomial sampler
-            max_polynomials: Maximum number of polynomials in F
             min_polynomials: Minimum number of polynomials in F
+            max_polynomials: Maximum number of polynomials in F
         """
 
         self.sampler = sampler
-        self.max_polynomials = max_polynomials
         self.min_polynomials = min_polynomials
+        self.max_polynomials = max_polynomials
 
     def __call__(self, seed: int) -> tuple[list[PolyElement], list[PolyElement]]:
         """
@@ -89,13 +89,21 @@ class PolyStatisticsCalculator(BaseStatisticsCalculator):
             containing descriptive statistics including:
             - num_polynomials: Number of polynomials in the system
             - sum_total_degree: Sum of total degrees of all polynomials in the system
-            - max_total_degree: Maximum degree of any polynomial in the system
             - min_total_degree: Minimum degree of any polynomial in the system
+            - max_total_degree: Maximum degree of any polynomial in the system
             - sum_num_terms: Total number of terms across all polynomials in the system
-            - max_num_terms: Maximum number of terms in any polynomial in the system
             - min_num_terms: Minimum number of terms in any polynomial in the system
-            - max_abs_coeff: Maximum absolute coefficient value in the system
+            - max_num_terms: Maximum number of terms in any polynomial in the system
             - min_abs_coeff: Minimum absolute coefficient value in the system
+            - max_abs_coeff: Maximum absolute coefficient value in the system
+
+        Examples:
+            >>> stats_calculator = PolyStatisticsCalculator()
+            >>> stats = stats_calculator(problem=[x**2 + 1, x**3 + 2], solution=[x**2 + 1, x**3 + 2])
+            >>> stats['problem']['num_polynomials']
+            2
+            >>> stats['solution']['num_polynomials']
+            2
         """
         return {
             "problem": self.poly_system_stats(
@@ -144,15 +152,15 @@ class PolyStatisticsCalculator(BaseStatisticsCalculator):
             "num_polynomials": len(polys),
             # Degree statistics
             "sum_total_degree": sum(degrees),
-            "max_total_degree": max(degrees),
             "min_total_degree": min(degrees),
+            "max_total_degree": max(degrees),
             # Term count statistics
             "sum_num_terms": sum(num_terms),
-            "max_num_terms": max(num_terms),
             "min_num_terms": min(num_terms),
+            "max_num_terms": max(num_terms),
             # Coefficient statistics
-            "max_abs_coeff": max(coeffs) if coeffs else 0,
             "min_abs_coeff": min(coeffs) if coeffs else 0,
+            "max_abs_coeff": max(coeffs) if coeffs else 0,
         }
 
     def total_degree(self, poly: PolyElement) -> int:
@@ -205,16 +213,16 @@ def main(save_dir, n_jobs):
         term_sampling="uniform",  # "uniform" or "fixed"
         max_coeff=None,  # Used for RR and ZZ
         num_bound=None,  # Used for QQ
-        strictly_conditioned=True,
+        strictly_conditioned=False,
         nonzero_instance=True,
-        max_attempts=1000,
+        nonzero_coeff=True,
     )
 
     # Initialize problem generator
     problem_generator = PartialSumProblemGenerator(
         sampler=sampler,
-        max_polynomials=5,
         min_polynomials=2,
+        max_polynomials=5,
     )
 
     # Initialize statistics calculator
