@@ -1,4 +1,4 @@
-# Tokenizer Guide (Draft)
+# Tokenizer Guide
 
 This page documents the tokenizer used in **calt** and how to register a **custom vocabulary** (custom tokens).  
 The implementation is centered on `calt.data_loader.utils.tokenizer.set_tokenizer`, which returns a `PreTrainedTokenizerFast`.
@@ -124,7 +124,7 @@ Then load it and pass the dict to `set_tokenizer`:
 import yaml
 from calt.data_loader.utils.tokenizer import set_tokenizer
 
-with open("config/my_vocab.yaml", "r") as f:
+with open("config/vocab.yaml", "r") as f:
     vocab_config = yaml.safe_load(f)
 
 tok = set_tokenizer(vocab_config=vocab_config, max_length=512)
