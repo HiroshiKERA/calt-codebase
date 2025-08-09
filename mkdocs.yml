@@ -70,6 +70,7 @@ nav:
     - Welcome: README.md
     - Quickstart: quickstart.md
     - Polynomial Problems: polynomial_problems.md
+    - Tokenizer Guide: tokenizer_guide.md
   #   - Quickstart: user-guide/quickstart.md
   #   - Concepts:
   #     - Agents:
