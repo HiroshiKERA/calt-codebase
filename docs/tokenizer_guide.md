@@ -24,15 +24,35 @@ The implementation is centered on `calt.data_loader.utils.tokenizer.set_tokenize
 
 ---
 
-## 2. Default Tokenization
+## 2. Quickstart
 
-### 2.1 Model & Preprocessing
+```python
+from calt.data_loader.utils.tokenizer import set_tokenizer
+
+# Example 1: integers ZZ, coefficients within ±50, max degree 5, max sequence length 512
+tok_zz = set_tokenizer(field="ZZ", max_coeff=50, max_degree=5, max_length=512)
+
+text = "C3 E2 C-3 E1"
+ids = tok_zz.encode(text)
+print(tok_zz.convert_ids_to_tokens(ids))  # ['<s>', 'C3', 'E2', 'C-3', 'E1', '</s>']
+
+# Example 2: finite field GF(31), max degree 10
+tok_gf = set_tokenizer(field="GF31", max_degree=10, max_length=512)
+```
+
+> By design, **padding is enabled** and **truncation is disabled** by default (the collator typically handles dynamic padding/truncation).
+
+---
+
+## 3. Default Tokenization
+
+### 3.1 Model & Preprocessing
 - **Model**: `tokenizers.models.WordLevel` (fixed vocabulary)
 - **Pre-tokenizer**: `CharDelimiterSplit(" ")` (**split on a single space**)
 - **Post-processor**: `TemplateProcessing`
   - Single sequence: `"<s> $A </s>"` (automatically prepends BOS and appends EOS)
 
-### 2.2 Special tokens
+### 3.2 Special tokens
 
 The default special tokens are defined via `special_vocab` and registered on the tokenizer.
 
@@ -45,7 +65,7 @@ The default special tokens are defined via `special_vocab` and registered on the
 
 > **Important:** `[SEP]` is **not** a special token by default. It is a *regular* token included in the vocabulary to delimit algebraic segments (e.g., separating factors). If you want `[SEP]` to behave like a special token, add it via `add_special_tokens` under `additional_special_tokens`.
 
-### 2.3 Default vocabulary generation
+### 3.3 Default vocabulary generation
 
 When `vocab_config` is **not** provided, `set_tokenizer` generates a vocabulary from the following rules:
 
@@ -61,7 +81,7 @@ When `vocab_config` is **not** provided, `set_tokenizer` generates a vocabulary 
 
 > **WordLevel caution:** tokens **must** exist in the vocabulary. Any out-of-vocabulary string **cannot** be encoded.
 
-### 2.4 Customizing the internal token schema (beyond `C*`/`E*`)
+### 3.4 Customizing the internal token schema (beyond `C*`/`E*`)
 
 The **token schema is defined by the preprocessor**, not by the tokenizer. To use a different schema (e.g., `K<int>` for coefficients and `P<int>` for exponents):
 
@@ -69,26 +89,6 @@ The **token schema is defined by the preprocessor**, not by the tokenizer. To us
    Example text: `K3 P2 K-3 P1`
 2. **Provide a matching vocabulary**, preferably via YAML (see §4.1), that includes all tokens your data can produce (e.g., `"K-50"... "K50"`, `"P0"... "P10"`, plus any separators like `"[SEP]"`).  
 3. The tokenizer will then treat these tokens as regular WordLevel entries. BOS/EOS handling remains unchanged.
-
----
-
-## 3. Quickstart
-
-```python
-from calt.data_loader.utils.tokenizer import set_tokenizer
-
-# Example 1: integers ZZ, coefficients within ±50, max degree 5, max sequence length 512
-tok = set_tokenizer(field="ZZ", max_coeff=50, max_degree=5, max_length=512)
-
-text = "C3 E2 C-3 E1"
-ids = tok.encode(text)
-print(tok.convert_ids_to_tokens(ids))  # ['<s>', 'C3', 'E2', 'C-3', 'E1', '</s>']
-
-# Example 2: finite field GF(31), max degree 10
-tok_gf = set_tokenizer(field="GF31", max_degree=10, max_length=512)
-```
-
-> By design, **padding is enabled** and **truncation is disabled** by default (the collator typically handles dynamic padding/truncation).
 
 ---
 
