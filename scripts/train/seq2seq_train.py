@@ -2,7 +2,6 @@ import argparse
 from dataclasses import dataclass
 from typing import Optional
 
-import numpy as np  # noqa: F401
 from transformers import (
     AutoModelForSeq2SeqLM,
     AutoTokenizer,
@@ -36,10 +35,7 @@ class ScriptConfig:
 
 def parse_args() -> ScriptConfig:
     parser = argparse.ArgumentParser(
-        description=(
-            "Train a model with HF Trainer using StandardDataset, tokenizer, "
-            "and data_collator."
-        ),
+        description=("Train a model with HF Trainer using StandardDataset, tokenizer, " "and data_collator."),
     )
     parser.add_argument(
         "--model_name_or_path",
@@ -106,11 +102,7 @@ def main() -> None:
     # Build datasets using StandardDataset with an identity preprocessor
     preprocessor = IdentityPreprocessor()
     train_dataset = StandardDataset.load_file(cfg.train_file, preprocessor=preprocessor)
-    eval_dataset = (
-        StandardDataset.load_file(cfg.eval_file, preprocessor=preprocessor)
-        if cfg.eval_file
-        else None
-    )
+    eval_dataset = StandardDataset.load_file(cfg.eval_file, preprocessor=preprocessor) if cfg.eval_file else None
 
     tokenizer_name = cfg.tokenizer_name_or_path or cfg.model_name_or_path
     tokenizer = AutoTokenizer.from_pretrained(tokenizer_name, use_fast=True)
