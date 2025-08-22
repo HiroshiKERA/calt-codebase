@@ -99,7 +99,7 @@ python scripts/train/seq2seq_train.py \
   --per_device_eval_batch_size 8 \
   --num_train_epochs 1 \
   --learning_rate 5e-5 \
-  --output_dir outputs/hf-trainer
+  --output_dir outputs/seq2seq-training
 ```
 
 Key arguments (subject to change):
@@ -113,37 +113,9 @@ Key arguments (subject to change):
 - Instantiates `IdentityPreprocessor` and loads datasets with `StandardDataset.load_file`
 - Builds a tokenizer and a `AutoModelForSeq2SeqLM`
 - Uses `StandardDataCollator(tokenizer)` for dynamic padding and label shifting
-- Configures `TrainingArguments` (e.g., `evaluation_strategy`, `save_strategy`)
+- Configures `TrainingArguments` (e.g., `eval_strategy`, `save_strategy`)
 - Trains via `Trainer` and optionally evaluates
 - Saves model and tokenizer to `output_dir`
-
----
-
-## Extending: custom preprocessing
-To apply domain-specific normalization or conversions, subclass `AbstractPreprocessor` and implement `encode`/`decode`. For example, if your input is a structured expression you can normalize spacing, canonicalize symbols, or serialize to a linear form in `encode`, while `decode` can reconstruct the original form for analysis.
-
-```python
-from calt.data_loader.utils.preprocessor import AbstractPreprocessor
-
-class MyPreprocessor(AbstractPreprocessor):
-    def __init__(self, some_config: int) -> None:
-        super().__init__(num_variables=0, max_degree=0, max_coeff=1)
-        self.some_config = some_config
-
-    def encode(self, text: str) -> str:
-        # Apply your normalization/transformation
-        return text.lower()
-
-    def decode(self, tokens: str) -> str:
-        # Optionally invert the transformation
-        return tokens
-```
-
-Use it exactly like the identity version:
-```python
-preprocessor = MyPreprocessor(some_config=42)
-train_ds = StandardDataset.load_file("path/to/train.txt", preprocessor=preprocessor)
-```
 
 ---
 
