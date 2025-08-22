@@ -91,7 +91,7 @@ Important:
 
 ### Run from the command line (draft; subject to change)
 ```bash
-python scripts/train/train_hf.py \
+python scripts/train/seq2seq_train.py \
   --model_name_or_path t5-small \
   --train_file dataset/sagemath/polynomial_problem/GF7_n=2/train_raw.txt \
   --eval_file dataset/sagemath/polynomial_problem/GF7_n=2/train_raw.txt \

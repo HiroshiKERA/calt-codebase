@@ -19,6 +19,7 @@ from calt.dataset_generator.sagemath import (
     BaseStatisticsCalculator,
 )
 
+
 class PartialSumProblemGenerator:
     """
     Problem generator for partial sum problems involving polynomials.
