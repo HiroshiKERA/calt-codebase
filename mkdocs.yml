@@ -71,6 +71,7 @@ nav:
     - Quickstart: quickstart.md
     - Polynomial Problems: polynomial_problems.md
     - Tokenizer Guide: tokenizer_guide.md
+    - Sequence to Sequence Training: seq2seq.md
   #   - Quickstart: user-guide/quickstart.md
   #   - Concepts:
   #     - Agents:
