@@ -84,11 +84,6 @@ Any compatible seq2seq model can be used (e.g., `t5-small`, `t5-base`, `facebook
 ## End-to-end training via Trainer
 There is a draft reference script that wires these pieces together: `scripts/train/seq2seq_train.py`.
 
-Important:
-- This script is an internal draft for illustration only and is not intended for public release.
-- It is not part of the public API and may change or be removed without notice.
-- Treat it as a starting point: copy relevant logic into your own training entry point instead of depending on it.
-
 ### Run from the command line (draft; subject to change)
 ```bash
 python scripts/train/seq2seq_train.py \
