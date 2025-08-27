@@ -1,11 +1,11 @@
 import torch
-from calt import Trainer
 import numpy as np
+from calt import Trainer
 
 
 class CustomTrainer(Trainer):
     """
-    Trainer class is based on the HuggingFace Trainer class.
+    Trainer class in CALT is based on the HuggingFace Trainer class. 
     Refer to the (official documentation)[https://huggingface.co/docs/transformers/en/main_classes/trainer] of HuggingFace Trainer class to see methods to override.
 
     Below are the methods that are typically overridden.
@@ -13,7 +13,6 @@ class CustomTrainer(Trainer):
     - compute_metrics
     - evaluate
     - evaluate_and_save_generation  (particular to CALT)
-
     """
 
     def __init__(self, *args, **kwargs):

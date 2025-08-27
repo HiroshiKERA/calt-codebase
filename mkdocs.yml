@@ -78,7 +78,7 @@ nav:
     - Custom Dataset Generation: custom_dataset_generation.md
     - Problem Generator Examples: problem_generator_examples.md
     - Statistics Calculator Examples: statistics_calculator_examples.md
-
+    - Tokenizer Guide: tokenizer_guide.md
   #   - Quickstart: user-guide/quickstart.md
   #   - Concepts:
   #     - Agents:

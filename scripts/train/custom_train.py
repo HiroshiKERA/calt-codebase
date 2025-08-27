@@ -1,7 +1,5 @@
 import os
 import sys
-
-sys.path.insert(0, "../calt/src")  # use calt in local dir, not from library
 sys.path.append("src")
 
 # Environment variables for reproducibility
@@ -55,6 +53,9 @@ def main(config, dryrun, no_wandb):
             print(f"wandb.name: {cfg.wandb.name}")
 
         print("-" * 100)
+
+    # Create output directory if it doesn't exist
+    os.makedirs(cfg.train.output_dir, exist_ok=True)
 
     # Save config
     config_file_name = os.path.basename(config)
