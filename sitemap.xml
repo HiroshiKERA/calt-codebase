@@ -2,14 +2,26 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://calt.ai/</loc>
-         <lastmod>2025-07-29</lastmod>
+         <lastmod>2025-08-27</lastmod>
     </url>
     <url>
-         <loc>https://calt.ai/polynomial_problems/</loc>
-         <lastmod>2025-07-29</lastmod>
+         <loc>https://calt.ai/dataset_generator_guide/</loc>
+         <lastmod>2025-08-27</lastmod>
+    </url>
+    <url>
+         <loc>https://calt.ai/problem_generator_examples/</loc>
+         <lastmod>2025-08-27</lastmod>
     </url>
     <url>
          <loc>https://calt.ai/quickstart/</loc>
-         <lastmod>2025-07-29</lastmod>
+         <lastmod>2025-08-27</lastmod>
+    </url>
+    <url>
+         <loc>https://calt.ai/statistics_calculator_examples/</loc>
+         <lastmod>2025-08-27</lastmod>
+    </url>
+    <url>
+         <loc>https://calt.ai/tokenizer_guide/</loc>
+         <lastmod>2025-08-27</lastmod>
     </url>
 </urlset>

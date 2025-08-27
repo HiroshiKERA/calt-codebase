@@ -1,0 +1,1168 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    
+      <meta name="description" content="Documentation for CALT, a codebase for generating math problems">
+    
+    
+    
+      <link rel="canonical" href="https://calt.ai/tokenizer_guide/">
+    
+    
+      <link rel="prev" href="../statistics_calculator_examples/">
+    
+    
+    
+    <link rel="icon" href="../assets/logo-light.png" sizes="any">
+    <link rel="icon" href="../assets/logo-auto.svg" type="image/svg+xml">
+    <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.14">
+
+    
+      
+        <title>Tokenizer Guide - CALT codebase documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.342714a4.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        
+        <link rel="stylesheet" href="../assets/external/fonts.googleapis.com/css.49ea35f2.css">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#tokenizer-guide" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="CALT codebase documentation" class="md-header__button md-logo" aria-label="CALT codebase documentation" data-md-component="logo">
+      <!-- Logo -->
+
+  <img src="../assets/logo-light.svg" alt="logo" class="logo-light" />
+  <img src="../assets/logo-dark.svg" alt="logo" class="logo-dark" />
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            CALT codebase documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Tokenizer Guide
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/HiroshiKERA/calt-codebase" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href=".." class="md-tabs__link">
+          
+  
+  
+  User Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="CALT codebase documentation" class="md-nav__button md-logo" aria-label="CALT codebase documentation" data-md-component="logo">
+      <!-- Logo -->
+
+  <img src="../assets/logo-light.svg" alt="logo" class="logo-light" />
+  <img src="../assets/logo-dark.svg" alt="logo" class="logo-dark" />
+
+    </a>
+    CALT codebase documentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/HiroshiKERA/calt-codebase" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    User Guide
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            User Guide
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Welcome
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Quickstart
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dataset_generator_guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Dataset Generator Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../problem_generator_examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Problem Generator Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../statistics_calculator_examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Statistics Calculator Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Tokenizer Guide
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    Tokenizer Guide
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-goals-assumptions" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Goals &amp; Assumptions
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-quickstart" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Quickstart
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-default-tokenization" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Default Tokenization
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Default Tokenization">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-model-preprocessing" class="md-nav__link">
+    <span class="md-ellipsis">
+      3.1 Model &amp; Preprocessing
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-special-tokens" class="md-nav__link">
+    <span class="md-ellipsis">
+      3.2 Special tokens
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-default-vocabulary-generation" class="md-nav__link">
+    <span class="md-ellipsis">
+      3.3 Default vocabulary generation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#34-customizing-the-internal-token-schema-beyond-ce" class="md-nav__link">
+    <span class="md-ellipsis">
+      3.4 Customizing the internal token schema (beyond C*/E*)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-registering-a-custom-vocabulary" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Registering a custom vocabulary
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Registering a custom vocabulary">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-provide-the-vocabulary-via-yaml-recommended" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.1 Provide the vocabulary via YAML (recommended)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-add-tokens-to-an-existing-tokenizer" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.2 Add tokens to an existing tokenizer
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-parameters-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Parameters (API)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-operational-notes-pitfalls" class="md-nav__link">
+    <span class="md-ellipsis">
+      6. Operational notes (pitfalls)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-faq" class="md-nav__link">
+    <span class="md-ellipsis">
+      7. FAQ
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-minimal-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      8. Minimal test
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-integration-points" class="md-nav__link">
+    <span class="md-ellipsis">
+      9. Integration points
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-goals-assumptions" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Goals &amp; Assumptions
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-quickstart" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Quickstart
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-default-tokenization" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Default Tokenization
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Default Tokenization">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-model-preprocessing" class="md-nav__link">
+    <span class="md-ellipsis">
+      3.1 Model &amp; Preprocessing
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-special-tokens" class="md-nav__link">
+    <span class="md-ellipsis">
+      3.2 Special tokens
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-default-vocabulary-generation" class="md-nav__link">
+    <span class="md-ellipsis">
+      3.3 Default vocabulary generation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#34-customizing-the-internal-token-schema-beyond-ce" class="md-nav__link">
+    <span class="md-ellipsis">
+      3.4 Customizing the internal token schema (beyond C*/E*)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-registering-a-custom-vocabulary" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Registering a custom vocabulary
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Registering a custom vocabulary">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-provide-the-vocabulary-via-yaml-recommended" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.1 Provide the vocabulary via YAML (recommended)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-add-tokens-to-an-existing-tokenizer" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.2 Add tokens to an existing tokenizer
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-parameters-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Parameters (API)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-operational-notes-pitfalls" class="md-nav__link">
+    <span class="md-ellipsis">
+      6. Operational notes (pitfalls)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-faq" class="md-nav__link">
+    <span class="md-ellipsis">
+      7. FAQ
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-minimal-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      8. Minimal test
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-integration-points" class="md-nav__link">
+    <span class="md-ellipsis">
+      9. Integration points
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="tokenizer-guide">Tokenizer Guide<a class="headerlink" href="#tokenizer-guide" title="Permanent link">&para;</a></h1>
+<p>This page documents the tokenizer used in <strong>calt</strong> and how to register a <strong>custom vocabulary</strong> (custom tokens).<br />
+The implementation is centered on <code>calt.data_loader.utils.tokenizer.set_tokenizer</code>, which returns a <code>PreTrainedTokenizerFast</code>.</p>
+<hr />
+<h2 id="1-goals-assumptions">1. Goals &amp; Assumptions<a class="headerlink" href="#1-goals-assumptions" title="Permanent link">&para;</a></h2>
+<ul>
+<li>The library targets <strong>polynomials and integer arithmetic</strong> for Transformer models. We use a <strong>simple WordLevel</strong> token stream as the internal representation.</li>
+<li>Tokens are concatenated with <strong>exactly one half-width space</strong> between them.</li>
+<li><strong>Schema note (customizable):</strong> By default, the <em>preprocessor</em> emits tokens using the convention<br />
+<strong>coefficients → <code>C&lt;int&gt;</code></strong>, <strong>exponents → <code>E&lt;int&gt;</code></strong> (e.g., <code>C3</code>, <code>E2</code>).<br />
+  This <strong>is a preprocessor convention, not a tokenizer constraint</strong>. You can replace it with your own schema as long as the resulting strings exist in the tokenizer vocabulary and follow the one‑space delimiter rule.</li>
+<li>Typical default internal tokens:</li>
+<li>Coefficients: <code>C&lt;integer&gt;</code> (e.g., <code>C3</code>, <code>C-1</code>)</li>
+<li>Exponents: <code>E&lt;nonnegative integer&gt;</code> (e.g., <code>E0</code>, <code>E2</code>)</li>
+<li>Intra-sequence separator: <code>[SEP]</code> (a <em>regular</em> token unless you explicitly mark it as special)</li>
+<li>The tokenizer automatically adds <strong>BOS/EOS</strong> at the boundaries (<code>&lt;s&gt; ... &lt;/s&gt;</code>).</li>
+</ul>
+<blockquote>
+<p>Example) Polynomial (3x^2 - 3x) in the <em>default</em> internal form<br />
+<code>C3 E2 C-3 E1</code><br />
+→ Encoded (with specials): <code>&lt;s&gt; C3 E2 C-3 E1 &lt;/s&gt;</code></p>
+</blockquote>
+<hr />
+<h2 id="2-quickstart">2. Quickstart<a class="headerlink" href="#2-quickstart" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">calt.data_loader.utils.tokenizer</span><span class="w"> </span><span class="kn">import</span> <span class="n">set_tokenizer</span>
+
+<span class="c1"># Example 1: integers ZZ, coefficients within ±50, max degree 5, max sequence length 512</span>
+<span class="n">tok_zz</span> <span class="o">=</span> <span class="n">set_tokenizer</span><span class="p">(</span><span class="n">field</span><span class="o">=</span><span class="s2">&quot;ZZ&quot;</span><span class="p">,</span> <span class="n">max_coeff</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">max_degree</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">512</span><span class="p">)</span>
+
+<span class="n">text</span> <span class="o">=</span> <span class="s2">&quot;C3 E2 C-3 E1&quot;</span>
+<span class="n">ids</span> <span class="o">=</span> <span class="n">tok_zz</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">tok_zz</span><span class="o">.</span><span class="n">convert_ids_to_tokens</span><span class="p">(</span><span class="n">ids</span><span class="p">))</span>  <span class="c1"># [&#39;&lt;s&gt;&#39;, &#39;C3&#39;, &#39;E2&#39;, &#39;C-3&#39;, &#39;E1&#39;, &#39;&lt;/s&gt;&#39;]</span>
+
+<span class="c1"># Example 2: finite field GF(31), max degree 10</span>
+<span class="n">tok_gf</span> <span class="o">=</span> <span class="n">set_tokenizer</span><span class="p">(</span><span class="n">field</span><span class="o">=</span><span class="s2">&quot;GF31&quot;</span><span class="p">,</span> <span class="n">max_degree</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">512</span><span class="p">)</span>
+</code></pre></div>
+<blockquote>
+<p>By design, <strong>padding is enabled</strong> and <strong>truncation is disabled</strong> by default (the collator typically handles dynamic padding/truncation).</p>
+</blockquote>
+<hr />
+<h2 id="3-default-tokenization">3. Default Tokenization<a class="headerlink" href="#3-default-tokenization" title="Permanent link">&para;</a></h2>
+<h3 id="31-model-preprocessing">3.1 Model &amp; Preprocessing<a class="headerlink" href="#31-model-preprocessing" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Model</strong>: <code>tokenizers.models.WordLevel</code> (fixed vocabulary)</li>
+<li><strong>Pre-tokenizer</strong>: <code>CharDelimiterSplit(" ")</code> (<strong>split on a single space</strong>)</li>
+<li><strong>Post-processor</strong>: <code>TemplateProcessing</code></li>
+<li>Single sequence: <code>"&lt;s&gt; $A &lt;/s&gt;"</code> (automatically prepends BOS and appends EOS)</li>
+</ul>
+<h3 id="32-special-tokens">3.2 Special tokens<a class="headerlink" href="#32-special-tokens" title="Permanent link">&para;</a></h3>
+<p>The default special tokens are defined via <code>special_vocab</code> and registered on the tokenizer.</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>String</th>
+<th>Placement &amp; Behavior</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PAD</td>
+<td><code>[PAD]</code></td>
+<td>Used for <strong>padding</strong> to a uniform length. Typically masked out in attention and loss.</td>
+<td>Set as <code>pad_token</code>.</td>
+</tr>
+<tr>
+<td>BOS</td>
+<td><code>&lt;s&gt;</code></td>
+<td><strong>Beginning-of-sequence</strong> token; <strong>automatically prepended</strong> by the post-processor. Do <strong>not</strong> write it in your raw text.</td>
+<td>Set as <code>bos_token</code>.</td>
+</tr>
+<tr>
+<td>EOS</td>
+<td><code>&lt;/s&gt;</code></td>
+<td><strong>End-of-sequence</strong> token; <strong>automatically appended</strong> by the post-processor. Do <strong>not</strong> write it in your raw text.</td>
+<td>Set as <code>eos_token</code>.</td>
+</tr>
+<tr>
+<td>CLS</td>
+<td><code>[CLS]</code></td>
+<td>Optional <strong>classification</strong> token. Included for compatibility with encoder-style pipelines. Not used by default in calt.</td>
+<td>Set as <code>cls_token</code>.</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>Important:</strong> <code>[SEP]</code> is <strong>not</strong> a special token by default. It is a <em>regular</em> token included in the vocabulary to delimit algebraic segments (e.g., separating factors). If you want <code>[SEP]</code> to behave like a special token, add it via <code>add_special_tokens</code> under <code>additional_special_tokens</code>.</p>
+</blockquote>
+<h3 id="33-default-vocabulary-generation">3.3 Default vocabulary generation<a class="headerlink" href="#33-default-vocabulary-generation" title="Permanent link">&para;</a></h3>
+<p>When <code>vocab_config</code> is <strong>not</strong> provided, <code>set_tokenizer</code> generates a vocabulary from the following rules:</p>
+<ul>
+<li>Coefficient tokens <code>CONSTS</code> (default schema)</li>
+<li><code>field="ZZ"</code> (integers): <code>C-&lt;max_coeff&gt; ... C0 ... C&lt;max_coeff&gt;</code></li>
+<li><code>field="GF&lt;p&gt;"</code> (finite field): <code>C-(p-1) ... C-1 C0 C1 ... C(p-1)</code><br />
+    (Arithmetic is interpreted modulo <code>p</code>. The negative forms appear for symmetry in the vocabulary.)</li>
+<li>Exponent tokens <code>ECONSTS</code> (default schema)</li>
+<li><code>E0, E1, ..., E&lt;max_degree&gt;</code></li>
+<li>Final vocabulary layout</li>
+<li><code>["[C]"] + CONSTS + ECONSTS + ["[SEP]"] + (special tokens)</code></li>
+<li><code>"[C]"</code> is a <em>regular</em> sentinel token reserved by some generators; you can ignore it if unused.</li>
+</ul>
+<blockquote>
+<p><strong>WordLevel caution:</strong> tokens <strong>must</strong> exist in the vocabulary. Any out-of-vocabulary string <strong>cannot</strong> be encoded.</p>
+</blockquote>
+<h3 id="34-customizing-the-internal-token-schema-beyond-ce">3.4 Customizing the internal token schema (beyond <code>C*</code>/<code>E*</code>)<a class="headerlink" href="#34-customizing-the-internal-token-schema-beyond-ce" title="Permanent link">&para;</a></h3>
+<p>The <strong>token schema is defined by the preprocessor</strong>, not by the tokenizer. To use a different schema (e.g., <code>K&lt;int&gt;</code> for coefficients and <code>P&lt;int&gt;</code> for exponents):</p>
+<ol>
+<li><strong>Make your preprocessor/generator emit</strong> the desired strings, separated by single spaces.<br />
+   Example text: <code>K3 P2 K-3 P1</code></li>
+<li><strong>Provide a matching vocabulary</strong>, preferably via YAML (see §4.1), that includes all tokens your data can produce (e.g., <code>"K-50"... "K50"</code>, <code>"P0"... "P10"</code>, plus any separators like <code>"[SEP]"</code>).  </li>
+<li>The tokenizer will then treat these tokens as regular WordLevel entries. BOS/EOS handling remains unchanged.</li>
+</ol>
+<hr />
+<h2 id="4-registering-a-custom-vocabulary">4. Registering a custom vocabulary<a class="headerlink" href="#4-registering-a-custom-vocabulary" title="Permanent link">&para;</a></h2>
+<p>There are two common approaches.</p>
+<h3 id="41-provide-the-vocabulary-via-yaml-recommended">4.1 Provide the vocabulary via YAML (recommended)<a class="headerlink" href="#41-provide-the-vocabulary-via-yaml-recommended" title="Permanent link">&para;</a></h3>
+<p>Prepare a minimal YAML file with the <strong>token list</strong> and <strong>special tokens mapping</strong>:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">vocab</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;[C]&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;C-50&quot;</span><span class="w">   </span><span class="c1"># ...</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;C0&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;C50&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;E0&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;E1&quot;</span><span class="w">     </span><span class="c1"># ...</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;E10&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;[SEP]&quot;</span>
+
+<span class="nt">special_vocab</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">pad_token</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;[PAD]&quot;</span>
+<span class="w">  </span><span class="nt">bos_token</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&lt;s&gt;&quot;</span>
+<span class="w">  </span><span class="nt">eos_token</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&lt;/s&gt;&quot;</span>
+<span class="w">  </span><span class="nt">cls_token</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;[CLS]&quot;</span>
+</code></pre></div>
+<p>Then load it and pass the dict to <code>set_tokenizer</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">yaml</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">calt.data_loader.utils.tokenizer</span><span class="w"> </span><span class="kn">import</span> <span class="n">set_tokenizer</span>
+
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;config/vocab.yaml&quot;</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="n">vocab_config</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+
+<span class="n">tok</span> <span class="o">=</span> <span class="n">set_tokenizer</span><span class="p">(</span><span class="n">vocab_config</span><span class="o">=</span><span class="n">vocab_config</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">512</span><span class="p">)</span>
+</code></pre></div>
+<ul>
+<li>This method <strong>fully fixes</strong> the vocabulary (no OOV at encode time).</li>
+<li>Useful when you need strict control over admissible coefficients/degrees.</li>
+<li>For a <strong>custom schema</strong> (e.g., <code>K*</code>/<code>P*</code>), define those tokens in YAML instead of <code>C*</code>/<code>E*</code>.</li>
+</ul>
+<h3 id="42-add-tokens-to-an-existing-tokenizer">4.2 Add tokens to an existing tokenizer<a class="headerlink" href="#42-add-tokens-to-an-existing-tokenizer" title="Permanent link">&para;</a></h3>
+<p>Start from the default vocabulary, then add <strong>regular tokens</strong> or <strong>additional special tokens</strong>:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Add regular tokens</span>
+<span class="n">num_added</span> <span class="o">=</span> <span class="n">tok</span><span class="o">.</span><span class="n">add_tokens</span><span class="p">([</span><span class="s2">&quot;C-101&quot;</span><span class="p">,</span> <span class="s2">&quot;C101&quot;</span><span class="p">,</span> <span class="s2">&quot;E11&quot;</span><span class="p">])</span>
+
+<span class="c1"># Add additional special tokens</span>
+<span class="n">tok</span><span class="o">.</span><span class="n">add_special_tokens</span><span class="p">({</span>
+    <span class="s2">&quot;additional_special_tokens&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;[VAR_X]&quot;</span><span class="p">,</span> <span class="s2">&quot;[VAR_Y]&quot;</span><span class="p">]</span>
+<span class="p">})</span>
+</code></pre></div>
+<blockquote>
+<p>If you add tokens after model initialization, remember to resize the token embeddings on the model side (e.g., <code>model.resize_token_embeddings(len(tok))</code>).</p>
+</blockquote>
+<hr />
+<h2 id="5-parameters-api">5. Parameters (API)<a class="headerlink" href="#5-parameters-api" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="n">set_tokenizer</span><span class="p">(</span>
+    <span class="n">field</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;GF&quot;</span><span class="p">,</span>        <span class="c1"># &quot;ZZ&quot; or &quot;GF&lt;p&gt;&quot; (e.g., &quot;GF31&quot;)</span>
+    <span class="n">max_coeff</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>     <span class="c1"># upper bound for |coefficients| when field == &quot;ZZ&quot;</span>
+    <span class="n">max_degree</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>     <span class="c1"># maximum exponent value (0..max_degree)</span>
+    <span class="n">max_length</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">512</span><span class="p">,</span>    <span class="c1"># model_max_length for HF tokenizer</span>
+    <span class="n">vocab_config</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># load from YAML into a dict and pass here</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">transformers</span><span class="o">.</span><span class="n">PreTrainedTokenizerFast</span>
+</code></pre></div>
+<ul>
+<li>If <code>vocab_config</code> is provided, the vocabulary is built <strong>only</strong> from the YAML (no auto-generation).</li>
+<li>For <code>field="GF&lt;p&gt;"</code>, <code>&lt;p&gt;</code> must be an integer; coefficients are listed as <code>C-(p-1) ... C(p-1)</code> in the <strong>default schema</strong>.</li>
+<li>Typical error messages on invalid input:</li>
+<li><code>ValueError: unknown field: ...</code></li>
+<li><code>ValueError: Invalid field specification for GF(p): ...</code></li>
+</ul>
+<hr />
+<h2 id="6-operational-notes-pitfalls">6. Operational notes (pitfalls)<a class="headerlink" href="#6-operational-notes-pitfalls" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>No OOV</strong>: WordLevel cannot encode unknown strings. Ensure your data generator emits <strong>only in-vocab</strong> tokens.</li>
+<li><strong>One space delimiter</strong>: The pre-tokenizer splits on <strong>a single space</strong>. Always join tokens with exactly one half-width space.</li>
+<li><strong>Auto BOS/EOS</strong>: Do <strong>not</strong> write <code>&lt;s&gt;</code> or <code>&lt;/s&gt;</code> in raw text; they are injected automatically.</li>
+<li><strong>Length control</strong>: Truncation is disabled by default. Keep sequences within <code>max_length</code> using your collator/dataloader.</li>
+</ul>
+<hr />
+<h2 id="7-faq">7. FAQ<a class="headerlink" href="#7-faq" title="Permanent link">&para;</a></h2>
+<p><strong>Q. Should variable names (x, y, …) appear as tokens?</strong><br />
+A. The internal form uses only <strong>coefficients <code>C*</code></strong> and <strong>exponents <code>E*</code></strong> by default, but this is <strong>preprocessor-defined</strong>. You can switch to any schema (e.g., <code>K*</code>/<code>P*</code>) as long as the tokenizer vocabulary matches it. Variable symbols are usually omitted and handled in rendering.</p>
+<p><strong>Q. YAML or auto-generation?</strong><br />
+A. Use YAML for <strong>reproducibility and strict control</strong>. Use auto-generation for quick experimentation within the default schema.</p>
+<p><strong>Q. Any caveats when adding tokens to an existing model?</strong><br />
+A. After adding tokens to the tokenizer, call <code>model.resize_token_embeddings(len(tokenizer))</code>. New embeddings are randomly initialized; you’ll need fine-tuning.</p>
+<hr />
+<h2 id="8-minimal-test">8. Minimal test<a class="headerlink" href="#8-minimal-test" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">calt.data_loader.utils.tokenizer</span><span class="w"> </span><span class="kn">import</span> <span class="n">set_tokenizer</span>
+
+<span class="n">tok</span> <span class="o">=</span> <span class="n">set_tokenizer</span><span class="p">(</span><span class="n">field</span><span class="o">=</span><span class="s2">&quot;GF31&quot;</span><span class="p">,</span> <span class="n">max_degree</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">512</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">tok</span><span class="o">.</span><span class="n">pad_token</span> <span class="o">==</span> <span class="s2">&quot;[PAD]&quot;</span>
+<span class="k">assert</span> <span class="n">tok</span><span class="o">.</span><span class="n">bos_token</span> <span class="o">==</span> <span class="s2">&quot;&lt;s&gt;&quot;</span>
+<span class="k">assert</span> <span class="n">tok</span><span class="o">.</span><span class="n">eos_token</span> <span class="o">==</span> <span class="s2">&quot;&lt;/s&gt;&quot;</span>
+
+<span class="n">text</span> <span class="o">=</span> <span class="s2">&quot;C1 E2 C-3 E1&quot;</span>
+<span class="n">ids</span> <span class="o">=</span> <span class="n">tok</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">tok</span><span class="o">.</span><span class="n">convert_ids_to_tokens</span><span class="p">(</span><span class="n">ids</span><span class="p">)</span> <span class="o">==</span> <span class="p">[</span><span class="s2">&quot;&lt;s&gt;&quot;</span><span class="p">,</span> <span class="s2">&quot;C1&quot;</span><span class="p">,</span> <span class="s2">&quot;E2&quot;</span><span class="p">,</span> <span class="s2">&quot;C-3&quot;</span><span class="p">,</span> <span class="s2">&quot;E1&quot;</span><span class="p">,</span> <span class="s2">&quot;&lt;/s&gt;&quot;</span><span class="p">]</span>
+</code></pre></div>
+<hr />
+<h2 id="9-integration-points">9. Integration points<a class="headerlink" href="#9-integration-points" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Dataset generators / preprocessors</strong> must emit strings that contain <strong>only vocabulary tokens</strong>, separated by single spaces. The <code>C*</code>/<code>E*</code> convention is just the <strong>default</strong>; you can output any schema that matches the tokenizer vocabulary.</li>
+<li><strong>Collator</strong> is expected to handle dynamic padding/truncation. If sequences exceed <code>model_max_length</code>, reconsider your data design or chunking.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        <div class="md-social">
+  
+    
+    
+    
+    
+    <a href="" target="_blank" rel="noopener" title="" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "..", "features": ["content.code.copy", "content.code.select", "navigation.instant", "navigation.instant.prefetch", "navigation.instant.progress", "navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top", "search.highlight", "content.code.copy", "mathjax"], "search": "../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.56ea9cef.min.js"></script>
+      
+        <script src="../javascripts/mathjax-config.js"></script>
+      
+        <script src="../assets/external/cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+        <script src="../assets/external/unpkg.com/mermaid@11/dist/mermaid.min.js"></script>
+      
+    
+  </body>
+</html>
