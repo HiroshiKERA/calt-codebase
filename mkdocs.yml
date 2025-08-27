@@ -75,7 +75,10 @@ nav:
   - User Guide:
     - Welcome: README.md
     - Quickstart: quickstart.md
-    - Polynomial Problems: polynomial_problems.md
+    - Custom Dataset Generation: custom_dataset_generation.md
+    - Problem Generator Examples: problem_generator_examples.md
+    - Statistics Calculator Examples: statistics_calculator_examples.md
+
   #   - Quickstart: user-guide/quickstart.md
   #   - Concepts:
   #     - Agents:
