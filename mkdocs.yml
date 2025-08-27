@@ -75,7 +75,7 @@ nav:
   - User Guide:
     - Welcome: README.md
     - Quickstart: quickstart.md
-    - Custom Dataset Generation: custom_dataset_generation.md
+    - Dataset Generator Guide: dataset_generator_guide.md
     - Problem Generator Examples: problem_generator_examples.md
     - Statistics Calculator Examples: statistics_calculator_examples.md
     - Tokenizer Guide: tokenizer_guide.md
