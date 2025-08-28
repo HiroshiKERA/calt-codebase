@@ -25,7 +25,7 @@
 
     
       
-        <title>Dataset Generator Guide - CALT codebase documentation</title>
+        <title>Custom Dataset Generator - CALT codebase documentation</title>
       
     
     
@@ -81,7 +81,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#custom-dataset-generation" class="md-skip">
+        <a href="#custom-dataset-generator" class="md-skip">
           Skip to content
         </a>
       
@@ -122,7 +122,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Dataset Generator Guide
+              Custom Dataset Generator
             
           </span>
         </div>
@@ -397,6 +397,54 @@
   
   
   
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_1_3" id="__nav_1_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Dataset Generator Guide
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_1_3">
+            <span class="md-nav__icon md-icon"></span>
+            Dataset Generator Guide
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
     <li class="md-nav__item md-nav__item--active">
       
       <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
@@ -410,7 +458,7 @@
   
   
   <span class="md-ellipsis">
-    Dataset Generator Guide
+    Custom Dataset Generator
     
   </span>
   
@@ -423,7 +471,7 @@
   
   
   <span class="md-ellipsis">
-    Dataset Generator Guide
+    Custom Dataset Generator
     
   </span>
   
@@ -490,13 +538,13 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-custom-statistics-calculator" class="md-nav__link">
+  <a href="#2-custom-statistics-calculator-optional" class="md-nav__link">
     <span class="md-ellipsis">
-      2. Custom Statistics Calculator
+      2. Custom Statistics Calculator (optional)
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="2. Custom Statistics Calculator">
+    <nav class="md-nav" aria-label="2. Custom Statistics Calculator (optional)">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -572,6 +620,14 @@
   
 
       </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -678,13 +734,13 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-custom-statistics-calculator" class="md-nav__link">
+  <a href="#2-custom-statistics-calculator-optional" class="md-nav__link">
     <span class="md-ellipsis">
-      2. Custom Statistics Calculator
+      2. Custom Statistics Calculator (optional)
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="2. Custom Statistics Calculator">
+    <nav class="md-nav" aria-label="2. Custom Statistics Calculator (optional)">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -729,13 +785,13 @@
   
 
 
-<h1 id="custom-dataset-generation">Custom Dataset Generation<a class="headerlink" href="#custom-dataset-generation" title="Permanent link">&para;</a></h1>
+<h1 id="custom-dataset-generator">Custom Dataset Generator<a class="headerlink" href="#custom-dataset-generator" title="Permanent link">&para;</a></h1>
 <p>This guide explains how to create custom datasets for training Transformer models on mathematical tasks using the CALT library. The library provides a flexible framework for generating various types of mathematical problems, from polynomial operations to integer arithmetic.</p>
 <h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
 <p>The CALT library offers a modular approach to dataset generation, allowing you to create custom problem generators for any mathematical task. After following the Quick Start guide, you can extend your experiments by creating custom datasets. The process involves several components:</p>
 <ol>
 <li><strong>Custom Problem Generator</strong>: Defines how to create problem-solution pairs</li>
-<li><strong>Custom Statistics Calculator</strong>: Analyzes the generated dataset</li>
+<li><strong>Custom Statistics Calculator (optional)</strong>: Analyzes the generated dataset</li>
 </ol>
 <h2 id="1-custom-problem-generator">1. Custom Problem Generator<a class="headerlink" href="#1-custom-problem-generator" title="Permanent link">&para;</a></h2>
 <p>To create your own problem generator, you need to define a class with a <code>__call__</code> method according to your specific mathematical task.</p>
@@ -781,7 +837,7 @@
 - `(list[MPolynomial_libsingular], MPolynomial_libsingular)` - Polynomial sum: input is list of polynomials, output is single polynomial
 - `(list[list[MPolynomial_libsingular]], list[list[MPolynomial_libsingular]])` - Matrix transpose: input and output are polynomial matrices -->
 
-<h2 id="2-custom-statistics-calculator">2. Custom Statistics Calculator<a class="headerlink" href="#2-custom-statistics-calculator" title="Permanent link">&para;</a></h2>
+<h2 id="2-custom-statistics-calculator-optional">2. Custom Statistics Calculator (optional)<a class="headerlink" href="#2-custom-statistics-calculator-optional" title="Permanent link">&para;</a></h2>
 <p>Create a custom statistics calculator to analyze your generated data. The calculator should inherit from <code>BaseStatisticsCalculator</code> and implement the <code>__call__</code> method.</p>
 <h3 id="basic-structure_1">Basic Structure<a class="headerlink" href="#basic-structure_1" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">calt.dataset_generator.sagemath</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseStatisticsCalculator</span>
@@ -968,6 +1024,10 @@ This modular approach allows you to experiment with various mathematical tasks a
         <script src="../assets/external/cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
       
         <script src="../assets/external/unpkg.com/mermaid@11/dist/mermaid.min.js"></script>
+      
+        <script src="../javascripts/mathjax.js"></script>
+      
+        <script src="../assets/external/unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>
