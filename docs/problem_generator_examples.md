@@ -265,3 +265,5 @@ class IntFactorProblemGenerator:
 
         return n, factors
 ```
+
+## Advanced Problems

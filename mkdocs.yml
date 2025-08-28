@@ -70,14 +70,17 @@ extra_javascript:
   - javascripts/mathjax-config.js
   - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
   - https://unpkg.com/mermaid@11/dist/mermaid.min.js
-
+  - javascripts/mathjax.js
+  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
+  
 nav:
   - User Guide:
     - Welcome: README.md
     - Quickstart: quickstart.md
-    - Dataset Generator Guide: dataset_generator_guide.md
-    - Problem Generator Examples: problem_generator_examples.md
-    - Statistics Calculator Examples: statistics_calculator_examples.md
+    - Dataset Generator Guide:
+      - Custom Dataset Generator: dataset_generator_guide.md
+      - Problem Generator Examples: problem_generator_examples.md
+      - Statistics Calculator Examples: statistics_calculator_examples.md
     - Tokenizer Guide: tokenizer_guide.md
   #   - Quickstart: user-guide/quickstart.md
   #   - Concepts:

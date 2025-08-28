@@ -1,4 +1,4 @@
-# Custom Dataset Generation
+# Custom Dataset Generator
 
 This guide explains how to create custom datasets for training Transformer models on mathematical tasks using the CALT library. The library provides a flexible framework for generating various types of mathematical problems, from polynomial operations to integer arithmetic.
 
@@ -7,7 +7,7 @@ This guide explains how to create custom datasets for training Transformer model
 The CALT library offers a modular approach to dataset generation, allowing you to create custom problem generators for any mathematical task. After following the Quick Start guide, you can extend your experiments by creating custom datasets. The process involves several components:
 
 1. **Custom Problem Generator**: Defines how to create problem-solution pairs
-2. **Custom Statistics Calculator**: Analyzes the generated dataset
+2. **Custom Statistics Calculator (optional)**: Analyzes the generated dataset
 
 
 ## 1. Custom Problem Generator
@@ -60,7 +60,7 @@ For concrete examples of problem generators, see [Problem Generator Examples](pr
 - `(list[list[MPolynomial_libsingular]], list[list[MPolynomial_libsingular]])` - Matrix transpose: input and output are polynomial matrices -->
 
 
-## 2. Custom Statistics Calculator
+## 2. Custom Statistics Calculator (optional)
 
 Create a custom statistics calculator to analyze your generated data. The calculator should inherit from `BaseStatisticsCalculator` and implement the `__call__` method.
 
