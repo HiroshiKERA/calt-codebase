@@ -37,7 +37,6 @@ class IdentityPreprocessor(AbstractPreprocessor):
 )
 @click.option("--train_file", type=str, required=True)
 @click.option("--eval_file", type=str, default=None)
-@click.option("--max_length", type=int, default=256)
 @click.option("--learning_rate", type=float, default=5e-5)
 @click.option("--num_train_epochs", type=float, default=3.0)
 @click.option("--per_device_train_batch_size", type=int, default=16)
@@ -51,7 +50,6 @@ def main(
     tokenizer_name_or_path: str | None,
     train_file: str,
     eval_file: str | None,
-    max_length: int,
     learning_rate: float,
     num_train_epochs: float,
     per_device_train_batch_size: int,
