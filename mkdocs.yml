@@ -82,6 +82,7 @@ nav:
       - Problem Generator Examples: problem_generator_examples.md
       - Statistics Calculator Examples: statistics_calculator_examples.md
     - Tokenizer Guide: tokenizer_guide.md
+    - Sequence to Sequence Training: seq2seq.md
   #   - Quickstart: user-guide/quickstart.md
   #   - Concepts:
   #     - Agents:
