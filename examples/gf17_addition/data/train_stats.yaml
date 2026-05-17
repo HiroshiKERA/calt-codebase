@@ -1,0 +1,60 @@
+total_time: 2.842238672077656
+num_samples: 100000
+samples_per_second: 35183.53366394129
+generation_time:
+    mean: 7.486061863601216e-06
+    std: 3.173918266904277e-05
+    min: 5.964189767837524e-06
+    max: 0.007014952600002289
+problem_stats:
+    num_values:
+        mean: 4.50103999999998
+        std: 1.1171834757102408
+        min: 3.0
+        max: 6.0
+    min_value:
+        mean: 2.7749499999999676
+        std: 2.767772118058125
+        min: 0.0
+        max: 16.0
+    max_value:
+        mean: 13.248789999999882
+        std: 2.763293964799975
+        min: 0.0
+        max: 16.0
+    mean_value:
+        mean: 8.009866999999826
+        std: 2.3967845145063986
+        min: 0.0
+        max: 16.0
+    std_value:
+        mean: 4.047745020889956
+        std: 1.3585829182868465
+        min: 0.0
+        max: 8.0
+answer_stats:
+    num_values:
+        mean: 4.50103999999998
+        std: 1.1171834757102408
+        min: 3.0
+        max: 6.0
+    min_value:
+        mean: 2.7486899999999865
+        std: 2.754591309777192
+        min: 0.0
+        max: 16.0
+    max_value:
+        mean: 13.250289999999895
+        std: 2.7537038540663636
+        min: 0.0
+        max: 16.0
+    mean_value:
+        mean: 8.003266166666613
+        std: 2.3822380272060157
+        min: 0.0
+        max: 16.0
+    std_value:
+        mean: 4.05811254385489
+        std: 1.3549360607164256
+        min: 0.0
+        max: 8.0

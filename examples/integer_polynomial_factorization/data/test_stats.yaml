@@ -1,0 +1,35 @@
+total_time: 0.3242481444031
+num_samples: 1000
+samples_per_second: 3084.057741767109
+generation_time:
+    mean: 0.000667355904355645
+    std: 0.0004685186709695124
+    min: 0.00044902414083480835
+    max: 0.008063459768891335
+problem_stats:
+    num_terms:
+        mean: 5.144999999999998
+        std: 2.3155938763090576
+        min: 1.0
+        max: 12.0
+    max_degree:
+        mean: 7.464000000000002
+        std: 1.8752877112592619
+        min: 3.0
+        max: 12.0
+    min_degree:
+        mean: 7.464000000000002
+        std: 1.8752877112592619
+        min: 3.0
+        max: 12.0
+answer_stats:
+    num_distinct_factors:
+        mean: 4.333999999999996
+        std: 0.8674353001809415
+        min: 2.0
+        max: 8.0
+    total_factors:
+        mean: 7.272000000000007
+        std: 2.5440157232218525
+        min: 3.0
+        max: 16.0
