@@ -1,5 +1,6 @@
-import os 
+import os
 import sys
+
 sys.path.append("src")
 
 # Environment variables for reproducibility
@@ -16,6 +17,7 @@ from calt import (
 )
 from calt import load_data
 import wandb
+import torch
 
 from utils.training_utils import fix_seeds
 
@@ -103,6 +105,12 @@ def main(config, dryrun, no_wandb):
     )
     model = Transformer(config=model_cfg)
 
+    if torch.cuda.is_available():
+        train_batch_size = cfg.train.batch_size // count_cuda_devices()
+        test_batch_size = cfg.train.test_batch_size // count_cuda_devices()
+    else:
+        train_batch_size = cfg.train.batch_size
+        test_batch_size = cfg.train.test_batch_size
     # Set up trainer
     args = TrainingArguments(
         output_dir=cfg.train.output_dir,
@@ -110,8 +118,8 @@ def main(config, dryrun, no_wandb):
         learning_rate=cfg.train.learning_rate,
         weight_decay=cfg.train.weight_decay,
         warmup_ratio=cfg.train.warmup_ratio,
-        per_device_train_batch_size=cfg.train.batch_size // count_cuda_devices(),
-        per_device_eval_batch_size=cfg.train.test_batch_size // count_cuda_devices(),
+        per_device_train_batch_size=train_batch_size,
+        per_device_eval_batch_size=test_batch_size,
         lr_scheduler_type="constant"
         if cfg.train.lr_scheduler_type == "constant"
         else "linear",

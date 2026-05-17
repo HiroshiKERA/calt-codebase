@@ -1,9 +1,4 @@
-import sys
-
-sys.path.insert(0, "../calt/src")  # use calt in local dir, not from library
-sys.path.append("src")
-
-from sage.all import ZZ, QQ, RR, GF, PolynomialRing
+from sage.all import ZZ, QQ, RR
 import sage.misc.randstate as randstate
 from sage.misc.prandom import randint
 from sage.rings.polynomial.multi_polynomial_libsingular import MPolynomial_libsingular
@@ -11,27 +6,24 @@ from sage.rings.polynomial.multi_polynomial_libsingular import MPolynomial_libsi
 import click
 import warnings
 
-# Import from local calt library (prioritized over pip-installed calt)
-from calt.dataset_generator.sagemath import (
-    PolynomialSampler,
-    DatasetGenerator,
-    DatasetWriter,
-    BaseStatisticsCalculator,
-)
+from calt.dataset import DatasetPipeline
+from calt.dataset.sagemath.utils.polynomial_sampler import PolynomialSampler
+from omegaconf import OmegaConf
 
-class PartialSumProblemGenerator:
+
+class CumulativeSumInstanceGenerator:
     """
-    Problem generator for partial sum problems involving polynomials.
+    Instance generator for cumulative sum problems involving polynomials.
 
-    This generator creates problems in which the problem is a list of polynomials F = [f_1, f_2, ..., f_n],
-    and the solution is a list of polynomials G = [g_1, g_2, ..., g_n], where g_i = f_1 + f_2 + ... + f_i.
+    This generator creates instances in which the problem is a list of polynomials F = [f_1, f_2, ..., f_n],
+    and the answer is a list of polynomials G = [g_1, g_2, ..., g_n], where g_i = f_1 + f_2 + ... + f_i.
     """
 
     def __init__(
         self, sampler: PolynomialSampler, min_polynomials: int, max_polynomials: int
     ):
         """
-        Initialize polynomial partial sum sampler.
+        Initialize cumulative sum instance generator.
 
         Args:
             sampler: Polynomial sampler
@@ -51,7 +43,7 @@ class PartialSumProblemGenerator:
 
         Each sample consists of:
         - Problem: polynomial system F
-        - Solution: polynomial system G (partial sums of F)
+        - Answer: polynomial system G (cumulative sums of F)
 
         Args:
             seed: Seed for random number generator
@@ -69,61 +61,53 @@ class PartialSumProblemGenerator:
         # Generate problem polynomials using sampler
         F = self.sampler.sample(num_samples=num_polys)
 
-        # Generate partial sums for solution
+        # Generate cumulative sums for answer
         G = [sum(F[: i + 1]) for i in range(len(F))]
 
         return F, G
 
 
-class PolyStatisticsCalculator(BaseStatisticsCalculator):
+class PolyStatisticsCalculator:
     """
-    Statistics calculator for polynomial problems.
+    Per-sample statistics for polynomial cumulative-sum datasets.
+
+    Used with :class:`DatasetPipeline` to summarize each (problem, answer) pair
+    produced by :class:`CumulativeSumInstanceGenerator`. Each side is typically
+    a list of polynomials; a single polynomial is wrapped in a one-element list.
     """
 
     def __call__(
         self,
         problem: list[MPolynomial_libsingular] | MPolynomial_libsingular,
-        solution: list[MPolynomial_libsingular] | MPolynomial_libsingular,
+        answer: list[MPolynomial_libsingular] | MPolynomial_libsingular,
     ) -> dict[str, dict[str, int | float]]:
         """
-        Calculate statistics for a single generated sample.
+        Calculate statistics for one polynomial cumulative-sum sample.
 
         Args:
-            problem: Either a list of polynomials or a single polynomial
-            solution: Either a list of polynomials or a single polynomial
+            problem: Polynomial list ``F``, or a single polynomial.
+            answer: Cumulative-sum list ``G``, or a single polynomial.
 
         Returns:
-            Dictionary with keys "problem" and "solution", each mapping to a sub-dictionary
-            containing descriptive statistics including:
-            - num_polynomials: Number of polynomials in the system
-            - sum_total_degree: Sum of total degrees of all polynomials in the system
-            - min_total_degree: Minimum degree of any polynomial in the system
-            - max_total_degree: Maximum degree of any polynomial in the system
-            - sum_num_terms: Total number of terms across all polynomials in the system
-            - min_num_terms: Minimum number of terms in any polynomial in the system
-            - max_num_terms: Maximum number of terms in any polynomial in the system
-            - min_abs_coeff: Minimum absolute coefficient value in the system
-            - max_abs_coeff: Maximum absolute coefficient value in the system
-
-        Examples:
-            >>> stats_calculator = PolyStatisticsCalculator()
-            >>> stats = stats_calculator(problem=[x^2 + 1, x^3 + 2], solution=[x^2 + 1, x^3 + 2])
-            >>> stats['problem']['num_polynomials']
-            2
-            >>> stats['solution']['num_polynomials']
-            2
+            Dictionary with keys ``"problem"`` and ``"answer"``. Each value is a
+            sub-dictionary returned by :meth:`poly_system_stats`.
         """
         return {
             "problem": self.poly_system_stats(
                 problem if isinstance(problem, list) else [problem]
             ),
-            "solution": self.poly_system_stats(
-                solution if isinstance(solution, list) else [solution]
+            "answer": self.poly_system_stats(
+                answer if isinstance(answer, list) else [answer]
             ),
         }
 
     def _extract_coefficients(self, poly: MPolynomial_libsingular) -> list[float | int]:
-        """Extract coefficients from polynomial based on field type."""
+        """
+        Return absolute coefficient magnitudes for statistics.
+
+        Supports polynomials over ``QQ`` (numerators and denominators), ``ZZ``,
+        ``RR``, and finite fields. Returns an empty list for unsupported base rings.
+        """
         coeff_field = poly.parent().base_ring()
         if coeff_field == QQ:
             return [abs(float(c.numerator())) for c in poly.coefficients()] + [
@@ -139,37 +123,49 @@ class PolyStatisticsCalculator(BaseStatisticsCalculator):
         self, polys: list[MPolynomial_libsingular]
     ) -> dict[str, int | float]:
         """
-        Calculate statistics for a list of polynomials.
+        Calculate aggregate statistics for a list of polynomials.
 
         Args:
-            polys: List of polynomials
+            polys: Non-empty list of polynomials in one problem or answer side.
 
         Returns:
-            Dictionary containing statistical information about the polynomials
+            Dictionary with keys:
+            - ``num_polynomials``: Length of ``polys``.
+            - ``sum_total_degree``, ``min_total_degree``, ``max_total_degree``:
+              Aggregates over per-polynomial degrees. Univariate rings (``ngens() == 1``)
+              use ``degree()``; multivariate rings use ``total_degree()``. Zero
+              polynomials are counted as 0 (Sage returns ``-1`` for the degree).
+            - ``sum_num_terms``, ``min_num_terms``, ``max_num_terms``:
+              Aggregates over monomial counts.
+            - ``min_abs_coeff``, ``max_abs_coeff``: Min/max over absolute
+              coefficients (0 if no coefficients are extracted).
+
+        Raises:
+            ValueError: If ``polys`` is empty.
         """
         if not polys:
             raise ValueError(
                 "Cannot calculate statistics for empty list of polynomials"
             )
 
+        R = polys[0].parent()
+        univariate = R.ngens() == 1
+
         degrees = [
-            max(p.total_degree(), 0) for p in polys
-        ]  # if polynomial p is zero, then p.total_degree() is -1, so we need to set it to 0
+            int(max(p.degree() if univariate else p.total_degree(), 0)) for p in polys
+        ]
+
         num_terms = [len(p.monomials()) for p in polys]
         coeffs = [c for p in polys for c in self._extract_coefficients(p)]
 
         return {
-            # System size statistics
             "num_polynomials": len(polys),
-            # Degree statistics
             "sum_total_degree": sum(degrees),
             "min_total_degree": min(degrees),
             "max_total_degree": max(degrees),
-            # Term count statistics
             "sum_num_terms": sum(num_terms),
             "min_num_terms": min(num_terms),
             "max_num_terms": max(num_terms),
-            # Coefficient statistics
             "min_abs_coeff": min(coeffs) if coeffs else 0,
             "max_abs_coeff": max(coeffs) if coeffs else 0,
         }
@@ -182,32 +178,23 @@ class PolyStatisticsCalculator(BaseStatisticsCalculator):
 )  # set the number of jobs for parallel processing (check your machine's capacity by command `nproc`)
 def main(save_dir, n_jobs):
     if save_dir == "":
-        # warning
-        save_dir = "dataset/partial_sum/GF7_n=3"
+        save_dir = "dataset/cumulative_sum/GF7_n=3"
         warnings.warn(
             f"No save directory provided. Using default save directory {save_dir}."
         )
 
-    # Initialize polynomial ring
-    R = PolynomialRing(GF(7), 3, "x", order="degrevlex")
-
     # Initialize polynomial sampler
     sampler = PolynomialSampler(
-        ring=R,
+        symbols="x,y,z",
+        field_str="GF(7)",
+        order="grevlex",
         max_num_terms=5,
         max_degree=10,
         min_degree=1,
-        degree_sampling="uniform",  # "uniform" or "fixed"
-        term_sampling="uniform",  # "uniform" or "fixed"
-        max_coeff=None,  # Used for RR and ZZ
-        num_bound=None,  # Used for QQ
-        strictly_conditioned=False,
-        nonzero_instance=True,
-        nonzero_coeff=True,
     )
 
-    # Initialize problem generator
-    problem_generator = PartialSumProblemGenerator(
+    # Initialize instance generator
+    instance_generator = CumulativeSumInstanceGenerator(
         sampler=sampler,
         min_polynomials=2,
         max_polynomials=5,
@@ -216,29 +203,26 @@ def main(save_dir, n_jobs):
     # Initialize statistics calculator
     statistics_calculator = PolyStatisticsCalculator()
 
-    # Initialize dataset generator
-    dataset_generator = DatasetGenerator(
-        backend="multiprocessing",
-        n_jobs=n_jobs,
-        verbose=True,
-        root_seed=100,
-    )
+    config = {
+        "save_dir": save_dir,
+        "num_train_samples": 100000,
+        "num_test_samples": 1000,
+        "batch_size": 10000,
+        "n_jobs": n_jobs,
+        "root_seed": 42,
+        "verbose": True,
+        "backend": "sagemath",
+        "save_text": True,
+        "save_json": True,
+    }
 
-    # Initialize writer
-    dataset_writer = DatasetWriter(
-        save_dir=save_dir,
-        save_text=True,  # whether to save raw text files
-        save_json=True,  # whether to save JSON files
-    )
-
-    # Generate datasets with batch processing
-    dataset_generator.run(
-        dataset_sizes={"train": 100000, "test": 1000},
-        batch_size=100000,  # set batch size
-        problem_generator=problem_generator,
+    pipeline = DatasetPipeline.from_config(
+        OmegaConf.create(config),
+        instance_generator=instance_generator,
         statistics_calculator=statistics_calculator,
-        dataset_writer=dataset_writer,
     )
+    pipeline.run()
+    print("Dataset generation completed")
 
 
 if __name__ == "__main__":
