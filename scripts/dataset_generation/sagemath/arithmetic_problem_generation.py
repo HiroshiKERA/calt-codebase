@@ -156,7 +156,7 @@ class ArithmeticStatisticsCalculator:
 )  # set the number of jobs for parallel processing (check your machine's capacity by command `nproc`)
 def main(save_dir, n_jobs):
     if save_dir == "":
-        save_dir = "dataset/integer_factorization_problem"
+        save_dir = "dataset/integer_factorization"
         warnings.warn(
             f"No save directory provided. Using default save directory {save_dir}."
         )
@@ -190,6 +190,7 @@ def main(save_dir, n_jobs):
         statistics_calculator=statistics_calculator,
     )
     pipeline.run()
+    print("Dataset generation completed")
 
 
 if __name__ == "__main__":
