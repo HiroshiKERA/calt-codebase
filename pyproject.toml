@@ -1,0 +1,14 @@
+[project]
+name = "calt-experiments"
+version = "0.1.0"
+description = "Experiments for learning algebraic computations with Transformers"
+requires-python = ">=3.10,<3.13"
+dependencies = [
+    "calt-x>=0.1.0",
+    "omegaconf>=2.3.0",
+    "matplotlib>=3.7.0",
+    "click>=8.0.0",
+]
+
+[tool.ruff]
+line-length = 100

@@ -1,0 +1,16 @@
+# Parity task (toy): random permutation σ of {0..n-1} -> sign(σ) ∈ {+1, -1}
+
+problem_generator:
+  n: 5            # permutation length (5! = 120 distinct inputs)
+
+dataset:
+  save_dir: "../data"
+  num_train_samples: 5000
+  num_test_samples: 500
+  batch_size: 1000
+  n_jobs: 4
+  root_seed: 42
+  verbose: true
+  backend: "sympy"
+  save_text: true
+  save_json: false

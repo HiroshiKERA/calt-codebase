@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CALT codebase — Complete Documentation</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --sidebar-bg: #f5f6f8;
+    --border: #e1e4e8;
+    --text: #24292f;
+    --muted: #57606a;
+    --accent: #4f46e5;
+    --accent-soft: #eef0fd;
+    --code-bg: #f6f8fa;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--text);
+    background: var(--bg);
+    line-height: 1.6;
+  }
+  /* ---- layout ---- */
+  .sidebar {
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    width: 300px;
+    background: var(--sidebar-bg);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    padding: 20px 14px 60px;
+  }
+  .content {
+    margin-left: 300px;
+    padding: 40px 56px 120px;
+    max-width: 920px;
+  }
+  /* ---- sidebar header + filter ---- */
+  .sidebar h2.brand {
+    font-size: 15px;
+    margin: 4px 8px 14px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .04em;
+  }
+  .filter {
+    width: 100%;
+    padding: 8px 10px;
+    margin-bottom: 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 14px;
+    background: #fff;
+  }
+  .filter:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+  /* ---- TOC (python-markdown emits nested <ul>) ---- */
+  .toc ul { list-style: none; margin: 0; padding-left: 0; }
+  .toc > ul > li > a { font-weight: 600; }
+  .toc ul ul { padding-left: 14px; border-left: 1px solid var(--border); margin-left: 8px; }
+  .toc li { margin: 1px 0; }
+  .toc a {
+    display: block;
+    padding: 5px 10px;
+    border-radius: 6px;
+    color: var(--text);
+    text-decoration: none;
+    font-size: 13.5px;
+  }
+  .toc a:hover { background: #e9ebee; }
+  .toc a.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+  .toc li.hidden { display: none; }
+  /* ---- content typography ---- */
+  .content h1 { font-size: 30px; padding-bottom: .3em; border-bottom: 2px solid var(--border); }
+  .content h2 { font-size: 23px; margin-top: 2.2em; padding-bottom: .25em; border-bottom: 1px solid var(--border); scroll-margin-top: 20px; }
+  .content h3 { font-size: 18px; margin-top: 1.6em; scroll-margin-top: 20px; }
+  .content a { color: var(--accent); }
+  .content table { border-collapse: collapse; width: 100%; margin: 1.2em 0; font-size: 14px; }
+  .content th, .content td { border: 1px solid var(--border); padding: 7px 12px; text-align: left; }
+  .content th { background: var(--code-bg); }
+  .content tr:nth-child(even) { background: #fafbfc; }
+  .content code {
+    background: var(--code-bg);
+    padding: .15em .4em;
+    border-radius: 5px;
+    font-size: 85%;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  }
+  .content pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    line-height: 1.45;
+  }
+  .content pre code { background: none; padding: 0; font-size: 13px; }
+  .content blockquote {
+    border-left: 4px solid var(--accent);
+    background: var(--accent-soft);
+    margin: 1.2em 0;
+    padding: .6em 1em;
+    color: var(--muted);
+    border-radius: 0 8px 8px 0;
+  }
+  .content blockquote p { margin: .3em 0; }
+  hr { border: none; border-top: 1px solid var(--border); margin: 2.4em 0; }
+  /* ---- responsive ---- */
+  .menu-toggle { display: none; }
+  @media (max-width: 860px) {
+    .sidebar { transform: translateX(-100%); transition: transform .2s; z-index: 20; }
+    .sidebar.open { transform: translateX(0); }
+    .content { margin-left: 0; padding: 70px 20px 80px; }
+    .menu-toggle {
+      display: block; position: fixed; top: 12px; left: 12px; z-index: 30;
+      background: var(--accent); color: #fff; border: none; border-radius: 8px;
+      padding: 8px 12px; font-size: 16px; cursor: pointer;
+    }
+  }
+</style>
+</head>
+<body>
+  <button class="menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+  <nav class="sidebar">
+    <h2 class="brand">CALT codebase — Complete Documentation</h2>
+    <input class="filter" type="text" placeholder="Filter sections…" oninput="filterToc(this.value)">
+    <div class="toc">
+      <div class="toc">
+<ul>
+<li><a href="#table-of-contents">Table of Contents</a></li>
+<li><a href="#1-what-is-this-project">1. What is this project?</a><ul>
+<li><a href="#example-tasks-in-this-repo">Example tasks in this repo</a></li>
+</ul>
+</li>
+<li><a href="#2-two-layers-calt-x-and-calt-codebase">2. Two layers: calt-x and calt-codebase</a></li>
+<li><a href="#3-installation">3. Installation</a><ul>
+<li><a href="#recommended-use-a-dedicated-conda-environment">Recommended: use a dedicated conda environment</a></li>
+</ul>
+</li>
+<li><a href="#4-core-concepts">4. Core concepts</a><ul>
+<li><a href="#41-the-transformer-a-universal-translator">4.1 The Transformer: a universal translator</a></li>
+<li><a href="#42-training-learning-from-examples">4.2 Training: learning from examples</a></li>
+<li><a href="#43-tokenization-turning-math-into-machine-readable-text">4.3 Tokenization: turning math into machine-readable text</a></li>
+<li><a href="#44-evaluation-metric-exact-match">4.4 Evaluation metric: exact match</a></li>
+</ul>
+</li>
+<li><a href="#5-repository-structure">5. Repository structure</a></li>
+<li><a href="#6-the-3-step-workflow">6. The 3-step workflow</a><ul>
+<li><a href="#step-1-generate-the-data">Step 1 — Generate the data</a></li>
+<li><a href="#step-2-train-the-model">Step 2 — Train the model</a></li>
+<li><a href="#step-3-evaluate">Step 3 — Evaluate</a></li>
+</ul>
+</li>
+<li><a href="#7-configuration-files">7. Configuration files</a><ul>
+<li><a href="#71-datayaml-dataset-generation">7.1 data.yaml — dataset generation</a></li>
+<li><a href="#72-lexeryaml-tokenizer-vocabulary">7.2 lexer.yaml — tokenizer vocabulary</a></li>
+<li><a href="#73-trainyaml-model-training-data-paths">7.3 train.yaml — model + training + data paths</a></li>
+</ul>
+</li>
+<li><a href="#8-the-three-tasks">8. The three tasks</a><ul>
+<li><a href="#81-parity-sign-of-a-permutation-start-here">8.1 parity — sign of a permutation ⭐ start here</a></li>
+<li><a href="#82-groebner_basis-grobner-basis-of-f1-f2">8.2 groebner_basis — Gröbner basis of ⟨f1, f2⟩</a></li>
+<li><a href="#83-border_basis-border-basis-of-a-0-dimensional-ideal">8.3 border_basis — border basis of a 0-dimensional ideal</a></li>
+</ul>
+</li>
+<li><a href="#9-creating-your-own-task">9. Creating your own task</a></li>
+<li><a href="#10-the-shared-utilities">10. The shared/ utilities</a></li>
+<li><a href="#11-advanced-usage">11. Advanced usage</a><ul>
+<li><a href="#111-grobner-lex-order-variant">11.1 Gröbner lex-order variant</a></li>
+<li><a href="#112-extra-training-metrics">11.2 Extra training metrics</a></li>
+<li><a href="#113-reproducibility">11.3 Reproducibility</a></li>
+<li><a href="#114-disabling-wandb">11.4 Disabling wandb</a></li>
+<li><a href="#115-a-custom-trainer">11.5 A custom Trainer</a></li>
+</ul>
+</li>
+<li><a href="#12-troubleshooting">12. Troubleshooting</a><ul>
+<li><a href="#modulenotfounderror-no-module-named-calt">ModuleNotFoundError: No module named 'calt'</a></li>
+<li><a href="#modulenotfounderror-no-module-named-shared-or-your-task">ModuleNotFoundError: No module named 'shared' (or your task)</a></li>
+<li><a href="#unk-tokens-validation-error">[UNK] tokens / validation error</a></li>
+<li><a href="#cuda-out-of-memory">CUDA out of memory</a></li>
+<li><a href="#loss-not-decreasing">Loss not decreasing</a></li>
+<li><a href="#wandb-errors">wandb errors</a></li>
+<li><a href="#same-seed-gives-the-same-data-every-run">Same seed gives the same data every run</a></li>
+</ul>
+</li>
+<li><a href="#13-glossary">13. Glossary</a></li>
+<li><a href="#useful-links">Useful links</a></li>
+</ul>
+</div>
+
+    </div>
+  </nav>
+  <main class="content">
+    <h1 id="calt-codebase-complete-documentation">CALT codebase — Complete Documentation</h1>
+<blockquote>
+<p>A full guide for anyone who wants to understand, use, or extend this repository —
+<strong>no prior knowledge of transformers or deep learning required.</strong></p>
+<p>This document describes <strong>calt-codebase</strong> (the experiment repository in this folder).
+The underlying library it builds on is <strong>calt-x</strong> (<code>pip install calt-x</code>); for a
+source-level reference aimed at AI assistants, see <a href="ai-context.html">AI_CONTEXT.md</a>.</p>
+</blockquote>
+<hr />
+<h2 id="table-of-contents">Table of Contents</h2>
+<ol>
+<li><a href="#1-what-is-this-project">What is this project?</a></li>
+<li><a href="#2-two-layers-calt-x-and-calt-codebase">Two layers: calt-x and calt-codebase</a></li>
+<li><a href="#3-installation">Installation</a></li>
+<li><a href="#4-core-concepts">Core concepts</a></li>
+<li><a href="#5-repository-structure">Repository structure</a></li>
+<li><a href="#6-the-3-step-workflow">The 3-step workflow</a></li>
+<li><a href="#7-configuration-files">Configuration files</a></li>
+<li><a href="#8-the-three-tasks">The three tasks</a></li>
+<li><a href="#9-creating-your-own-task">Creating your own task</a></li>
+<li><a href="#10-the-shared-utilities">The <code>shared/</code> utilities</a></li>
+<li><a href="#11-advanced-usage">Advanced usage</a></li>
+<li><a href="#12-troubleshooting">Troubleshooting</a></li>
+<li><a href="#13-glossary">Glossary</a></li>
+</ol>
+<hr />
+<h2 id="1-what-is-this-project">1. What is this project?</h2>
+<p>This repository trains Transformer models to solve <strong>symbolic mathematics</strong>
+problems. It explores one central question:</p>
+<blockquote>
+<p>Can a neural network learn to perform an algebraic computation just from examples?</p>
+</blockquote>
+<p>Some computer-algebra algorithms (Gröbner bases, border bases) are extremely
+expensive — doubly exponential in the number of variables in the worst case. The
+idea here is to <strong>learn the input → output mapping from data</strong>, the same way a
+language model learns translation.</p>
+<p>Every task is framed as a <strong>translation task</strong>:</p>
+<pre><code>Input  : f1 | f2          (a problem, written as text)
+Output : g1 | … | gk       (its answer, written as text)
+</code></pre>
+<p>The model sees thousands of such pairs and learns the rule that maps one side to
+the other — without that rule being programmed explicitly.</p>
+<h3 id="example-tasks-in-this-repo">Example tasks in this repo</h3>
+<table>
+<thead>
+<tr>
+<th>Input</th>
+<th>Output</th>
+<th>Task</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>2 0 1</code></td>
+<td><code>+1</code></td>
+<td>Parity of a permutation</td>
+</tr>
+<tr>
+<td><code>x^2 + 2*x \| 3*x - 1</code></td>
+<td><code>1 \| x^2 - 1</code></td>
+<td>Gröbner basis of ⟨f1, f2⟩</td>
+</tr>
+<tr>
+<td><code>g1 \| g2 \| g3</code> (over GF(7))</td>
+<td>border basis</td>
+<td>Border basis of a 0-dim ideal</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="2-two-layers-calt-x-and-calt-codebase">2. Two layers: calt-x and calt-codebase</h2>
+<pre><code>┌─────────────────────────────────────────────────────────┐
+│                    calt-codebase                          │
+│  (THIS REPO — experiment template)                        │
+│                                                           │
+│  • parity / groebner_basis / border_basis tasks           │
+│  • shared/ utilities (seeds, configs, paths, plotting)    │
+│  • templates/ to scaffold new tasks                       │
+└──────────────────────────┬────────────────────────────────┘
+                           │ uses (pip install calt-x)
+                           ▼
+┌─────────────────────────────────────────────────────────┐
+│                       calt-x                              │
+│  (Python library — the engine)                            │
+│                                                           │
+│  • DatasetPipeline  → generate (problem, answer) pairs    │
+│  • IOPipeline       → load, preprocess, tokenize          │
+│  • ModelPipeline    → build the Transformer (BART-based)  │
+│  • TrainerPipeline  → train + evaluate                    │
+└─────────────────────────────────────────────────────────┘
+</code></pre>
+<p><strong>Analogy</strong>: <code>calt-x</code> is the engine; <code>calt-codebase</code> is the vehicle built around
+it. You write task-specific math in <code>calt-codebase</code>; <code>calt-x</code> does the
+data-generation, tokenization, training and evaluation heavy lifting.</p>
+<hr />
+<h2 id="3-installation">3. Installation</h2>
+<p><code>calt-x</code> is available on both <strong>PyPI</strong> and <strong>conda-forge</strong>:</p>
+<pre><code class="language-bash"># via pip
+pip install calt-x omegaconf matplotlib click
+
+# or via conda-forge
+conda install calt-x
+</code></pre>
+<ul>
+<li>Python <code>&gt;=3.10,&lt;3.13</code>.</li>
+<li><code>calt-x</code> pulls in PyTorch, HuggingFace Transformers, and (for the polynomial
+  tasks) <strong>SageMath</strong>. SageMath is large; the easiest way to get it is a conda
+  environment with a SageMath build, then install <code>calt-x</code> inside it.</li>
+<li>A GPU is strongly recommended for training (CPU works but is very slow).</li>
+<li><code>wandb</code> is optional (used for live training curves). Disable it with
+  <code>no_wandb: true</code> in <code>train.yaml</code> or <code>WANDB_MODE=disabled</code>.</li>
+</ul>
+<blockquote>
+<p><strong>conda-forge packaging</strong> — <code>calt-x</code> is maintained on conda-forge at
+<a href="https://github.com/conda-forge/calt-x-feedstock">conda-forge/calt-x-feedstock</a>.
+When a new version is released on PyPI, a bot automatically opens a PR on the
+feedstock; merging it is enough when dependencies are unchanged. If dependencies
+change (or a CI build fails), the feedstock maintainer updates <code>meta.yaml</code> by hand.</p>
+</blockquote>
+<h3 id="recommended-use-a-dedicated-conda-environment">Recommended: use a dedicated conda environment</h3>
+<p>The safest setup is a dedicated environment named <code>calt-env</code> that bundles
+SageMath, PyTorch, and <code>calt-x</code> together:</p>
+<pre><code class="language-bash">conda create -n calt-env python=3.12
+conda activate calt-env
+conda install calt-x omegaconf matplotlib click
+</code></pre>
+<blockquote>
+<p><strong>Important</strong> — always activate this environment before running any script in
+this repo, otherwise Python will not find <code>calt-x</code> and you will get a
+<code>ModuleNotFoundError</code>:</p>
+<p><code>bash
+conda activate calt-env</code></p>
+</blockquote>
+<p>Verify:</p>
+<pre><code class="language-bash">conda activate calt-env
+python -c &quot;import calt; print('calt-x OK')&quot;
+cd groebner_basis/experiments/toy/scripts
+python generate.py            # generate a small dataset
+python train.py --dryrun      # quick smoke test (reduced epochs)
+</code></pre>
+<hr />
+<h2 id="4-core-concepts">4. Core concepts</h2>
+<p><em>No AI background required.</em></p>
+<h3 id="41-the-transformer-a-universal-translator">4.1 The Transformer: a universal translator</h3>
+<p>A <strong>Transformer</strong> converts one sequence of symbols into another. It has two parts:</p>
+<pre><code>Input (problem) → ENCODER → DECODER → Output (solution)
+</code></pre>
+<p>The decoder generates the output <strong>one token at a time</strong>, using what it has
+already produced. This step-by-step generation is what lets the model "reason"
+through multi-step computations.</p>
+<h3 id="42-training-learning-from-examples">4.2 Training: learning from examples</h3>
+<p>The model starts random. We show it examples, measure how wrong it is (the
+<strong>loss</strong>), nudge its parameters to reduce the error, and repeat. This is
+<strong>gradient descent</strong>. In these experiments: thousands to 100k examples, tens of
+epochs, the AdamW optimizer.</p>
+<h3 id="43-tokenization-turning-math-into-machine-readable-text">4.3 Tokenization: turning math into machine-readable text</h3>
+<p>The Transformer sees <strong>lists of integers</strong>, not math. Every expression is first
+turned into a sequence of <strong>tokens</strong> (atomic symbols), and every token must be
+declared in <code>lexer.yaml</code>.</p>
+<p>This repo uses the <strong>native string form</strong> of the objects (what SageMath prints),
+tokenized with a small vocabulary:</p>
+<pre><code>Polynomial:  3*x^2*y - 2*x + 1
+Tokens:      3 * x ^ 2 * y - 2 * x + 1      (with numbers split per digit)
+</code></pre>
+<p>Two tokenization styles are used, depending on the task:</p>
+<ul>
+<li><strong>Polynomial tasks</strong> (<code>groebner_basis</code>, <code>border_basis</code>): vocabulary is
+  <code>numbers</code> + the operators <code>+ - * ^ x y | /</code>, with <code>digit_group: 1</code>
+  (<strong>each digit is its own token</strong>). Splitting numbers digit-by-digit means the
+  model can represent arbitrarily large coefficients with just the symbols 0–9.</li>
+<li><strong>Parity</strong>: permutation entries are whole-number tokens (<code>numbers: ["", 0, 20]</code>,
+  <code>digit_group: 0</code>), and the two answers <code>+1</code> / <code>-1</code> are single tokens.</li>
+</ul>
+<blockquote>
+<p><strong>Note</strong>: this is <em>not</em> the older "C/E" (Coefficient/Exponent) encoding. Tasks
+here feed the polynomial's printed form directly and rely on per-digit
+tokenization.</p>
+</blockquote>
+<h3 id="44-evaluation-metric-exact-match">4.4 Evaluation metric: exact match</h3>
+<p>In symbolic math a partially-correct answer is useless: <code>1 | x^2 - 1</code> vs
+<code>1 | x^2 + 1</code> is simply wrong. So the metric is the <strong>exact-match success rate</strong> —
+the fraction of predictions that are character-for-character identical to the
+expected answer (after stripping whitespace). See <code>core/metrics.py::success_rate</code>
+in any task.</p>
+<hr />
+<h2 id="5-repository-structure">5. Repository structure</h2>
+<pre><code>calt-codebase/
+├── shared/             # utilities imported by every task
+│   ├── seed.py         # set_seed()  — fix Python/NumPy/PyTorch/HF seeds
+│   ├── config.py       # load_config(), save_config()
+│   ├── paths.py        # data_dir(), config_dir(), output_dir() …
+│   ├── calt_adapter.py # re-export the 4 CALT pipelines + run_standard_training()
+│   ├── logging.py      # CustomLoggingCallback (grad norms, GPU memory → wandb)
+│   └── plotting.py     # load_eval_results(), show_examples(), plot_success_rate()
+│
+├── parity/             # task: sign of a permutation
+├── groebner_basis/     # task: Gröbner basis of ⟨f1, f2⟩
+├── border_basis/       # task: border basis of a 0-dim ideal
+│
+├── templates/
+│   └── task_template/  # copy this to start a new task
+│
+├── pyproject.toml
+└── README.md
+</code></pre>
+<p>Each task is <strong>self-contained</strong> and always follows this layout:</p>
+<pre><code>&lt;task&gt;/
+├── README.md
+├── core/
+│   ├── generator.py    # class with __call__(seed) → (problem, answer)
+│   ├── formatter.py    # object → string helpers (for tests/REPL)
+│   ├── parser.py       # optional load-time preprocessor (often empty for text data)
+│   ├── metrics.py      # instance_stats() + success_rate()
+│   └── train.py        # run_training(cfg, …) — drives the CALT pipelines
+└── experiments/
+    └── &lt;name&gt;/         # toy, scaling, ablation, finite_field, …
+        ├── configs/    # data.yaml, lexer.yaml, train.yaml
+        └── scripts/    # generate.py, train.py, evaluate.py, run.sh
+</code></pre>
+<p>The <code>core/</code> modules hold reusable logic; the <code>scripts/</code> are thin entry points
+that load a config, set the seed, and call into <code>core/</code>.</p>
+<hr />
+<h2 id="6-the-3-step-workflow">6. The 3-step workflow</h2>
+<p>Using <code>groebner_basis/experiments/toy</code> as the example.</p>
+<blockquote>
+<p><strong>Before anything</strong>: make sure the <code>calt-env</code> conda environment is active.
+<code>bash
+conda activate calt-env</code></p>
+</blockquote>
+<h3 id="step-1-generate-the-data">Step 1 — Generate the data</h3>
+<pre><code class="language-bash">cd groebner_basis/experiments/toy/scripts
+python generate.py
+</code></pre>
+<p>Internally <code>generate.py</code>:
+1. loads <code>../configs/data.yaml</code>,
+2. builds a <code>PolynomialSampler</code> and a <code>GroebnerGenerator(sampler, …)</code>,
+3. hands the generator to <code>DatasetPipeline</code>, which calls it for seeds
+   <code>0 … N-1</code> <strong>in parallel</strong> and writes:</p>
+<pre><code>../data/QQ/train_raw.txt    # &quot;f1 | f2 # g1 | … | gk&quot;  per line
+../data/QQ/test_raw.txt
+../data/QQ/train_stats.yaml  # aggregate generation statistics
+../data/QQ/test_stats.yaml
+</code></pre>
+<p><strong>File format</strong>: one example per line, <code>input # output</code>. <code>|</code> separates list
+elements; <code>#</code> separates input from output.</p>
+<h3 id="step-2-train-the-model">Step 2 — Train the model</h3>
+<pre><code class="language-bash">python train.py                       # full run
+python train.py --dryrun              # quick smoke test
+python train.py --training_order lex  # Gröbner-specific variant (see §11)
+</code></pre>
+<p>Internally <code>train.py</code> → <code>core/train.py::run_training</code>:</p>
+<pre><code>train_raw.txt
+   │  IOPipeline.from_config(cfg.data).build()
+   │     read lines → split on &quot; # &quot; → tokenize with the lexer
+   ▼  ModelPipeline.from_io_dict(cfg.model, io_dict).build()
+   │     build a BART encoder-decoder from cfg.model
+   ▼  TrainerPipeline.from_io_dict(cfg.train, model, io_dict).build()
+   │     train (cross-entropy + AdamW), evaluate periodically, log to wandb
+   ▼
+../outputs/results_degrevlex/
+   ├── model.safetensors
+   ├── tokenizer.json
+   ├── train.yaml             # snapshot of the config actually used
+   ├── eval_results.json      # final predictions vs references
+   └── eval_results/step_*.json
+</code></pre>
+<h3 id="step-3-evaluate">Step 3 — Evaluate</h3>
+<pre><code class="language-bash">python evaluate.py
+</code></pre>
+<p><code>evaluate.py</code> loads <code>eval_results.json</code> via <code>shared.plotting.load_eval_results</code>,
+prints the exact-match success rate, and shows a few correct and incorrect
+predictions with <code>show_examples</code>.</p>
+<hr />
+<h2 id="7-configuration-files">7. Configuration files</h2>
+<p>Each experiment has three YAML files in <code>configs/</code>.</p>
+<h3 id="71-datayaml-dataset-generation">7.1 <code>data.yaml</code> — dataset generation</h3>
+<pre><code class="language-yaml"># Parameters forwarded to PolynomialSampler (polynomial tasks only)
+sampler:
+  symbols: &quot;x,y&quot;
+  field_str: &quot;QQ&quot;          # &quot;QQ&quot;, &quot;ZZ&quot;, &quot;GF7&quot;, &quot;GF11&quot;, …
+  order: &quot;degrevlex&quot;
+  max_num_terms: 5
+  max_degree: 4
+  min_degree: 1
+  max_coeff: 5
+  degree_sampling: &quot;uniform&quot;
+  term_sampling: &quot;uniform&quot;
+
+# Parameters forwarded to the task's generator class
+problem_generator:
+  num_polynomials: 2
+
+# Parameters consumed by DatasetPipeline
+dataset:
+  save_dir: &quot;../data/QQ&quot;
+  num_train_samples: 1000
+  num_test_samples: 200
+  batch_size: 100
+  n_jobs: 4                 # CPU cores for parallel generation
+  root_seed: 42             # same seed ⇒ same data
+  verbose: true
+  backend: &quot;sagemath&quot;       # &quot;sagemath&quot; or &quot;sympy&quot;
+  save_text: true           # write *_raw.txt (required for training)
+  save_json: false
+</code></pre>
+<p>The <code>parity</code> task has no <code>sampler:</code> block (it needs no polynomials) — just
+<code>problem_generator: {n: …}</code> and <code>dataset:</code>.</p>
+<h3 id="72-lexeryaml-tokenizer-vocabulary">7.2 <code>lexer.yaml</code> — tokenizer vocabulary</h3>
+<p>Polynomial task example (<code>groebner_basis</code>, <code>border_basis</code>):</p>
+<pre><code class="language-yaml">vocab:
+  range:
+    numbers: [&quot;&quot;, -100, 100]   # [prefix, min, max] → seeds number tokens
+  misc: [&quot;+&quot;, &quot;-&quot;, &quot;*&quot;, &quot;^&quot;, &quot;x&quot;, &quot;y&quot;, &quot;|&quot;, &quot;/&quot;]
+  special_tokens: {}
+  flags:
+    include_base_vocab: true
+    include_base_special_tokens: true   # &lt;s&gt;, &lt;/s&gt;, [PAD], [UNK], …
+
+number_policy:
+  attach_sign: true     # &quot;-3&quot; as one signed token rather than &quot;- 3&quot;
+  digit_group: 1        # tokenize each digit separately → any coefficient size
+  allow_float: false
+
+strict: true            # raise on an unknown token (recommended)
+include_base_vocab: true
+</code></pre>
+<p>Parity example:</p>
+<pre><code class="language-yaml">vocab:
+  range:
+    numbers: [&quot;&quot;, 0, 20]   # permutation entries 0..19 (n ≤ 20)
+    signed:  [&quot;&quot;, -1, -1]  # the target token &quot;-1&quot;
+  misc: [&quot;+1&quot;]             # the target token &quot;+1&quot;
+  flags:
+    include_base_vocab: true
+    include_base_special_tokens: true
+number_policy:
+  digit_group: 0           # whole-number tokens
+strict: false
+</code></pre>
+<blockquote>
+<p><strong>Critical rule</strong>: the vocabulary must cover <strong>every</strong> symbol that appears in
+the data, <em>including the outputs</em>. With <code>digit_group: 1</code>, the digits 0–9 cover
+any integer; with <code>digit_group: 0</code> you must declare a wide enough <code>numbers</code>
+range. Set <code>validate_*_tokens: true</code> (see below) to catch gaps before training.</p>
+</blockquote>
+<h3 id="73-trainyaml-model-training-data-paths">7.3 <code>train.yaml</code> — model + training + data paths</h3>
+<pre><code class="language-yaml">model:
+  model_type: generic        # BART encoder-decoder
+  num_encoder_layers: 3
+  num_encoder_heads: 4
+  num_decoder_layers: 3
+  num_decoder_heads: 4
+  d_model: 256
+  encoder_ffn_dim: 1024
+  decoder_ffn_dim: 1024
+  max_sequence_length: 2048
+
+train:
+  save_dir: ../outputs/results
+  num_train_epochs: 50
+  learning_rate: 0.0003
+  weight_decay: 0.0
+  warmup_ratio: 0.05
+  batch_size: 16
+  test_batch_size: 16
+  lr_scheduler_type: linear
+  max_grad_norm: 1.0
+  optimizer: adamw_torch
+  num_workers: 2
+  seed: 42
+  wandb:
+    project: calt-experiments
+    group: groebner_basis
+    name: toy_QQ
+    no_wandb: false          # true → disable wandb entirely
+
+data:
+  train_dataset_path: ../data/QQ/train_raw.txt
+  test_dataset_path: ../data/QQ/test_raw.txt
+  lexer_config: ../configs/lexer.yaml
+  validate_train_tokens: false   # set true to verify vocab before training
+  validate_test_tokens: false
+</code></pre>
+<p>Paths are written <strong>relative to the <code>scripts/</code> directory</strong> (that's where you run
+the scripts from). The <code>shared.paths</code> helpers resolve them regardless of cwd.</p>
+<hr />
+<h2 id="8-the-three-tasks">8. The three tasks</h2>
+<h3 id="81-parity-sign-of-a-permutation-start-here">8.1 <code>parity</code> — sign of a permutation ⭐ start here</h3>
+<ul>
+<li><strong>Input</strong>: one-line notation of a permutation σ, e.g. <code>2 0 1</code>.</li>
+<li><strong>Output</strong>: <code>+1</code> (even) or <code>-1</code> (odd), where <code>sign(σ) = (−1)^(#inversions)</code>.</li>
+<li><strong>Storage</strong>: plain text, no preprocessor, <code>sympy</code> backend (no SageMath needed).</li>
+<li><strong>Experiments</strong>: <code>toy/</code> (n=5) and <code>scaling/</code> (n ∈ {5, 7, 10}, via <code>--n</code>).</li>
+<li><strong>Why</strong>: parity is a <em>global</em> property — the model must compare all pairs, not
+  just look at one element. A clean probe of attention over the full sequence.</li>
+</ul>
+<h3 id="82-groebner_basis-grobner-basis-of-f1-f2">8.2 <code>groebner_basis</code> — Gröbner basis of ⟨f1, f2⟩</h3>
+<ul>
+<li><strong>Input</strong>: two random polynomials <code>f1 | f2</code> over k[x, y], k ∈ {ℚ, GF(p), ℤ}.</li>
+<li><strong>Output</strong>: the Gröbner basis <code>g1 | … | gk</code> (Buchberger's algorithm via SageMath).</li>
+<li><strong>Storage</strong>: plain text. Over ℚ, samples with large rational coefficients are
+  rejected to avoid coefficient swell.</li>
+<li><strong>Experiments</strong>: <code>toy/</code>, <code>scaling/</code>, <code>ablation/</code> (degrevlex vs. lex).</li>
+<li><strong>Variant</strong>: <code>--training_order lex</code> recomputes the basis in lex order at load
+  time (see §11).</li>
+</ul>
+<h3 id="83-border_basis-border-basis-of-a-0-dimensional-ideal">8.3 <code>border_basis</code> — border basis of a 0-dimensional ideal</h3>
+<ul>
+<li><strong>Input</strong>: generators <code>g1 | g2 | g3</code> over GF(p) (so the ideal is 0-dimensional).</li>
+<li><strong>Output</strong>: the border basis, computed by a verbatim port of Algorithm 4.1
+  (BBasis) from <em>Computational Algebra with Attention</em> (arXiv:2505.23696), in
+  <code>core/algorithm.py</code> (<code>BorderBasisCalculator</code>).</li>
+<li><strong>Experiments</strong>: <code>toy/</code> (GF(7)), <code>finite_field/</code> (GF(5/7/11/17/31)), <code>ablation/</code>.</li>
+</ul>
+<hr />
+<h2 id="9-creating-your-own-task">9. Creating your own task</h2>
+<pre><code class="language-bash">cp -r templates/task_template my_new_task
+cd my_new_task
+</code></pre>
+<p>Then work through the checklist in <code>templates/task_template/README.md</code>:</p>
+<ol>
+<li><strong><code>core/generator.py</code></strong> — implement <code>TaskGenerator.__call__(seed) → (problem, answer)</code>.
+   - Always seed your RNG inside <code>__call__</code> (e.g. <code>random.seed(seed)</code>, and for
+     SageMath <code>sage.misc.randstate.set_random_seed(seed)</code>).
+   - <code>problem</code>/<code>answer</code> may be a string, a list (joined with <code>|</code>), or a
+     SageMath object (<code>str()</code> is called automatically).</li>
+<li><strong><code>core/formatter.py</code></strong> — define how objects become strings (handy for tests).</li>
+<li><strong><code>core/parser.py</code></strong> — only needed if you store data as pickle/JSON; plain
+   text needs no parser.</li>
+<li><strong><code>core/metrics.py</code></strong> — <code>instance_stats(problem, answer)</code> and <code>success_rate</code>.</li>
+<li><strong><code>experiments/toy/configs/</code></strong> — set <code>data.yaml</code> (sizes, sampler/generator
+   params), <code>lexer.yaml</code> (vocabulary for <em>your</em> symbols), <code>train.yaml</code> (model + paths).</li>
+<li><strong>Run</strong>: <code>python generate.py &amp;&amp; python train.py --dryrun &amp;&amp; python evaluate.py</code>.</li>
+</ol>
+<p><strong>Generator contract</strong>: one argument <code>seed: int</code>; deterministic given the seed;
+returns <code>(problem, answer)</code>.</p>
+<hr />
+<h2 id="10-the-shared-utilities">10. The <code>shared/</code> utilities</h2>
+<p>Import these instead of duplicating code (see <code>shared/README.md</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Import</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>from shared.seed import set_seed</code></td>
+<td>Fix all RNG seeds (Python, NumPy, PyTorch, HF) + deterministic CuBLAS</td>
+</tr>
+<tr>
+<td><code>from shared.config import load_config, save_config</code></td>
+<td>Load YAML with optional <code>key=value</code> overrides</td>
+</tr>
+<tr>
+<td><code>from shared.paths import data_dir, config_dir, output_dir, experiment_dir</code></td>
+<td>Paths relative to a script file</td>
+</tr>
+<tr>
+<td><code>from shared.calt_adapter import DatasetPipeline, IOPipeline, ModelPipeline, TrainerPipeline, apply_dryrun_settings</code></td>
+<td>One import for all four pipelines</td>
+</tr>
+<tr>
+<td><code>from shared.calt_adapter import run_standard_training</code></td>
+<td>One-call train→eval for tasks needing no custom logic</td>
+</tr>
+<tr>
+<td><code>from shared.logging import CustomLoggingCallback</code></td>
+<td>Log grad norms + GPU memory to wandb</td>
+</tr>
+<tr>
+<td><code>from shared.plotting import load_eval_results, show_examples, plot_success_rate</code></td>
+<td>Inspect eval results in scripts/notebooks</td>
+</tr>
+</tbody>
+</table>
+<p>Every script begins by putting the repo root on <code>sys.path</code>:</p>
+<pre><code class="language-python">import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
+</code></pre>
+<p>(<code>parents[4]</code> because scripts live at <code>&lt;task&gt;/experiments/&lt;exp&gt;/scripts/&lt;file&gt;.py</code>.)</p>
+<hr />
+<h2 id="11-advanced-usage">11. Advanced usage</h2>
+<h3 id="111-grobner-lex-order-variant">11.1 Gröbner lex-order variant</h3>
+<pre><code class="language-bash">python train.py --training_order lex
+</code></pre>
+<p>This wires a <code>ChainLoadPreprocessor(TextToSageLoadPreprocessor, GroebnerLexOrderPreprocessor)</code>
+into the IOPipeline. At load time it parses <code>f1 | f2</code> back into SageMath
+polynomials, moves them into a <strong>lex</strong>-ordered ring, and recomputes the lex
+Gröbner basis (<code>libsingular:std</code>). Output dirs and wandb names get a <code>_lex</code>
+suffix. Requires <code>data.yaml</code> (passed automatically) to reconstruct the source ring.</p>
+<h3 id="112-extra-training-metrics">11.2 Extra training metrics</h3>
+<pre><code class="language-python">from shared.logging import CustomLoggingCallback
+trainer_pipeline = TrainerPipeline.from_io_dict(cfg.train, model, io_dict).build()
+trainer_pipeline.trainer.add_callback(CustomLoggingCallback())
+</code></pre>
+<p>Logs average parameter norm and GPU memory at each logging step.</p>
+<h3 id="113-reproducibility">11.3 Reproducibility</h3>
+<pre><code class="language-python">from shared.seed import set_seed
+set_seed(42)   # also sets CUBLAS_WORKSPACE_CONFIG and deterministic algorithms
+</code></pre>
+<p>Same <code>root_seed</code> in <code>data.yaml</code> ⇒ identical datasets.</p>
+<h3 id="114-disabling-wandb">11.4 Disabling wandb</h3>
+<pre><code class="language-bash">WANDB_MODE=disabled python train.py
+# or set  train.wandb.no_wandb: true  in train.yaml
+</code></pre>
+<h3 id="115-a-custom-trainer">11.5 A custom Trainer</h3>
+<p>There is no <code>src/custom_trainer.py</code> in this repo. For a custom loss or metric,
+subclass <code>calt.trainer.trainer.Trainer</code>, then build the trainer pipeline and
+swap in your class (see the CALT library docs / <a href="ai-context.html">AI_CONTEXT.md</a>).
+The lightweight alternative — extra logging without changing the loss — is the
+<code>CustomLoggingCallback</code> above.</p>
+<hr />
+<h2 id="12-troubleshooting">12. Troubleshooting</h2>
+<h3 id="modulenotfounderror-no-module-named-calt"><code>ModuleNotFoundError: No module named 'calt'</code></h3>
+<p><code>calt-x</code> isn't installed in the active environment: <code>pip install calt-x</code>
+(inside the env that has SageMath, for polynomial tasks).</p>
+<h3 id="modulenotfounderror-no-module-named-shared-or-your-task"><code>ModuleNotFoundError: No module named 'shared'</code> (or your task)</h3>
+<p>Run scripts from inside their <code>scripts/</code> directory, or ensure the
+<code>sys.path.insert(... parents[4])</code> line is present. The repo root must be importable.</p>
+<h3 id="unk-tokens-validation-error"><code>[UNK]</code> tokens / validation error</h3>
+<p>A symbol in the data isn't in <code>lexer.yaml</code>. Widen the <code>numbers</code> range or add the
+missing operator to <code>misc</code>, and set <code>validate_train_tokens: true</code> to catch it early.</p>
+<h3 id="cuda-out-of-memory"><code>CUDA out of memory</code></h3>
+<p>Lower <code>batch_size</code> in <code>train.yaml</code> (try 8, 4, 2). Note polynomial tasks use a
+large <code>max_sequence_length</code> (2048).</p>
+<h3 id="loss-not-decreasing">Loss not decreasing</h3>
+<p>Check <code>learning_rate</code> (try 1e-4…5e-4), confirm <code>max_sequence_length</code> isn't
+truncating long bases, and inspect a few raw lines of <code>train_raw.txt</code>.</p>
+<h3 id="wandb-errors"><code>wandb</code> errors</h3>
+<p><code>pip install --upgrade wandb</code> and <code>wandb login</code>, or just set
+<code>WANDB_MODE=disabled</code> / <code>no_wandb: true</code>.</p>
+<h3 id="same-seed-gives-the-same-data-every-run">Same seed gives the same data every run</h3>
+<p>Expected. Change <code>root_seed</code> in <code>data.yaml</code> for a different dataset.</p>
+<hr />
+<h2 id="13-glossary">13. Glossary</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Plain-language definition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Transformer</strong></td>
+<td>Neural network that converts one sequence of symbols into another</td>
+</tr>
+<tr>
+<td><strong>Token</strong></td>
+<td>An atomic symbol in the model's vocabulary (<code>x</code>, <code>^</code>, <code>+</code>, <code>+1</code>, a digit)</td>
+</tr>
+<tr>
+<td><strong>Tokenization</strong></td>
+<td>Turning an expression into a list of tokens</td>
+</tr>
+<tr>
+<td><strong>Vocabulary</strong></td>
+<td>The full set of allowed tokens, declared in <code>lexer.yaml</code></td>
+</tr>
+<tr>
+<td><strong><code>digit_group</code></strong></td>
+<td>How many digits form one number token (<code>1</code> = per digit)</td>
+</tr>
+<tr>
+<td><strong>Loss</strong></td>
+<td>A measure of the model's error; lower is better</td>
+</tr>
+<tr>
+<td><strong>Epoch</strong></td>
+<td>One full pass over the training data</td>
+</tr>
+<tr>
+<td><strong>Batch</strong></td>
+<td>A group of examples processed together</td>
+</tr>
+<tr>
+<td><strong>Learning rate</strong></td>
+<td>How fast the model updates its parameters</td>
+</tr>
+<tr>
+<td><strong>AdamW</strong></td>
+<td>The optimizer used to update parameters</td>
+</tr>
+<tr>
+<td><strong>Exact match</strong></td>
+<td>Is the prediction character-for-character identical to the answer?</td>
+</tr>
+<tr>
+<td><strong>Success rate</strong></td>
+<td>Fraction of test examples that match exactly</td>
+</tr>
+<tr>
+<td><strong>Gröbner basis</strong></td>
+<td>A canonical generating set of a polynomial ideal (Buchberger's algorithm)</td>
+</tr>
+<tr>
+<td><strong>Border basis</strong></td>
+<td>An order-free alternative to a Gröbner basis for 0-dimensional ideals</td>
+</tr>
+<tr>
+<td><strong>Permutation parity</strong></td>
+<td>The sign (+1 / −1) of a permutation</td>
+</tr>
+<tr>
+<td><strong>Finite field GF(p)</strong></td>
+<td>Arithmetic modulo a prime p</td>
+</tr>
+<tr>
+<td><strong>SageMath</strong></td>
+<td>Computer-algebra system used to compute the answers</td>
+</tr>
+<tr>
+<td><strong>DatasetPipeline / IOPipeline / ModelPipeline / TrainerPipeline</strong></td>
+<td>The four calt-x stages: generate, load, build, train</td>
+</tr>
+<tr>
+<td><strong>Seed</strong></td>
+<td>Reproducibility integer: same seed ⇒ same random data</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="useful-links">Useful links</h2>
+<ul>
+<li>This repo's README: <a href="README.md">README.md</a></li>
+<li>AI-assistant reference: <a href="ai-context.html">AI_CONTEXT.md</a></li>
+<li>calt-x library: <a href="https://github.com/HiroshiKERA/calt">https://github.com/HiroshiKERA/calt</a> · docs: <a href="https://hiroshikera.github.io/calt/">https://hiroshikera.github.io/calt/</a></li>
+<li>Paper (CALT): <a href="https://arxiv.org/abs/2506.08600">arXiv:2506.08600</a></li>
+<li>Paper (border basis): <a href="https://arxiv.org/abs/2505.23696">arXiv:2505.23696</a></li>
+</ul>
+  </main>
+<script>
+  // ---- filter sidebar by keyword ----
+  function filterToc(q) {
+    q = q.trim().toLowerCase();
+    document.querySelectorAll('.toc li').forEach(function (li) {
+      var a = li.querySelector('a');
+      var text = a ? a.textContent.toLowerCase() : '';
+      li.classList.toggle('hidden', q !== '' && !text.includes(q));
+    });
+  }
+  // ---- scroll-spy: highlight the section currently in view ----
+  var links = {};
+  document.querySelectorAll('.toc a').forEach(function (a) {
+    var id = decodeURIComponent(a.getAttribute('href').slice(1));
+    links[id] = a;
+  });
+  var headings = Array.from(document.querySelectorAll('.content h2, .content h3'))
+    .filter(function (h) { return links[h.id]; });
+  function onScroll() {
+    var pos = window.scrollY + 90;
+    var current = null;
+    headings.forEach(function (h) { if (h.offsetTop <= pos) current = h; });
+    Object.values(links).forEach(function (a) { a.classList.remove('active'); });
+    if (current && links[current.id]) {
+      links[current.id].classList.add('active');
+      links[current.id].scrollIntoView({ block: 'nearest' });
+    }
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+</script>
+</body>
+</html>

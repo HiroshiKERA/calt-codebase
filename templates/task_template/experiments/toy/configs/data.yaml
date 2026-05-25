@@ -1,0 +1,9 @@
+# Dataset generation config — see core/generator.py for what these control.
+dataset:
+  save_dir: "../data"
+  num_train_samples: 1000    # TODO: adjust for your task
+  num_test_samples: 200
+  root_seed: 42
+  backend: "sagemath"        # "sagemath" or "sympy" (remove if not using DatasetPipeline)
+  save_text: true
+  save_json: false

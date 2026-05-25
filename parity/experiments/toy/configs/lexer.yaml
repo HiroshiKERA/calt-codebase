@@ -1,0 +1,17 @@
+vocab:
+  range:
+    numbers: ["", 0, 20]          # permutation elements: 0..19 (covers n ≤ 20)
+    signed: ["", -1, -1]          # the target token "-1"
+  misc: ["+1"]                    # the target token "+1"
+  special_tokens: {}
+  flags:
+    include_base_vocab: true
+    include_base_special_tokens: true
+
+number_policy:
+  attach_sign: true
+  digit_group: 0
+  allow_float: false
+
+strict: false
+include_base_vocab: true
