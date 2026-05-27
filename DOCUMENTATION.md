@@ -24,6 +24,7 @@
 11. [Advanced usage](#11-advanced-usage)
 12. [Troubleshooting](#12-troubleshooting)
 13. [Glossary](#13-glossary)
+14. [Extensions: tokenization format, offline preprocessing, user hooks](#14-extensions-tokenization-format-offline-preprocessing-user-hooks)
 
 ---
 
@@ -641,6 +642,230 @@ Expected. Change `root_seed` in `data.yaml` for a different dataset.
 | **SageMath** | Computer-algebra system used to compute the answers |
 | **DatasetPipeline / IOPipeline / ModelPipeline / TrainerPipeline** | The four calt-x stages: generate, load, build, train |
 | **Seed** | Reproducibility integer: same seed ⇒ same random data |
+
+---
+
+## 14. Extensions: tokenization format, offline preprocessing, user hooks
+
+This codebase ships three extensions beyond what `calt-x` provides natively. All
+three are **opt-in** and **backward compatible**: if you don't use them, the
+training behaves exactly as the original codebase.
+
+### 14.1 — Tokenization format (choice between *raw* and *C/E expanded*)
+
+**What it does.** Polynomial tasks (`groebner_basis`, `border_basis`) can be
+tokenized in two ways:
+
+| Format | Lexer config | Example of one term |
+|---|---|---|
+| **raw** (default) | `lexer.yaml` | `"x ^ 2"` → `["x", "^", "2"]` |
+| **C/E expanded** | `lexer_expanded.yaml` | `"2*x^2*y"` → `["C2", "E2", "E1"]` |
+
+**How to switch** — edit one line in `<task>/experiments/<exp>/configs/train.yaml`:
+
+```yaml
+data:
+  lexer_config: ../configs/lexer.yaml             # raw  (default)
+  # lexer_config: ../configs/lexer_expanded.yaml  # C/E expanded
+```
+
+The training pipeline auto-detects the format via `shared.calt_adapter.detect_lexer_format`
+and wires `ExpandedFormLoadPreprocessor` (a CALT-provided component) into the
+load chain when needed.
+
+**When to use which**:
+- **raw** — paper-faithful reproduction (ISSAC '26 §5). Handles coefficient
+  swell on ℚ via `digit_group: 1`.
+- **expanded** — smaller fixed-size vocabulary, aligns with the
+  `polynomial_reduction` task in the paper. ⚠ Coefficients outside the declared
+  range produce OOV tokens — widen `coefficients: ["C", min, max]` accordingly.
+
+**Files touched by this extension**:
+- `shared/calt_adapter.py` — adds `detect_lexer_format()` helper
+- `<task>/experiments/toy/configs/lexer_expanded.yaml` — new file per task
+- `<task>/core/train.py::build_load_preprocessor` — wires `ExpandedFormLoadPreprocessor`
+
+### 14.2 — Offline preprocessing (skip work at training startup)
+
+**The problem.** Vanilla CALT applies the `dataset_load_preprocessor`
+(TextToSage → FGLM → ExpandedForm, depending on configuration) once **at each
+training startup**. On the Gröbner `--training_order lex` chain on 100k samples
+this means rerunning SageMath/FGLM (~1 minute) every single time you launch
+`train.py`. Worse, the per-batch tokenization (`UnifiedLexer.__call__`) and
+HF `tokenizer.__call__` run lazily in the data loader.
+
+**The fix — two cache levels.**
+
+```
+generate.py            → train_raw.txt
+preprocess.py          → cache (one of two flavors)
+train.py               → auto-detects cache, skips redundant work
+```
+
+| Cache directory | Content | Skipped at training |
+|---|---|---|
+| `processed_<order>_<format>_ids/` | `{"input_ids": [...], "target_ids": [...]}` | SageMath + UnifiedLexer + HF tokenizer (everything) |
+| `processed_<order>_<format>/`     | `{"problem": str, "answer": str}` | SageMath / FGLM / ExpandedForm only |
+| (no cache) | — | nothing (original CALT behavior) |
+
+Both flavors are produced by the same CLI:
+
+```bash
+cd groebner_basis/experiments/toy/scripts
+python preprocess.py --training_order lex                    # pretokenized (default)
+python preprocess.py --training_order lex --no-pretokenize   # strings only
+python preprocess.py --force                                  # rebuild
+```
+
+`train.py` then picks the most aggressive cache available: pretok → strings → raw.
+
+**Cache invalidation by SHA256 hash.** Each cache directory stores `_hash.txt`
+that fingerprints `(lexer.yaml + sampler dict + training_order + tokenizer vocab
++ user hook source)`. Any change → mismatch → `STALE` warning + automatic fallback.
+
+**Proof of zero online tokenization** (monkey-patched spies on a 3-batch run
+through the data loader, see test in §14.4 below):
+
+```
+LEX calls during 3 batches:    0   ← UnifiedLexer disabled
+TOK __call__ during 3 batches: 0   ← HF tokenizer disabled
+TOK pad   during 3 batches:    >0  ← only padding runs, on already-tokenized ids
+```
+
+**Files touched by this extension**:
+- `shared/preprocess.py` — thin shim re-exporting `calt.preprocess`
+- `<task>/experiments/toy/scripts/preprocess.py` — CLI per task
+- `<task>/core/train.py::run_training` — adds the pretok → strings → raw hierarchy
+
+### 14.3 — User post-processing hooks (per-task or shared)
+
+**What it does.** Two opt-in slots let you transform `(input_text, target_text)`
+between the load chain and tokenization, without editing any task's training code.
+
+| Slot | File (create to enable) | Scope |
+|---|---|---|
+| **Base hook**    | `shared/base_postprocessor.py`         | All tasks that wire user hooks (groebner + border) |
+| **Per-task**     | `<task>/core/postprocessor.py`         | One specific task, AFTER the base hook |
+
+Each file exposes one function:
+
+```python
+def postprocess(input_text: str, target_text: str) -> tuple[str, str]:
+    # Default identity. Edit me.
+    return input_text, target_text
+```
+
+**Activation rules**:
+- If a file does NOT exist → that slot is skipped (no chain change, no cache
+  invalidation, no perf cost).
+- If a file DOES exist → its source code is folded into the cache hash, so
+  editing `postprocess()` automatically invalidates stale caches.
+
+**To enable** copy the corresponding `.example` template:
+
+```bash
+cp shared/base_postprocessor.py.example shared/base_postprocessor.py
+# then edit shared/base_postprocessor.py
+```
+
+**Example — reverse the order of polynomials in the target**:
+
+```python
+def postprocess(input_text, target_text):
+    parts = target_text.split(" | ")
+    return input_text, " | ".join(reversed(parts))
+```
+
+The chain ordering is:
+
+```
+raw line → [task load chain] → (input, target) → base hook → task hook → tokenizer
+```
+
+**Files touched by this extension**:
+- `shared/user_postprocessor.py` — helper that loads hooks + computes hash contribution
+- `shared/base_postprocessor.py.example` — template (user copies + edits)
+- `<task>/core/postprocessor.py.example` — per-task template
+- `<task>/core/train.py::build_load_preprocessor` — appends `UserPostProcessorAdapter` to the chain when hook files exist
+
+### 14.4 — Compatibility with upstream `calt-x` from `HiroshiKERA/calt`
+
+⚠ **Important** — this is the key question:
+
+> *If I `pip install calt-x` fresh from KERA's official repo, will all three
+>  extensions work without any modification?*
+
+**Answer**: 2 of the 3 extensions work as-is; **task 14.2's pre-tokenized cache
+requires 3 modifications to the installed `calt-x` package**. Task 14.1 and 14.3
+work out of the box on vanilla CALT.
+
+| Extension | Vanilla `calt-x` from KERA | Why |
+|---|---|---|
+| **14.1** Tokenization format | ✅ Works | Only uses CALT's existing `ExpandedFormLoadPreprocessor` + `ChainLoadPreprocessor`. The codebase adds `shared/calt_adapter.detect_lexer_format`, a pure Python YAML parser — no CALT touch. |
+| **14.3** User hooks | ✅ Works | Hooks are wrapped in `UserPostProcessorAdapter` that implements CALT's `process_sample` protocol. Plugs into the existing `ChainLoadPreprocessor` without any CALT change. |
+| **14.2** Strings cache (`processed_*/`) | ⚠ Partial | The JSONL format `{"problem", "answer"}` is the one CALT's `JsonlDefaultLoadPreprocessor` already reads. The cache itself works on vanilla CALT. **BUT** the helper module `calt.preprocess` (where `run_preprocess`, `compute_config_hash`, etc. live) does not ship in upstream CALT — you would need to move it into this repo's `shared/preprocess.py` (the codebase already has a shim there). |
+| **14.2** Pre-tokenized cache (`processed_*_ids/`) | ❌ Doesn't work | Needs 3 specific patches on `calt-x` (see below). |
+
+**The 3 modifications needed in `calt-x` for the pretokenized path**:
+
+1. **`calt/preprocess.py`** — new file (~470 lines) providing `preprocess_to_ids`,
+   `maybe_use_pretokenized_cache`, `compute_pretok_hash`, etc. Does not exist
+   upstream. Could equivalently live in `shared/`.
+
+2. **`calt/io/base.py::StandardDataCollator.__call__`** — patched to detect
+   `list[int]` batches and call `self.tokenizer.pad(...)` instead of
+   `self.tokenizer(...)`. Without this patch, the collator tries to call the
+   tokenizer on integer lists and crashes (or worse, silently mis-tokenizes).
+
+3. **`calt/io/pipeline.py::IOPipeline.build`** — patched to sniff the first
+   JSONL line for an `"input_ids"` key and load the dataset as pre-tokenized
+   `list[list[int]]` (bypassing `StandardDataset.load_file`'s text path and
+   disabling the UnifiedLexer in `__getitem__`).
+
+In this codebase, those 3 modifications are applied **locally to the installed
+`calt-x` in `site-packages/` only** — never to the upstream git repo. The
+upstream `HiroshiKERA/calt` is untouched.
+
+**Three deployment options**:
+
+| Option | Setup | Maintenance |
+|---|---|---|
+| **A. Local patches (current)** | Patches in `site-packages/calt/` only. Backup at `/data/.../backups/`. | Re-apply after `pip install --upgrade calt-x`. |
+| **B. Submit upstream PR** | Open a PR at `HiroshiKERA/calt` adding the 3 changes. | Once merged, vanilla `pip install calt-x` is enough. |
+| **C. Don't use the pretokenized path** | Use only the strings cache (`--no-pretokenize`). | Vanilla CALT works; loses ~5–15% training speedup. |
+
+A backup of the patched site-packages and the baseline (pre-modification) state
+both exist under `/data/t-maxime/backups/`.
+
+### 14.5 — Summary of files added/modified
+
+```
+NEW files (10):
+  shared/preprocess.py                                       (shim → calt.preprocess)
+  shared/user_postprocessor.py                               (hook helper)
+  shared/base_postprocessor.py.example                       (template)
+  groebner_basis/core/postprocessor.py.example
+  groebner_basis/experiments/toy/configs/lexer_expanded.yaml
+  groebner_basis/experiments/toy/scripts/preprocess.py
+  border_basis/core/postprocessor.py.example
+  border_basis/experiments/toy/configs/lexer_expanded.yaml
+  border_basis/experiments/toy/scripts/preprocess.py
+  parity/core/postprocessor.py.example
+
+MODIFIED files (7):
+  shared/calt_adapter.py                                     (+ detect_lexer_format)
+  groebner_basis/core/train.py                               (+ build_load_preprocessor, cache hierarchy, hook wiring)
+  groebner_basis/experiments/toy/scripts/evaluate.py         (match new output dirs)
+  groebner_basis/README.md                                   (docs)
+  border_basis/core/train.py                                 (same as groebner)
+  border_basis/experiments/toy/scripts/train.py              (+ --data_config_path)
+  border_basis/README.md                                     (docs)
+
+calt-x library — LOCAL patches only (site-packages, NOT upstream git):
+  + calt/preprocess.py                  (new module)
+  ~ calt/io/base.py                     (StandardDataCollator pretok branch)
+  ~ calt/io/pipeline.py                 (IOPipeline.build pretok detection)
+```
 
 ---
 

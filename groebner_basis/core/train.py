@@ -24,11 +24,14 @@ from sage.all import GF, QQ, RR, ZZ, PolynomialRing  # type: ignore
 
 from calt.io import (
     ChainLoadPreprocessor,
+    ExpandedFormLoadPreprocessor,
     IOPipeline,
     TextToSageLoadPreprocessor,
 )
 from calt.models import ModelPipeline
 from calt.trainer import TrainerPipeline, apply_dryrun_settings
+
+from shared.calt_adapter import detect_lexer_format
 
 from .parser import GroebnerLexOrderPreprocessor
 
@@ -56,6 +59,68 @@ def _build_source_ring(data_cfg: DictConfig):
 
     names = [s.strip() for s in symbols.split(",")]
     return PolynomialRing(field, names, order=order)
+
+
+def build_load_preprocessor(
+    cfg: DictConfig,
+    data_cfg: DictConfig | None,
+    training_order: str = "degrevlex",
+):
+    """
+    Build the load-time preprocessor chain that converts raw text data into the
+    string form expected by the tokenizer. Used by both run_training() and the
+    offline preprocess.py script so the two stay in sync.
+
+    Chain composition:
+      training_order=lex   → TextToSage + GroebnerLexOrder
+      lexer format=expanded → TextToSage + ExpandedForm (appended)
+
+    Returns
+    -------
+    tuple (preprocessor_or_None, format_str)
+        preprocessor is None when no preprocessing is needed (raw text + degrevlex).
+        format_str is "raw" or "expanded" for logging.
+    """
+    lexer_format = detect_lexer_format(cfg.data.lexer_config)
+    needs_ring = (training_order == "lex") or (lexer_format == "expanded")
+    R_src = _build_source_ring(data_cfg) if (needs_ring and data_cfg is not None) else None
+    if needs_ring and R_src is None:
+        raise ValueError(
+            "Either training_order='lex' or lexer format='expanded' requires data_cfg "
+            "to rebuild the source ring."
+        )
+
+    chain = []
+    if training_order == "lex":
+        chain.append(TextToSageLoadPreprocessor(delimiter="|", ring=R_src))
+        chain.append(GroebnerLexOrderPreprocessor(R_src, delimiter="|"))
+    if lexer_format == "expanded":
+        if not chain:
+            chain.append(TextToSageLoadPreprocessor(delimiter="|", ring=R_src))
+        chain.append(ExpandedFormLoadPreprocessor(delimiter=" | "))
+
+    # Wire optional user post-processing hooks (task 3).
+    # - shared/base_postprocessor.py   (applies to all tasks)
+    # - groebner_basis/core/postprocessor.py (per-task, runs after base)
+    # Both are opt-in: if neither file exists, this branch is a no-op.
+    from shared.user_postprocessor import (
+        get_user_postprocessors,
+        RawLineToTupleAdapter,
+        UserPostProcessorAdapter,
+    )
+    user_hooks = get_user_postprocessors("groebner_basis")
+    if user_hooks:
+        # If no task chain step has run yet, parse the raw line first so the
+        # hooks receive a (str, str) tuple.
+        if not chain:
+            chain.append(RawLineToTupleAdapter())
+        chain.append(UserPostProcessorAdapter(user_hooks))
+
+    if not chain:
+        return None, lexer_format
+    if len(chain) == 1:
+        return chain[0], lexer_format
+    return ChainLoadPreprocessor(*chain), lexer_format
 
 
 def run_training(
@@ -101,15 +166,34 @@ def run_training(
     os.makedirs(save_dir, exist_ok=True)
     OmegaConf.save(cfg, os.path.join(save_dir, "train.yaml"))
 
-    io_pipeline = IOPipeline.from_config(cfg.data)
+    # ---- Cache hierarchy ----
+    # 1. Pre-tokenized cache (input_ids on disk) → ZERO online tokenization.
+    # 2. Strings cache (post-load-preprocessor strings) → tokenization still online,
+    #    but SageMath/FGLM/Expanded skipped.
+    # 3. Raw .txt + load_preprocessor (original CALT behavior).
+    from calt.preprocess import (
+        maybe_use_pretokenized_cache,
+        maybe_use_processed_cache,
+    )
+    from shared.user_postprocessor import user_postprocessor_hash_contribution
+    hooks_hash = user_postprocessor_hash_contribution("groebner_basis")
 
-    if training_order == "lex":
-        if data_cfg is None:
-            raise ValueError("training_order='lex' requires data_cfg to rebuild the source ring.")
-        R_src = _build_source_ring(data_cfg)
-        text_to_sage = TextToSageLoadPreprocessor(delimiter="|", ring=R_src)
-        lex_pre = GroebnerLexOrderPreprocessor(R_src, delimiter="|")
-        io_pipeline.dataset_load_preprocessor = ChainLoadPreprocessor(text_to_sage, lex_pre)
+    load_preprocessor, lexer_format = build_load_preprocessor(cfg, data_cfg, training_order)
+
+    used_pretok = maybe_use_pretokenized_cache(cfg, data_cfg, training_order, lexer_format, extra_hash_bytes=hooks_hash)
+    if used_pretok:
+        print(f"[run_training] using PRE-TOKENIZED cache (format={lexer_format}, order={training_order})")
+        io_pipeline = IOPipeline.from_config(cfg.data)
+    else:
+        used_strings = maybe_use_processed_cache(cfg, data_cfg, training_order, lexer_format, extra_hash_bytes=hooks_hash)
+        if used_strings:
+            print(f"[run_training] using strings cache (format={lexer_format}, order={training_order})")
+            io_pipeline = IOPipeline.from_config(cfg.data)
+        else:
+            io_pipeline = IOPipeline.from_config(cfg.data)
+            if load_preprocessor is not None:
+                io_pipeline.dataset_load_preprocessor = load_preprocessor
+            print(f"[run_training] no cache; lexer format={lexer_format}, training_order={training_order}")
 
     io_dict = io_pipeline.build()
 

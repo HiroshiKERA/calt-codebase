@@ -19,11 +19,22 @@ Typical usage in a task's core/train.py
         ModelPipeline,
         TrainerPipeline,
         apply_dryrun_settings,
+        detect_lexer_format,
+        ExpandedFormLoadPreprocessor,
+        ChainLoadPreprocessor,
     )
 """
 
+import yaml
+from pathlib import Path
+
 from calt.dataset import DatasetPipeline
-from calt.io import IOPipeline
+from calt.io import (
+    ChainLoadPreprocessor,
+    ExpandedFormLoadPreprocessor,
+    IOPipeline,
+    TextToSageLoadPreprocessor,
+)
 from calt.models import ModelPipeline
 from calt.trainer import TrainerPipeline, apply_dryrun_settings
 
@@ -33,32 +44,112 @@ __all__ = [
     "ModelPipeline",
     "TrainerPipeline",
     "apply_dryrun_settings",
+    # Load preprocessors
+    "ChainLoadPreprocessor",
+    "ExpandedFormLoadPreprocessor",
+    "TextToSageLoadPreprocessor",
+    # Helpers
+    "detect_lexer_format",
 ]
+
+
+def detect_lexer_format(lexer_yaml_path: str | Path) -> str:
+    """
+    Detect whether a lexer.yaml uses the 'raw' or 'expanded' polynomial format.
+
+    Returns
+    -------
+    "expanded"  if vocab.range has BOTH `coefficients` and `exponents` keys
+                 (e.g. `coefficients: ["C", -99, 99]`, `exponents: ["E", 0, 5]`)
+    "raw"       otherwise (default: vocab.range has just `numbers`)
+
+    Background
+    ----------
+    Polynomials can be tokenized in two ways (see paper §2.2):
+      - raw      : text-direct, e.g. "x ^ 2 + y" (used by ISSAC2026/groebner)
+      - expanded : C/E form,   e.g. "C1 E2 E0 + C1 E0 E1" (used by ISSAC2026/polynomial_reduction)
+
+    The vocabulary required differs between the two formats. By inspecting the
+    `vocab.range` keys, we can detect which format the user wants:
+
+        vocab.range.numbers      → raw text format
+        vocab.range.coefficients → C/E expanded format
+        vocab.range.exponents    → C/E expanded format
+
+    """
+    with open(lexer_yaml_path) as f:
+        cfg = yaml.safe_load(f) or {}
+    rng = (cfg.get("vocab") or {}).get("range") or {}
+    if "coefficients" in rng and "exponents" in rng:
+        return "expanded"
+    return "raw"
+
+
+def maybe_wrap_with_expanded_preprocessor(
+    io_pipeline,
+    lexer_yaml_path: str | Path,
+    *,
+    delimiter: str = "|",
+    ring=None,
+):
+    """
+    If the lexer is in C/E expanded format, wire `ExpandedFormLoadPreprocessor`
+    into the io_pipeline's load chain. Otherwise leave the pipeline unchanged.
+
+    The chain becomes:
+        [existing dataset_load_preprocessor if any]
+        → TextToSageLoadPreprocessor (raw text → Sage polynomials)
+        → ExpandedFormLoadPreprocessor (Sage polys → "C1 E2 E0" text)
+
+    Parameters
+    ----------
+    io_pipeline : IOPipeline
+        Mutated in place if expanded format is detected.
+    lexer_yaml_path : str | Path
+        Path to the lexer.yaml whose format determines the behavior.
+    delimiter : str
+        Inner separator between polynomials (default "|").
+    ring : sage PolynomialRing or None
+        Required for TextToSageLoadPreprocessor when format is expanded.
+        Must be provided by the caller (different rings per task).
+
+    Returns
+    -------
+    str : the detected format ("raw" or "expanded"), for logging.
+    """
+    fmt = detect_lexer_format(lexer_yaml_path)
+    if fmt != "expanded":
+        return fmt
+    if ring is None:
+        raise ValueError(
+            "Expanded format requires a `ring` argument to TextToSageLoadPreprocessor. "
+            "Pass the SageMath PolynomialRing matching your data."
+        )
+    text_to_sage = TextToSageLoadPreprocessor(delimiter=delimiter, ring=ring)
+    expanded_form = ExpandedFormLoadPreprocessor(delimiter=delimiter)
+    existing = io_pipeline.dataset_load_preprocessor
+    if existing is None:
+        io_pipeline.dataset_load_preprocessor = ChainLoadPreprocessor(text_to_sage, expanded_form)
+    else:
+        # Insert expanded_form at the end of the existing chain
+        io_pipeline.dataset_load_preprocessor = ChainLoadPreprocessor(existing, expanded_form)
+    return fmt
 
 
 def run_standard_training(cfg, load_preprocessor=None, dryrun: bool = False) -> float:
     """
     Run a complete training pipeline: load data → build model → train → evaluate.
 
-    This covers the common case where no custom Trainer is needed.
-    For tasks requiring a custom loss or metrics, call the pipelines directly
-    (see core/train.py in each task).
-
     Parameters
     ----------
     cfg : DictConfig
-        Config with 'data', 'model', and 'train' sections.
     load_preprocessor : object | None
         Optional load-time preprocessor (must implement process_sample).
-        Required for tasks that store data as Python objects (e.g., SageMath
-        polynomials saved as pickle).
     dryrun : bool
-        If True, reduce epochs and data for a quick sanity check.
 
     Returns
     -------
-    float
-        Exact-match success rate on the test set.
+    float : exact-match success rate on the test set.
     """
     import os
     from omegaconf import OmegaConf

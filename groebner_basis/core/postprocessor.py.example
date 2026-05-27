@@ -1,0 +1,22 @@
+"""
+PER-TASK post-processor — applies ONLY to the groebner_basis task.
+
+To enable: copy this file to `groebner_basis/core/postprocessor.py` (drop the
+`.example` suffix) and edit `postprocess()`.
+
+Execution order:
+    raw line → [groebner load chain] → (input, target) → base hook → THIS HOOK → final
+
+This hook runs AFTER `shared/base_postprocessor.py` (if present), so you can
+compose: the base transformation is already applied when you receive
+(input_text, target_text) here.
+
+See `shared/base_postprocessor.py.example` for general guidance.
+"""
+
+from __future__ import annotations
+
+
+def postprocess(input_text: str, target_text: str) -> tuple[str, str]:
+    """Identity by default. Edit for groebner-specific transformations."""
+    return input_text, target_text

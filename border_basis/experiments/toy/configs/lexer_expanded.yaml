@@ -1,0 +1,26 @@
+# Lexer EXPANDED — C/E form for the border basis task (GF(p)[x, y]).
+#
+# Same C/E scheme as groebner, but the coefficient range is narrower
+# (modular arithmetic in GF(7) gives coefficients in 0..6).
+#
+# Example: "2*x*y + 5*y + 1" → "C2 E1 E1 + C5 E0 E1 + C1 E0 E0"
+#
+# Reference: ISSAC '26 paper §2.2.
+
+vocab:
+  range:
+    coefficients: ["C", 0, 6]     # GF(7): coefficients are 0..6
+    exponents:    ["E", 0, 5]     # max_degree=3 + safety margin
+  misc: ["+", "|"]
+  special_tokens: {}
+  flags:
+    include_base_vocab: true
+    include_base_special_tokens: true
+
+number_policy:
+  attach_sign: true
+  digit_group: 0
+  allow_float: false
+
+strict: true
+include_base_vocab: true

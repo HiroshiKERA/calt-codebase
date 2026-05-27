@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+*.egg-info/
+.pytest_cache/
+
+# Generated datasets (regenerable via generate.py — seed=42)
+*/experiments/*/data/
+*/bench/data/
+
+# Training outputs (model checkpoints, eval results)
+*/experiments/*/outputs/
+*/bench/outputs/
+
+# Cache directories from preprocess.py (regenerable)
+*/data/*/processed_*/
+*/experiments/*/data/*/processed_*/
+
+# Weights & Biases run dirs
+*/wandb/
+**/wandb/
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+*.swp
+*~
+
+# User-defined post-processing hooks (opt-in)
+# These are intentionally not tracked: each user enables them locally by
+# copying the .example template. Commit the .example files but not the live ones.
+shared/base_postprocessor.py
+*/core/postprocessor.py
+
+# Logs
+*.log

@@ -76,3 +76,31 @@ python generate.py
 python train.py
 python evaluate.py
 ```
+
+## User post-processing hooks (optional)
+
+Two opt-in slots inject custom `(input, target)` transformations between the
+load chain and tokenization. Identical mechanism to `groebner_basis`, see
+[groebner_basis/README.md](../groebner_basis/README.md#user-post-processing-hooks-optional).
+
+Per-task slot for this task: `border_basis/core/postprocessor.py` (copy the
+`.example` file and edit).
+
+## Tokenization format (raw vs C/E expanded)
+
+Same mechanism as `groebner_basis`. Two lexer configs are provided and the format is
+auto-detected from `data.lexer_config` in your `train.yaml`:
+
+```yaml
+data:
+  lexer_config: ../configs/lexer.yaml           # raw  (default, ISSAC '26 paper)
+  # lexer_config: ../configs/lexer_expanded.yaml  # C/E expanded (smaller vocab)
+```
+
+- **raw** — `"x^2 + y"` → `["x", "^", "2", "+", "y"]`. Default.
+- **expanded** — each term as `C<coef> E<exp_x> E<exp_y>`. Fixed-size vocab.
+
+When `expanded` is detected, `core/train.py` wires `ExpandedFormLoadPreprocessor` into
+the load chain and **requires** `--data_config_path` (it needs the source ring from
+`data.yaml`). See [groebner_basis/README.md](../groebner_basis/README.md#tokenization-format-raw-vs-ce-expanded)
+for details and trade-offs (they are identical for both tasks).

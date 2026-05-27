@@ -1,0 +1,43 @@
+"""
+BASE post-processor — applies to ALL tasks that wire user hooks.
+
+To enable: copy this file to `shared/base_postprocessor.py` (drop the `.example`
+suffix) and edit `postprocess()` to your needs.
+
+Execution order:
+    raw line → [task's load chain] → (input, target) → THIS HOOK → [task hook] → final
+
+Activation rules
+----------------
+- File MUST be at `shared/base_postprocessor.py` exactly.
+- File MUST expose a function named `postprocess` with the exact signature below.
+- Editing this file invalidates the preprocessing cache (the hook's source is
+  hashed). The next `preprocess.py` run rebuilds the cache automatically.
+
+Tips
+----
+- Keep the function deterministic (no randomness, no time-of-day): the cache
+  assumes f(input, target) is stable.
+- Return strings, not lists / tensors / Sage objects.
+- If you want to filter out samples, you can't: the chain is per-sample with no
+  drop signal. Use a stream filter at generate-time instead.
+"""
+
+from __future__ import annotations
+
+
+def postprocess(input_text: str, target_text: str) -> tuple[str, str]:
+    """
+    Edit me. The default identity below is the no-op fallback.
+
+    Example — reverse the order of polynomials in the target:
+
+        parts = target_text.split(" | ")
+        return input_text, " | ".join(reversed(parts))
+
+    Example — uppercase variable names everywhere:
+
+        return input_text.replace("x", "X").replace("y", "Y"), \
+               target_text.replace("x", "X").replace("y", "Y")
+    """
+    return input_text, target_text
