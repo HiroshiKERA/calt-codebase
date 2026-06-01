@@ -38,6 +38,93 @@ from calt.io import (
 from calt.models import ModelPipeline
 from calt.trainer import TrainerPipeline, apply_dryrun_settings
 
+# ---------------------------------------------------------------------------
+# Offline-preprocessing helpers.
+#
+# These were upstreamed into the CALT library: the module moved from
+# `calt.preprocess` to `calt.io.preprocess`, and two generic helpers
+# (`build_io_pipeline_with_cache`, `build_ring_from_sampler`) were added so that
+# task runners no longer duplicate the cache cascade or the source-ring
+# reconstruction.
+#
+# We import them from the library when present and provide a local fallback so
+# this repo also runs against an older calt-x that predates the upstream move.
+# Once everyone is on the new calt-x, the fallback branches become dead code and
+# can be deleted.
+# ---------------------------------------------------------------------------
+try:  # new calt-x: module lives under calt.io
+    from calt.io.preprocess import (
+        maybe_use_pretokenized_cache,
+        maybe_use_processed_cache,
+        preprocess_to_ids,
+        run_preprocess,
+    )
+except ImportError:  # old calt-x: module at top level
+    from calt.preprocess import (
+        maybe_use_pretokenized_cache,
+        maybe_use_processed_cache,
+        preprocess_to_ids,
+        run_preprocess,
+    )
+
+try:  # new calt-x exposes the generic helpers from calt.io
+    from calt.io import build_io_pipeline_with_cache, build_ring_from_sampler
+except ImportError:
+    build_io_pipeline_with_cache = None
+    build_ring_from_sampler = None
+
+if build_ring_from_sampler is None:
+
+    def build_ring_from_sampler(sampler_cfg):
+        """Fallback (old calt-x): reconstruct the source PolynomialRing."""
+        from omegaconf import OmegaConf
+        from sage.all import GF, QQ, RR, ZZ, PolynomialRing
+
+        if isinstance(sampler_cfg, dict):
+            sampler = dict(sampler_cfg)
+        else:
+            sampler = dict(OmegaConf.to_container(sampler_cfg, resolve=True))
+        symbols = sampler.get("symbols", "x,y")
+        field_str = sampler.get("field_str", "QQ")
+        order = sampler.get("order", "degrevlex")
+
+        if field_str == "QQ":
+            field = QQ
+        elif field_str == "RR":
+            field = RR
+        elif field_str == "ZZ":
+            field = ZZ
+        elif field_str.startswith("GF"):
+            digits = field_str[2:]
+            if not digits.isdigit():
+                raise ValueError(f"Unsupported field_str for GF: {field_str!r}")
+            field = GF(int(digits))
+        else:
+            raise ValueError(f"Unsupported field_str: {field_str!r}")
+        names = [s.strip() for s in symbols.split(",")]
+        return PolynomialRing(field, names, order=order)
+
+
+if build_io_pipeline_with_cache is None:
+
+    def build_io_pipeline_with_cache(
+        cfg, data_cfg, training_order, lexer_format, load_preprocessor, extra_hash_bytes=b""
+    ):
+        """Fallback (old calt-x): pretok → strings → raw cache cascade."""
+        if maybe_use_pretokenized_cache(
+            cfg, data_cfg, training_order, lexer_format, extra_hash_bytes=extra_hash_bytes
+        ):
+            return IOPipeline.from_config(cfg.data), "pretokenized"
+        if maybe_use_processed_cache(
+            cfg, data_cfg, training_order, lexer_format, extra_hash_bytes=extra_hash_bytes
+        ):
+            return IOPipeline.from_config(cfg.data), "strings"
+        io_pipeline = IOPipeline.from_config(cfg.data)
+        if load_preprocessor is not None:
+            io_pipeline.dataset_load_preprocessor = load_preprocessor
+        return io_pipeline, "none"
+
+
 __all__ = [
     "DatasetPipeline",
     "IOPipeline",
@@ -50,6 +137,13 @@ __all__ = [
     "TextToSageLoadPreprocessor",
     # Helpers
     "detect_lexer_format",
+    # Offline preprocessing (re-exported / shimmed from calt)
+    "build_io_pipeline_with_cache",
+    "build_ring_from_sampler",
+    "maybe_use_pretokenized_cache",
+    "maybe_use_processed_cache",
+    "preprocess_to_ids",
+    "run_preprocess",
 ]
 
 
@@ -77,6 +171,22 @@ def detect_lexer_format(lexer_yaml_path: str | Path) -> str:
         vocab.range.exponents    → C/E expanded format
 
     """
+    lexer_yaml_path = Path(lexer_yaml_path)
+    if not lexer_yaml_path.exists():
+        # Try to suggest available lexer files in the same directory.
+        parent = lexer_yaml_path.parent if lexer_yaml_path.parent.exists() else Path(".")
+        candidates = sorted(parent.glob("lexer*.yaml"))
+        suggestion = ""
+        if candidates:
+            suggestion = (
+                "\n  Available lexer configs in that directory:\n    "
+                + "\n    ".join(f"- {c.name}" for c in candidates)
+            )
+        raise FileNotFoundError(
+            f"Lexer config not found: {lexer_yaml_path}\n"
+            f"  Check `data.lexer_config` in your train.yaml.{suggestion}"
+        )
+
     with open(lexer_yaml_path) as f:
         cfg = yaml.safe_load(f) or {}
     rng = (cfg.get("vocab") or {}).get("range") or {}

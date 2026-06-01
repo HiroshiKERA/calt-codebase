@@ -21,7 +21,7 @@ import click
 from omegaconf import OmegaConf
 
 from border_basis.core.train import build_load_preprocessor
-from calt.preprocess import preprocess_to_ids, run_preprocess
+from shared.calt_adapter import preprocess_to_ids, run_preprocess
 from shared.paths import config_dir
 from shared.user_postprocessor import user_postprocessor_hash_contribution
 

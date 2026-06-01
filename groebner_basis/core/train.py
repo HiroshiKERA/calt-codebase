@@ -20,45 +20,22 @@ import os
 
 import sage.all  # noqa: F401  # initialise Sage before any submodule
 from omegaconf import DictConfig, OmegaConf
-from sage.all import GF, QQ, RR, ZZ, PolynomialRing  # type: ignore
 
 from calt.io import (
     ChainLoadPreprocessor,
     ExpandedFormLoadPreprocessor,
-    IOPipeline,
     TextToSageLoadPreprocessor,
 )
 from calt.models import ModelPipeline
 from calt.trainer import TrainerPipeline, apply_dryrun_settings
 
-from shared.calt_adapter import detect_lexer_format
+from shared.calt_adapter import (
+    build_io_pipeline_with_cache,
+    build_ring_from_sampler,
+    detect_lexer_format,
+)
 
 from .parser import GroebnerLexOrderPreprocessor
-
-
-def _build_source_ring(data_cfg: DictConfig):
-    """Reconstruct the source PolynomialRing used at generation time."""
-    sampler_cfg = dict(OmegaConf.to_container(data_cfg.sampler, resolve=True))
-    symbols = sampler_cfg.get("symbols", "x,y")
-    field_str = sampler_cfg.get("field_str", "QQ")
-    order = sampler_cfg.get("order", "degrevlex")
-
-    if field_str == "QQ":
-        field = QQ
-    elif field_str == "RR":
-        field = RR
-    elif field_str == "ZZ":
-        field = ZZ
-    elif field_str.startswith("GF"):
-        p = int(field_str[2:]) if field_str[2:].isdigit() else None
-        if not p:
-            raise ValueError(f"Unsupported field_str for GF: {field_str!r}")
-        field = GF(p)
-    else:
-        raise ValueError(f"Unsupported field_str: {field_str!r}")
-
-    names = [s.strip() for s in symbols.split(",")]
-    return PolynomialRing(field, names, order=order)
 
 
 def build_load_preprocessor(
@@ -82,8 +59,30 @@ def build_load_preprocessor(
         format_str is "raw" or "expanded" for logging.
     """
     lexer_format = detect_lexer_format(cfg.data.lexer_config)
+
+    # `lex` + `expanded` is currently unsupported: GroebnerLexOrderPreprocessor
+    # returns (str, str), but ExpandedFormLoadPreprocessor expects dict — they
+    # cannot be chained in that order. Stop early with a clear message rather
+    # than letting CALT raise a cryptic TypeError deep in the chain.
+    if training_order == "lex" and lexer_format == "expanded":
+        raise ValueError(
+            "Unsupported configuration: training_order='lex' combined with "
+            "lexer format='expanded'.\n"
+            "  Reason: GroebnerLexOrderPreprocessor returns (str, str) but "
+            "ExpandedFormLoadPreprocessor expects dict source. Chaining them "
+            "would crash at training time.\n"
+            "  Pick ONE of these instead:\n"
+            "    • training_order=lex      + lexer.yaml          (raw text)\n"
+            "    • training_order=degrevlex + lexer_expanded.yaml (C/E format)\n"
+            "    • training_order=degrevlex + lexer.yaml          (default)"
+        )
+
     needs_ring = (training_order == "lex") or (lexer_format == "expanded")
-    R_src = _build_source_ring(data_cfg) if (needs_ring and data_cfg is not None) else None
+    R_src = (
+        build_ring_from_sampler(data_cfg.sampler)
+        if (needs_ring and data_cfg is not None)
+        else None
+    )
     if needs_ring and R_src is None:
         raise ValueError(
             "Either training_order='lex' or lexer format='expanded' requires data_cfg "
@@ -166,34 +165,22 @@ def run_training(
     os.makedirs(save_dir, exist_ok=True)
     OmegaConf.save(cfg, os.path.join(save_dir, "train.yaml"))
 
-    # ---- Cache hierarchy ----
-    # 1. Pre-tokenized cache (input_ids on disk) → ZERO online tokenization.
-    # 2. Strings cache (post-load-preprocessor strings) → tokenization still online,
-    #    but SageMath/FGLM/Expanded skipped.
-    # 3. Raw .txt + load_preprocessor (original CALT behavior).
-    from calt.preprocess import (
-        maybe_use_pretokenized_cache,
-        maybe_use_processed_cache,
-    )
+    # Cache hierarchy (pretok → strings → raw fallback) lives in the CALT
+    # library now; build_io_pipeline_with_cache picks the most aggressive valid
+    # cache, wires load_preprocessor only on the raw path, and emits the
+    # cross-order diagnostic when nothing matches.
     from shared.user_postprocessor import user_postprocessor_hash_contribution
+
     hooks_hash = user_postprocessor_hash_contribution("groebner_basis")
 
     load_preprocessor, lexer_format = build_load_preprocessor(cfg, data_cfg, training_order)
-
-    used_pretok = maybe_use_pretokenized_cache(cfg, data_cfg, training_order, lexer_format, extra_hash_bytes=hooks_hash)
-    if used_pretok:
-        print(f"[run_training] using PRE-TOKENIZED cache (format={lexer_format}, order={training_order})")
-        io_pipeline = IOPipeline.from_config(cfg.data)
-    else:
-        used_strings = maybe_use_processed_cache(cfg, data_cfg, training_order, lexer_format, extra_hash_bytes=hooks_hash)
-        if used_strings:
-            print(f"[run_training] using strings cache (format={lexer_format}, order={training_order})")
-            io_pipeline = IOPipeline.from_config(cfg.data)
-        else:
-            io_pipeline = IOPipeline.from_config(cfg.data)
-            if load_preprocessor is not None:
-                io_pipeline.dataset_load_preprocessor = load_preprocessor
-            print(f"[run_training] no cache; lexer format={lexer_format}, training_order={training_order}")
+    io_pipeline, cache_kind = build_io_pipeline_with_cache(
+        cfg, data_cfg, training_order, lexer_format, load_preprocessor,
+        extra_hash_bytes=hooks_hash,
+    )
+    print(
+        f"[run_training] cache={cache_kind} (format={lexer_format}, order={training_order})"
+    )
 
     io_dict = io_pipeline.build()
 

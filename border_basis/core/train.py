@@ -26,43 +26,18 @@ import os
 
 import sage.all  # noqa: F401  # initialise Sage before any submodule
 from omegaconf import DictConfig, OmegaConf
-from sage.all import GF, QQ, RR, ZZ, PolynomialRing  # type: ignore
 
 from shared.calt_adapter import (
     ChainLoadPreprocessor,
     ExpandedFormLoadPreprocessor,
-    IOPipeline,
     ModelPipeline,
     TextToSageLoadPreprocessor,
     TrainerPipeline,
     apply_dryrun_settings,
+    build_io_pipeline_with_cache,
+    build_ring_from_sampler,
     detect_lexer_format,
 )
-
-
-def _build_source_ring(data_cfg: DictConfig):
-    """Reconstruct the source PolynomialRing used at generation time."""
-    sampler_cfg = dict(OmegaConf.to_container(data_cfg.sampler, resolve=True))
-    symbols = sampler_cfg.get("symbols", "x,y")
-    field_str = sampler_cfg.get("field_str", "GF7")
-    order = sampler_cfg.get("order", "degrevlex")
-
-    if field_str == "QQ":
-        field = QQ
-    elif field_str == "RR":
-        field = RR
-    elif field_str == "ZZ":
-        field = ZZ
-    elif field_str.startswith("GF"):
-        p = int(field_str[2:]) if field_str[2:].isdigit() else None
-        if not p:
-            raise ValueError(f"Unsupported field_str for GF: {field_str!r}")
-        field = GF(p)
-    else:
-        raise ValueError(f"Unsupported field_str: {field_str!r}")
-
-    names = [s.strip() for s in symbols.split(",")]
-    return PolynomialRing(field, names, order=order)
 
 
 def build_load_preprocessor(cfg: DictConfig, data_cfg: DictConfig | None):
@@ -83,7 +58,7 @@ def build_load_preprocessor(cfg: DictConfig, data_cfg: DictConfig | None):
     if lexer_format == "expanded":
         if data_cfg is None:
             raise ValueError("lexer format='expanded' requires data_cfg to rebuild the source ring.")
-        R_src = _build_source_ring(data_cfg)
+        R_src = build_ring_from_sampler(data_cfg.sampler)
         chain.append(TextToSageLoadPreprocessor(delimiter="|", ring=R_src))
         chain.append(ExpandedFormLoadPreprocessor(delimiter=" | "))
 
@@ -132,33 +107,20 @@ def run_training(cfg: DictConfig, data_cfg: DictConfig | None = None, dryrun: bo
     os.makedirs(save_dir, exist_ok=True)
     OmegaConf.save(cfg, os.path.join(save_dir, "train.yaml"))
 
-    # Cache hierarchy: pretok > strings > raw. Mirrors groebner_basis/core/train.py.
+    # Cache hierarchy (pretok → strings → raw) is handled by the CALT library.
     # `training_order` is hard-coded "border" for border_basis (there is no FGLM
     # variant) so we use that as the hash discriminator.
-    from calt.preprocess import (
-        maybe_use_pretokenized_cache,
-        maybe_use_processed_cache,
-    )
     from shared.user_postprocessor import user_postprocessor_hash_contribution
+
     hooks_hash = user_postprocessor_hash_contribution("border_basis")
 
     load_preprocessor, lexer_format = build_load_preprocessor(cfg, data_cfg)
     training_order = "border"  # constant for this task
-
-    used_pretok = maybe_use_pretokenized_cache(cfg, data_cfg, training_order, lexer_format, extra_hash_bytes=hooks_hash)
-    if used_pretok:
-        print(f"[run_training] using PRE-TOKENIZED cache (format={lexer_format})")
-        io_pipeline = IOPipeline.from_config(cfg.data)
-    else:
-        used_strings = maybe_use_processed_cache(cfg, data_cfg, training_order, lexer_format, extra_hash_bytes=hooks_hash)
-        if used_strings:
-            print(f"[run_training] using strings cache (format={lexer_format})")
-            io_pipeline = IOPipeline.from_config(cfg.data)
-        else:
-            io_pipeline = IOPipeline.from_config(cfg.data)
-            if load_preprocessor is not None:
-                io_pipeline.dataset_load_preprocessor = load_preprocessor
-            print(f"[run_training] no cache; lexer format={lexer_format}")
+    io_pipeline, cache_kind = build_io_pipeline_with_cache(
+        cfg, data_cfg, training_order, lexer_format, load_preprocessor,
+        extra_hash_bytes=hooks_hash,
+    )
+    print(f"[run_training] cache={cache_kind} (format={lexer_format})")
 
     io_dict = io_pipeline.build()
     model = ModelPipeline.from_io_dict(cfg.model, io_dict).build()
