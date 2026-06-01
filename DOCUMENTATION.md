@@ -25,6 +25,8 @@
 12. [Troubleshooting](#12-troubleshooting)
 13. [Glossary](#13-glossary)
 14. [Extensions: tokenization format, offline preprocessing, user hooks](#14-extensions-tokenization-format-offline-preprocessing-user-hooks)
+    - 14.5 [User-friendly CLI tools (`run.sh`, `hooks.py`, `inspect_cache.py`)](#145--user-friendly-cli-tools)
+    - 14.6 [Built-in safety checks](#146--built-in-safety-checks-added-in-this-codebase)
 
 ---
 
@@ -837,7 +839,72 @@ upstream `HiroshiKERA/calt` is untouched.
 A backup of the patched site-packages and the baseline (pre-modification) state
 both exist under `/data/t-maxime/backups/`.
 
-### 14.5 — Summary of files added/modified
+### 14.5 — User-friendly CLI tools
+
+To reduce the friction of using the three extensions, the codebase ships three
+small helpers (no flag-juggling, no Python edits needed for the common cases):
+
+#### `bash <task>/experiments/<exp>/scripts/run.sh` — all-in-one workflow
+
+Runs `generate.py` → `preprocess.py` → `train.py` → `evaluate.py` in one
+command, with consistent flags everywhere. The script keeps the `--order` and
+`--lexer` choice synchronized across all three Python scripts, so you cannot
+forget to pass `--training_order` to `train.py` after building a cache for `lex`.
+
+```bash
+cd groebner_basis/experiments/toy/scripts
+bash run.sh                                  # defaults: degrevlex, raw, with cache
+bash run.sh --order lex                      # full lex run, cache + training matched
+bash run.sh --order lex --lexer expanded     # combine lex + C/E expanded vocab
+bash run.sh --no-preprocess --dryrun         # skip cache, dryrun smoke test
+bash run.sh --help                           # full usage
+```
+
+#### `python shared/hooks.py` — manage user hooks without copying files
+
+Instead of `cp shared/base_postprocessor.py.example shared/base_postprocessor.py`
+and remembering all paths, use:
+
+```bash
+python shared/hooks.py list                  # see what's active vs template-only
+python shared/hooks.py enable base           # copy template → live for base hook
+python shared/hooks.py enable groebner       # same for the per-task slot
+python shared/hooks.py disable base          # remove the live file
+```
+
+#### `python shared/inspect_cache.py` — inspect what's on disk
+
+Scans the repo for all `processed_*` directories and prints a human-readable
+summary (kind, order/format, sample counts, creation time, hash). Useful before
+launching a long training, to confirm the right cache will be picked up.
+
+```bash
+python shared/inspect_cache.py                            # all caches in repo
+python shared/inspect_cache.py groebner_basis/.../data/QQ # one specific data dir
+```
+
+### 14.6 — Built-in safety checks (added in this codebase)
+
+Before silently going wrong, the codebase emits clear errors / warnings:
+
+- **`shared/calt_adapter.detect_lexer_format`** — if `train.yaml::data.lexer_config`
+  points to a file that does not exist, you get a `FileNotFoundError` listing
+  the lexer files actually present in that directory (instead of a generic
+  CALT exception three frames deep).
+
+- **`shared/user_postprocessor.get_user_postprocessors`** — if a hook file
+  exists but the function is misnamed / has the wrong signature / returns the
+  wrong type / crashes on a dummy `("dummy_input", "dummy_target")` call,
+  you get a specific `AttributeError`/`TypeError`/`RuntimeError` explaining
+  the expected shape (instead of a crash deep inside the DataLoader at
+  training time).
+
+- **`<task>/core/train.py::run_training`** — if you launch `train.py
+  --training_order lex` but only a cache for `degrevlex` exists (or vice versa),
+  you get a `⚠` warning suggesting either to re-run with the matching flag,
+  or to build the cache for the requested order.
+
+### 14.7 — Summary of files added/modified
 
 ```
 NEW files (10):

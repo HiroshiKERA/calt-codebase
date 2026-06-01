@@ -59,14 +59,66 @@ PostFn = Callable[[str, str], tuple[str, str]]
 # --------------------------------------------------------------------------- #
 
 def _try_import_postprocess(module_name: str) -> PostFn | None:
-    """Import `<module_name>.postprocess` if it exists; return None otherwise."""
+    """Import `<module_name>.postprocess` if it exists; return None otherwise.
+
+    Raises a clear error if the file exists but the function is malformed
+    (wrong name, wrong signature, wrong return type) instead of silently
+    skipping the hook.
+    """
     try:
         mod = importlib.import_module(module_name)
     except ModuleNotFoundError:
         return None
     fn = getattr(mod, "postprocess", None)
     if fn is None or not callable(fn):
-        return None
+        raise AttributeError(
+            f"Hook file `{module_name}` exists but does not expose a callable "
+            f"named `postprocess`.\n"
+            f"  Required signature:\n"
+            f"      def postprocess(input_text: str, target_text: str) -> tuple[str, str]:\n"
+            f"          return input_text, target_text\n"
+            f"  Did you typo the function name? It MUST be exactly `postprocess`."
+        )
+
+    try:
+        sig = inspect.signature(fn)
+    except (TypeError, ValueError):
+        return fn  # builtin/unanalyzable; trust the user.
+    params = [
+        p for p in sig.parameters.values()
+        if p.kind in (inspect.Parameter.POSITIONAL_ONLY, inspect.Parameter.POSITIONAL_OR_KEYWORD)
+    ]
+    if len(params) != 2:
+        raise TypeError(
+            f"Hook `{module_name}.postprocess` must take exactly 2 positional "
+            f"arguments `(input_text, target_text)`, got {len(params)}: "
+            f"{[p.name for p in params]}.\n"
+            f"  Required signature:\n"
+            f"      def postprocess(input_text: str, target_text: str) -> tuple[str, str]:"
+        )
+
+    # Dummy call: catches runtime errors + validates return type early.
+    try:
+        result = fn("dummy_input", "dummy_target")
+    except Exception as e:
+        raise RuntimeError(
+            f"Hook `{module_name}.postprocess` crashed on dummy input "
+            f"('dummy_input', 'dummy_target'):\n"
+            f"  {type(e).__name__}: {e}\n"
+            f"  Make sure your function handles any (str, str) input without crashing."
+        ) from e
+    if not (
+        isinstance(result, tuple)
+        and len(result) == 2
+        and isinstance(result[0], str)
+        and isinstance(result[1], str)
+    ):
+        raise TypeError(
+            f"Hook `{module_name}.postprocess` must return `tuple[str, str]`, "
+            f"got {type(result).__name__} = {result!r}.\n"
+            f"  Fix the return statement:\n"
+            f"      return input_text, target_text   # both strings, in a 2-tuple"
+        )
     return fn
 
 

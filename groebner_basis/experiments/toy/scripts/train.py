@@ -47,10 +47,12 @@ def main(
     cfg = OmegaConf.load(cfg_path)
     set_seed(cfg.train.seed)
 
-    data_cfg = None
-    if training_order == "lex":
-        data_path = Path(data_config_path) if data_config_path else config_dir(__file__) / "data.yaml"
-        data_cfg = OmegaConf.load(data_path)
+    # Always load data.yaml when it exists. The sampler dict participates in
+    # the cache hash (compute_*_hash), so it must be passed identically to
+    # preprocess.py and train.py — otherwise hashes mismatch and a freshly
+    # built cache is detected as STALE on the very next training run.
+    data_path = Path(data_config_path) if data_config_path else config_dir(__file__) / "data.yaml"
+    data_cfg = OmegaConf.load(data_path) if data_path.exists() else None
 
     success = run_training(cfg, data_cfg=data_cfg, training_order=training_order, dryrun=dryrun)
     print(f"Success rate: {100 * success:.1f}%")
