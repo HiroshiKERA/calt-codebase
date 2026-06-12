@@ -1,0 +1,27 @@
+# Border basis task (toy): G=[g1,g2,g3] over GF(7)[x,y] -> border basis of (G)
+
+sampler:
+  symbols: "x,y"
+  field_str: "GF7"
+  order: "degrevlex"
+  max_num_terms: 4
+  max_degree: 3
+  min_degree: 1
+  max_coeff: 0
+  degree_sampling: "uniform"
+  term_sampling: "uniform"
+
+problem_generator:
+  num_polynomials: 3
+
+dataset:
+  save_dir: "../data/GF7"
+  num_train_samples: 1000
+  num_test_samples: 200
+  batch_size: 100
+  n_jobs: 4
+  root_seed: 42
+  verbose: true
+  backend: "sagemath"
+  save_text: true
+  save_json: false

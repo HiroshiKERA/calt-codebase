@@ -1,0 +1,27 @@
+# Groebner scaling: larger dataset and harder polynomials than toy/.
+
+sampler:
+  symbols: "x,y"
+  field_str: "QQ"
+  order: "degrevlex"
+  max_num_terms: 6
+  max_degree: 5
+  min_degree: 1
+  max_coeff: 5
+  degree_sampling: "uniform"
+  term_sampling: "uniform"
+
+problem_generator:
+  num_polynomials: 2
+
+dataset:
+  save_dir: "../data/QQ"
+  num_train_samples: 50000
+  num_test_samples: 1000
+  batch_size: 1000
+  n_jobs: 8
+  root_seed: 42
+  verbose: true
+  backend: "sagemath"
+  save_text: true
+  save_json: false

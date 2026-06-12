@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>calt-codebase — AI Context Document</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --sidebar-bg: #f5f6f8;
+    --border: #e1e4e8;
+    --text: #24292f;
+    --muted: #57606a;
+    --accent: #4f46e5;
+    --accent-soft: #eef0fd;
+    --code-bg: #f6f8fa;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--text);
+    background: var(--bg);
+    line-height: 1.6;
+  }
+  /* ---- layout ---- */
+  .sidebar {
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    width: 300px;
+    background: var(--sidebar-bg);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    padding: 20px 14px 60px;
+  }
+  .content {
+    margin-left: 300px;
+    padding: 40px 56px 120px;
+    max-width: 920px;
+  }
+  /* ---- sidebar header + filter ---- */
+  .sidebar h2.brand {
+    font-size: 15px;
+    margin: 4px 8px 14px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .04em;
+  }
+  .filter {
+    width: 100%;
+    padding: 8px 10px;
+    margin-bottom: 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 14px;
+    background: #fff;
+  }
+  .filter:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+  /* ---- TOC (python-markdown emits nested <ul>) ---- */
+  .toc ul { list-style: none; margin: 0; padding-left: 0; }
+  .toc > ul > li > a { font-weight: 600; }
+  .toc ul ul { padding-left: 14px; border-left: 1px solid var(--border); margin-left: 8px; }
+  .toc li { margin: 1px 0; }
+  .toc a {
+    display: block;
+    padding: 5px 10px;
+    border-radius: 6px;
+    color: var(--text);
+    text-decoration: none;
+    font-size: 13.5px;
+  }
+  .toc a:hover { background: #e9ebee; }
+  .toc a.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+  .toc li.hidden { display: none; }
+  /* ---- content typography ---- */
+  .content h1 { font-size: 30px; padding-bottom: .3em; border-bottom: 2px solid var(--border); }
+  .content h2 { font-size: 23px; margin-top: 2.2em; padding-bottom: .25em; border-bottom: 1px solid var(--border); scroll-margin-top: 20px; }
+  .content h3 { font-size: 18px; margin-top: 1.6em; scroll-margin-top: 20px; }
+  .content a { color: var(--accent); }
+  .content table { border-collapse: collapse; width: 100%; margin: 1.2em 0; font-size: 14px; }
+  .content th, .content td { border: 1px solid var(--border); padding: 7px 12px; text-align: left; }
+  .content th { background: var(--code-bg); }
+  .content tr:nth-child(even) { background: #fafbfc; }
+  .content code {
+    background: var(--code-bg);
+    padding: .15em .4em;
+    border-radius: 5px;
+    font-size: 85%;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  }
+  .content pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    line-height: 1.45;
+  }
+  .content pre code { background: none; padding: 0; font-size: 13px; }
+  .content blockquote {
+    border-left: 4px solid var(--accent);
+    background: var(--accent-soft);
+    margin: 1.2em 0;
+    padding: .6em 1em;
+    color: var(--muted);
+    border-radius: 0 8px 8px 0;
+  }
+  .content blockquote p { margin: .3em 0; }
+  hr { border: none; border-top: 1px solid var(--border); margin: 2.4em 0; }
+  /* ---- responsive ---- */
+  .menu-toggle { display: none; }
+  @media (max-width: 860px) {
+    .sidebar { transform: translateX(-100%); transition: transform .2s; z-index: 20; }
+    .sidebar.open { transform: translateX(0); }
+    .content { margin-left: 0; padding: 70px 20px 80px; }
+    .menu-toggle {
+      display: block; position: fixed; top: 12px; left: 12px; z-index: 30;
+      background: var(--accent); color: #fff; border: none; border-radius: 8px;
+      padding: 8px 12px; font-size: 16px; cursor: pointer;
+    }
+  }
+</style>
+</head>
+<body>
+  <button class="menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+  <nav class="sidebar">
+    <h2 class="brand">calt-codebase — AI Context Document</h2>
+    <input class="filter" type="text" placeholder="Filter sections…" oninput="filterToc(this.value)">
+    <div class="toc">
+      <div class="toc">
+<ul>
+<li><a href="#0-quick-facts">0. Quick facts</a></li>
+<li><a href="#1-directory-tree-real">1. Directory tree (real)</a></li>
+<li><a href="#2-the-per-task-core-contract">2. The per-task core/ contract</a><ul>
+<li><a href="#21-coregeneratorpy-class-generator-with-__call__seed">2.1 core/generator.py — class …Generator with __call__(seed)</a></li>
+<li><a href="#22-coreformatterpy">2.2 core/formatter.py</a></li>
+<li><a href="#23-coreparserpy-optional-load-time-preprocessor">2.3 core/parser.py — optional load-time preprocessor</a></li>
+<li><a href="#24-coremetricspy">2.4 core/metrics.py</a></li>
+<li><a href="#25-coretrainpy-run_training">2.5 core/train.py — run_training(...)</a></li>
+</ul>
+</li>
+<li><a href="#3-shared-house-api-exact">3. shared/ — house API (exact)</a><ul>
+<li><a href="#31-sharedseedpy">3.1 shared/seed.py</a></li>
+<li><a href="#32-sharedconfigpy">3.2 shared/config.py</a></li>
+<li><a href="#33-sharedpathspy">3.3 shared/paths.py</a></li>
+<li><a href="#34-sharedcalt_adapterpy">3.4 shared/calt_adapter.py</a></li>
+<li><a href="#35-sharedloggingpy">3.5 shared/logging.py</a></li>
+<li><a href="#36-sharedplottingpy">3.6 shared/plotting.py</a></li>
+</ul>
+</li>
+<li><a href="#4-how-calt-x-is-used-here-touchpoints">4. How calt-x is used here (touchpoints)</a></li>
+<li><a href="#5-lexeryaml-schema-real">5. lexer.yaml schema (real)</a></li>
+<li><a href="#6-config-schemas-real">6. Config schemas (real)</a><ul>
+<li><a href="#datayaml">data.yaml</a></li>
+<li><a href="#trainyaml">train.yaml</a></li>
+</ul>
+</li>
+<li><a href="#7-data-format-and-on-disk-outputs">7. Data format and on-disk outputs</a></li>
+<li><a href="#8-the-three-tasks-specifics">8. The three tasks (specifics)</a></li>
+<li><a href="#9-templatestask_template">9. templates/task_template/</a></li>
+<li><a href="#10-known-issues-gotchas-and-conventions">10. Known issues, gotchas, and conventions</a></li>
+<li><a href="#11-end-to-end-data-flow">11. End-to-end data flow</a></li>
+</ul>
+</div>
+
+    </div>
+  </nav>
+  <main class="content">
+    <h1 id="calt-codebase-ai-context-document">calt-codebase — AI Context Document</h1>
+<blockquote>
+<p>This document is for AI assistants answering questions about <strong>this repository</strong>
+(<code>calt-codebase</code>, an experiment repo built on the <code>calt-x</code> library). It contains
+the real directory tree, the house API (<code>shared/</code>), the per-task <code>core/</code>
+contract, the exact way <code>calt-x</code> is used here, the config schemas, and known
+gotchas. Read this file to answer "how does this code work" questions.</p>
+<p>For a beginner-friendly walkthrough see <a href="index.html">DOCUMENTATION.md</a>.</p>
+</blockquote>
+<hr />
+<h2 id="0-quick-facts">0. Quick facts</h2>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Repo role</td>
+<td>Experiments for learning algebraic computations with Transformers</td>
+</tr>
+<tr>
+<td>Built on</td>
+<td><code>calt-x</code> library — provides the 4 pipelines</td>
+</tr>
+<tr>
+<td>calt-x install</td>
+<td>pip: <code>pip install calt-x</code> · conda: <code>conda install calt-x</code> (conda-forge)</td>
+</tr>
+<tr>
+<td>conda-forge feedstock</td>
+<td><a href="https://github.com/conda-forge/calt-x-feedstock">https://github.com/conda-forge/calt-x-feedstock</a> (PyPI release → bot PR → merge if deps unchanged)</td>
+</tr>
+<tr>
+<td>Package name</td>
+<td><code>calt-experiments</code> (see <code>pyproject.toml</code>), version <code>0.1.0</code></td>
+</tr>
+<tr>
+<td>Python</td>
+<td><code>&gt;=3.10,&lt;3.13</code></td>
+</tr>
+<tr>
+<td>Declared deps</td>
+<td><code>calt-x&gt;=0.1.0</code>, <code>omegaconf&gt;=2.3.0</code>, <code>matplotlib&gt;=3.7.0</code>, <code>click&gt;=8.0.0</code></td>
+</tr>
+<tr>
+<td>Optional dep</td>
+<td><code>wandb</code> (used by <code>shared/logging.py</code>; disable via <code>no_wandb</code>/<code>WANDB_MODE=disabled</code>)</td>
+</tr>
+<tr>
+<td>Heavy transitive deps</td>
+<td>PyTorch, HuggingFace Transformers, <strong>SageMath</strong> (polynomial tasks)</td>
+</tr>
+<tr>
+<td>Tasks</td>
+<td><code>parity</code>, <code>groebner_basis</code>, <code>border_basis</code></td>
+</tr>
+<tr>
+<td>calt-x library source</td>
+<td><a href="https://github.com/HiroshiKERA/calt">https://github.com/HiroshiKERA/calt</a></td>
+</tr>
+<tr>
+<td>Papers</td>
+<td>CALT: arXiv:2506.08600 · Border basis: arXiv:2505.23696</td>
+</tr>
+<tr>
+<td>Experiments mirror</td>
+<td><code>issac2026_experiments/*</code> on <code>HiroshiKERA/calt@experiment/issac2026</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Organizing principle</strong>: each top-level directory is <strong>one task</strong> (one math
+problem). A task has <code>core/</code> (reusable logic) and <code>experiments/&lt;name&gt;/</code> (configs +
+scripts). Cross-task utilities live in <code>shared/</code>.</p>
+<blockquote>
+<p>Note for older docs: this repo does <strong>not</strong> use the "C/E" (Coefficient/Exponent)
+token format, an <code>examples/</code> or <code>src/</code> directory, a <code>CustomTrainer</code> file, an
+<code>environment.yml</code>, or Kaggle remote execution. Those belonged to a previous
+layout. Tokenization here is the polynomial's printed string + per-digit numbers.</p>
+</blockquote>
+<hr />
+<h2 id="1-directory-tree-real">1. Directory tree (real)</h2>
+<pre><code>calt-codebase/
+├── pyproject.toml              # name=calt-experiments, ruff line-length=100
+├── README.md
+├── DOCUMENTATION.md
+├── AI_CONTEXT.md
+├── .gitignore                  # ignores **/outputs/ **/data/ **/results/ **/wandb/
+│
+├── shared/                     # utilities imported by every task
+│   ├── __init__.py             # exports set_seed, load_config, paths.*, plotting.*
+│   ├── seed.py                 # set_seed()
+│   ├── config.py               # load_config(), save_config()
+│   ├── paths.py                # experiment_dir/data_dir/output_dir/config_dir/codebase_root
+│   ├── calt_adapter.py         # re-exports 4 pipelines + run_standard_training()
+│   ├── logging.py              # CustomLoggingCallback
+│   ├── plotting.py             # load_eval_results, show_examples, showcase, plot_success_rate
+│   └── README.md
+│
+├── parity/                     # task: sign of a permutation
+│   ├── core/{generator,formatter,parser,metrics,train}.py
+│   ├── experiments/toy/{configs,scripts}
+│   ├── experiments/scaling/{configs,scripts,data_n5,data_n7,data_n10}
+│   ├── experiments/ablation/{configs,scripts}
+│   └── notebooks/analysis.ipynb
+│
+├── groebner_basis/             # task: Gröbner basis of ⟨f1,f2⟩
+│   ├── core/{generator,formatter,parser,metrics,train}.py
+│   ├── experiments/{toy,scaling,ablation}/{configs,scripts}
+│   └── notebooks/analysis.ipynb
+│
+├── border_basis/               # task: border basis of a 0-dim ideal
+│   ├── core/{generator,formatter,parser,metrics,train,algorithm}.py   # +algorithm.py
+│   ├── experiments/{toy,finite_field,ablation}/{configs,scripts}
+│   └── notebooks/analysis.ipynb
+│
+└── templates/task_template/    # scaffold for a new task (same layout, TODOs)
+</code></pre>
+<p><code>experiments/scaling/data_n*/</code> contain committed <code>train_raw.txt</code>/<code>test_raw.txt</code>
+and <code>*_stats.yaml</code> for the parity scaling runs; most other <code>data/</code>, <code>outputs/</code>,
+<code>results/</code> dirs are git-ignored.</p>
+<hr />
+<h2 id="2-the-per-task-core-contract">2. The per-task <code>core/</code> contract</h2>
+<p>Every task exposes the same five modules. Signatures below are the real ones.</p>
+<h3 id="21-coregeneratorpy-class-generator-with-__call__seed">2.1 <code>core/generator.py</code> — <code>class …Generator</code> with <code>__call__(seed)</code></h3>
+<p>A <strong>callable class</strong>, not a function. Constructed with task params, then passed to
+<code>DatasetPipeline(instance_generator=...)</code>, which calls it once per seed.</p>
+<pre><code class="language-python">class GroebnerGenerator:
+    def __init__(self, sampler: PolynomialSampler, num_polynomials: int = 2): ...
+    def __call__(self, seed: int) -&gt; tuple[list, list]:
+        randstate.set_random_seed(seed)
+        ...
+        return F, G          # (problem, answer); lists are joined with ' | ' by CALT
+</code></pre>
+<pre><code class="language-python">class ParityGenerator:
+    def __init__(self, n: int = 5): ...
+    def __call__(self, seed: int) -&gt; tuple[str, str]:
+        random.seed(seed)
+        ...
+        return &quot;2 0 1&quot;, &quot;+1&quot;   # plain strings
+</code></pre>
+<pre><code class="language-python">class BorderBasisGenerator:
+    def __init__(self, sampler, num_polynomials=3,
+                 use_fast_elimination=True, lstabilization_only=False): ...
+    def __call__(self, seed: int) -&gt; tuple[list, list]: ...
+</code></pre>
+<p><strong>Contract</strong>: one arg <code>seed: int</code>; deterministic; returns <code>(problem, answer)</code>.
+Each side may be <code>str</code>, a <code>list</code> (CALT joins via <code>str()</code> + <code>' | '</code>), or a SageMath
+object (<code>str()</code> called automatically). Generators retry up to 100 seeds to skip
+degenerate samples (large-rational rejection for QQ Gröbner; non-0-dim ideals for
+border basis).</p>
+<h3 id="22-coreformatterpy">2.2 <code>core/formatter.py</code></h3>
+<p><code>format_input(problem) -&gt; str</code> and <code>format_target(answer) -&gt; str</code>. Used for
+tests/REPL/parsers — <strong>not</strong> by <code>DatasetPipeline</code> (which <code>str()</code>s objects itself).
+SEP is <code>" | "</code>.</p>
+<h3 id="23-coreparserpy-optional-load-time-preprocessor">2.3 <code>core/parser.py</code> — optional load-time preprocessor</h3>
+<p>For plain-text tasks (<code>parity</code>, default <code>groebner</code>/<code>border</code>) this is empty/reserved.
+The one real implementation is the Gröbner lex variant:</p>
+<pre><code class="language-python">class GroebnerLexOrderPreprocessor:
+    def __init__(self, ring_src, delimiter: str = &quot;|&quot;): ...
+    def process_sample(self, source: dict[str, Any]) -&gt; tuple[str, str]:
+        # rebuild F in a lex ring, recompute the lex Gröbner basis with
+        # I_lex.groebner_basis(&quot;libsingular:std&quot;); return (input_text, target_text)
+</code></pre>
+<p>A load preprocessor must implement <code>process_sample(source) -&gt; (input_text, target_text)</code>
+and is attached via <code>io_pipeline.dataset_load_preprocessor = &lt;obj&gt;</code>.</p>
+<h3 id="24-coremetricspy">2.4 <code>core/metrics.py</code></h3>
+<pre><code class="language-python">def success_rate(predictions: list[str], targets: list[str]) -&gt; float:
+    # exact match after .strip(); fraction correct
+</code></pre>
+<p>The template also defines <code>instance_stats(problem, answer) -&gt; dict</code> (per-sample
+stats for <code>DatasetPipeline</code>'s <code>statistics_calculator</code>); the concrete tasks rely on
+CALT's default stats instead.</p>
+<h3 id="25-coretrainpy-run_training">2.5 <code>core/train.py</code> — <code>run_training(...)</code></h3>
+<p>The function the <code>scripts/train.py</code> entry point calls. Drives the 4 CALT pipelines.</p>
+<pre><code class="language-python"># parity / border (simple text):
+def run_training(cfg: DictConfig, dryrun: bool = False) -&gt; float
+
+# groebner (supports the lex variant):
+def run_training(cfg, data_cfg=None, training_order=&quot;degrevlex&quot;, dryrun=False) -&gt; float
+</code></pre>
+<p>Body (all tasks share this shape):</p>
+<pre><code class="language-python">if dryrun: apply_dryrun_settings(cfg)
+save_dir = cfg.train.get(&quot;save_dir&quot;, cfg.train.get(&quot;output_dir&quot;, &quot;./results&quot;))
+os.makedirs(save_dir, exist_ok=True)
+OmegaConf.save(cfg, os.path.join(save_dir, &quot;train.yaml&quot;))
+
+io_pipeline = IOPipeline.from_config(cfg.data)
+# (groebner lex only) io_pipeline.dataset_load_preprocessor = ChainLoadPreprocessor(...)
+io_dict = io_pipeline.build()
+model = ModelPipeline.from_io_dict(cfg.model, io_dict).build()
+trainer_pipeline = TrainerPipeline.from_io_dict(cfg.train, model, io_dict).build()
+trainer_pipeline.train()
+trainer_pipeline.save_model()
+return trainer_pipeline.evaluate_and_save_generation()   # float success rate
+</code></pre>
+<p>Gröbner's <code>run_training</code> additionally suffixes <code>save_dir</code> and <code>wandb.name</code> with
+<code>_{training_order}</code> and, for <code>lex</code>, builds the source ring from <code>data_cfg.sampler</code>
+and wires <code>ChainLoadPreprocessor(TextToSageLoadPreprocessor, GroebnerLexOrderPreprocessor)</code>.</p>
+<hr />
+<h2 id="3-shared-house-api-exact">3. <code>shared/</code> — house API (exact)</h2>
+<h3 id="31-sharedseedpy">3.1 <code>shared/seed.py</code></h3>
+<pre><code class="language-python">def set_seed(seed: int = 42) -&gt; None
+# sets PYTHONHASHSEED, random, numpy, torch (+cuda), cudnn deterministic,
+# transformers.set_seed, CUBLAS_WORKSPACE_CONFIG=:4096:8, torch.use_deterministic_algorithms(True)
+</code></pre>
+<h3 id="32-sharedconfigpy">3.2 <code>shared/config.py</code></h3>
+<pre><code class="language-python">def load_config(path, overrides: list[str] | None = None) -&gt; DictConfig
+# overrides are OmegaConf dotlist, e.g. [&quot;train.batch_size=32&quot;]
+def save_config(cfg: DictConfig, path) -&gt; None
+</code></pre>
+<h3 id="33-sharedpathspy">3.3 <code>shared/paths.py</code></h3>
+<p>All take <code>__file__</code> of a script at <code>&lt;task&gt;/experiments/&lt;exp&gt;/scripts/&lt;file&gt;.py</code>.</p>
+<pre><code class="language-python">experiment_dir(f) -&gt; Path   # &lt;task&gt;/experiments/&lt;exp&gt;/
+data_dir(f)       -&gt; .../data
+output_dir(f)     -&gt; .../outputs
+config_dir(f)     -&gt; .../configs
+codebase_root(f)  -&gt; Path(f).resolve().parents[4]   # repo root
+</code></pre>
+<h3 id="34-sharedcalt_adapterpy">3.4 <code>shared/calt_adapter.py</code></h3>
+<p>Re-exports <code>DatasetPipeline</code>, <code>IOPipeline</code>, <code>ModelPipeline</code>, <code>TrainerPipeline</code>,
+<code>apply_dryrun_settings</code>. Plus:</p>
+<pre><code class="language-python">def run_standard_training(cfg, load_preprocessor=None, dryrun=False) -&gt; float
+# one-call train→eval for tasks needing no custom Trainer; mirrors core/train.py.
+</code></pre>
+<h3 id="35-sharedloggingpy">3.5 <code>shared/logging.py</code></h3>
+<pre><code class="language-python">class CustomLoggingCallback(TrainerCallback):
+    def on_log(self, args, state, control, model=None, **kwargs)
+    # logs train/avg_param_norm, train/gpu_memory_used_MB, _reserved_MB to wandb
+# attach: trainer_pipeline.trainer.add_callback(CustomLoggingCallback())
+</code></pre>
+<h3 id="36-sharedplottingpy">3.6 <code>shared/plotting.py</code></h3>
+<pre><code class="language-python">def load_eval_results(results_dir) -&gt; tuple[list[str], list[str]]
+# resolves &lt;dir&gt;/eval_results.json, else latest eval_results/step_*.json;
+# delegates to calt.io.visualization.comparison_vis.load_eval_results
+
+def show_examples(generated, references, n=5, successes=True) -&gt; None
+# prints up to n matching (successes=True) or mismatching cases — used by every
+# experiments/*/scripts/evaluate.py
+
+def showcase(dataset, success_cases=True, num_show=5, eval_results_path=None,
+             results_dir=&quot;results&quot;) -&gt; None
+# decodes via dataset.preprocessor.decode(); port of the official demo helper
+
+def plot_success_rate(results_dir, ax=None) -&gt; plt.Axes
+# success rate vs step from eval_results/step_*.json
+</code></pre>
+<p><code>shared/__init__.py</code> exports: <code>set_seed, load_config, experiment_dir, data_dir,
+output_dir, config_dir, showcase, show_examples, load_eval_results, plot_success_rate</code>.</p>
+<blockquote>
+<p>Historical bug (now fixed): <code>evaluate.py</code> files import <code>show_examples</code>, which
+previously did not exist in <code>plotting.py</code> (only <code>showcase</code>). <code>show_examples</code> is
+now defined and exported.</p>
+</blockquote>
+<hr />
+<h2 id="4-how-calt-x-is-used-here-touchpoints">4. How <code>calt-x</code> is used here (touchpoints)</h2>
+<p>This repo treats <code>calt-x</code> as a black box behind four pipelines. The exact imports
+and call sites used:</p>
+<pre><code class="language-python"># dataset
+from calt.dataset import DatasetPipeline
+from calt.dataset.sagemath.utils.polynomial_sampler import PolynomialSampler
+
+sampler = PolynomialSampler(**sampler_cfg)        # see §6 for sampler_cfg keys
+sampler.get_ring()                                 # → SageMath PolynomialRing
+sampler.sample(num_samples=k)                      # → list of polynomials
+DatasetPipeline.from_config(cfg.dataset, instance_generator=generator).run()
+
+# io
+from calt.io import IOPipeline, ChainLoadPreprocessor, TextToSageLoadPreprocessor
+io = IOPipeline.from_config(cfg.data)
+io.dataset_load_preprocessor = &lt;obj with process_sample&gt;   # optional
+io_dict = io.build()        # keys: tokenizer, train_dataset, test_dataset, data_collator
+
+# models
+from calt.models import ModelPipeline
+model = ModelPipeline.from_io_dict(cfg.model, io_dict).build()   # BART enc-dec
+
+# trainer
+from calt.trainer import TrainerPipeline, apply_dryrun_settings
+tp = TrainerPipeline.from_io_dict(cfg.train, model, io_dict).build()
+tp.train(); tp.save_model()
+rate = tp.evaluate_and_save_generation()           # float exact-match rate
+tp.trainer                                          # underlying HF Trainer (add_callback, …)
+
+# eval result loading
+from calt.io.visualization.comparison_vis import load_eval_results
+</code></pre>
+<p><code>apply_dryrun_settings(cfg)</code> mutates the config in place to reduce epochs/data.
+Exact internal signatures of these classes live in the installed <code>calt</code> package —
+verify against <code>pip show calt-x</code> / the library source rather than assuming, as the
+version is only pinned <code>&gt;=0.1.0</code>.</p>
+<hr />
+<h2 id="5-lexeryaml-schema-real">5. <code>lexer.yaml</code> schema (real)</h2>
+<pre><code class="language-yaml">vocab:
+  range:
+    numbers: [&quot;&quot;, min, max]    # [prefix, min, max] → number tokens; prefix usually &quot;&quot;
+    # extra named ranges allowed, e.g. signed: [&quot;&quot;, -1, -1]
+  misc: [&quot;+&quot;, &quot;-&quot;, &quot;*&quot;, &quot;^&quot;, &quot;x&quot;, &quot;y&quot;, &quot;|&quot;, &quot;/&quot;]   # literal operator/variable tokens
+  special_tokens: {}
+  flags:
+    include_base_vocab: true
+    include_base_special_tokens: true    # adds &lt;s&gt;, &lt;/s&gt;, [PAD], [UNK], [CLS], [SEP]
+
+number_policy:
+  attach_sign: true     # &quot;-3&quot; one token vs &quot;- 3&quot; two tokens
+  digit_group: 1        # 1 = each digit its own token; 0 = whole numbers
+  allow_float: false
+
+strict: true            # raise on unknown token
+include_base_vocab: true
+</code></pre>
+<p><strong>Polynomial tasks</strong> (<code>groebner</code>, <code>border</code>): <code>digit_group: 1</code>, misc includes
+<code>x y ^ * + - |</code> (and <code>/</code> for QQ). Digit-level tokenization → any integer size.
+<strong>Parity</strong>: <code>digit_group: 0</code>, <code>numbers: ["", 0, 20]</code>, misc <code>["+1"]</code>,
+<code>signed: ["", -1, -1]</code>, <code>strict: false</code>.</p>
+<hr />
+<h2 id="6-config-schemas-real">6. Config schemas (real)</h2>
+<h3 id="datayaml"><code>data.yaml</code></h3>
+<pre><code class="language-yaml">sampler:                 # polynomial tasks only (forwarded to PolynomialSampler)
+  symbols: &quot;x,y&quot;
+  field_str: &quot;QQ&quot;        # QQ | ZZ | RR | GF&lt;p&gt; (e.g. GF7, GF11)
+  order: &quot;degrevlex&quot;
+  max_num_terms: 5
+  max_degree: 4
+  min_degree: 1
+  max_coeff: 5
+  degree_sampling: &quot;uniform&quot;
+  term_sampling: &quot;uniform&quot;
+
+problem_generator:       # forwarded to the task's generator class
+  num_polynomials: 2     # parity uses: n: 7
+
+dataset:                 # forwarded to DatasetPipeline
+  save_dir: &quot;../data/QQ&quot;
+  num_train_samples: 1000
+  num_test_samples: 200
+  batch_size: 100
+  n_jobs: 4
+  root_seed: 42
+  verbose: true
+  backend: &quot;sagemath&quot;    # &quot;sagemath&quot; | &quot;sympy&quot; (parity uses sympy)
+  save_text: true
+  save_json: false
+</code></pre>
+<h3 id="trainyaml"><code>train.yaml</code></h3>
+<pre><code class="language-yaml">model:
+  model_type: generic
+  num_encoder_layers: 3
+  num_encoder_heads: 4
+  num_decoder_layers: 3
+  num_decoder_heads: 4
+  d_model: 256
+  encoder_ffn_dim: 1024
+  decoder_ffn_dim: 1024
+  max_sequence_length: 2048      # polynomial tasks need long sequences
+
+train:
+  save_dir: ../outputs/results
+  num_train_epochs: 50
+  learning_rate: 0.0003
+  weight_decay: 0.0
+  warmup_ratio: 0.05
+  batch_size: 16
+  test_batch_size: 16
+  lr_scheduler_type: linear
+  max_grad_norm: 1.0
+  optimizer: adamw_torch
+  num_workers: 2
+  seed: 42
+  wandb: {project: calt-experiments, group: groebner_basis, name: toy_QQ, no_wandb: false}
+
+data:
+  train_dataset_path: ../data/QQ/train_raw.txt
+  test_dataset_path: ../data/QQ/test_raw.txt
+  lexer_config: ../configs/lexer.yaml
+  validate_train_tokens: false
+  validate_test_tokens: false
+</code></pre>
+<p>All paths are relative to the <code>scripts/</code> directory (the run location).</p>
+<hr />
+<h2 id="7-data-format-and-on-disk-outputs">7. Data format and on-disk outputs</h2>
+<p><strong>Dataset text</strong> (<code>train_raw.txt</code> / <code>test_raw.txt</code>): one example per line,</p>
+<pre><code>&lt;input&gt; # &lt;output&gt;
+</code></pre>
+<ul>
+<li><code>#</code> separates input from output (with surrounding spaces: <code>" # "</code>).</li>
+<li><code>|</code> separates list elements within a side (<code>|</code>).</li>
+<li>Examples:</li>
+<li>parity: <code>0 2 3 1 4 # +1</code></li>
+<li>groebner: <code>f1 | f2 # g1 | g2 | … | gk</code></li>
+</ul>
+<p><strong>Generation stats</strong>: <code>train_stats.yaml</code> / <code>test_stats.yaml</code> (YAML, not JSON):
+<code>total_time</code>, <code>num_samples</code>, <code>samples_per_second</code>, <code>generation_time:{mean,std,min,max}</code>.</p>
+<p><strong>Training outputs</strong> (<code>&lt;save_dir&gt;/</code>): <code>model.safetensors</code>, <code>tokenizer.json</code>,
+<code>train.yaml</code> (snapshot of the config used), <code>eval_results.json</code>
+(<code>[{"generated": ..., "reference": ...}, …]</code>), and <code>eval_results/step_*.json</code>.</p>
+<hr />
+<h2 id="8-the-three-tasks-specifics">8. The three tasks (specifics)</h2>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>parity</th>
+<th>groebner_basis</th>
+<th>border_basis</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Input</td>
+<td>one-line perm <code>2 0 1</code></td>
+<td><code>f1 \| f2</code> over k[x,y]</td>
+<td><code>g1 \| g2 \| g3</code> over GF(p)</td>
+</tr>
+<tr>
+<td>Output</td>
+<td><code>+1</code> / <code>-1</code></td>
+<td>Gröbner basis <code>g1 \| …</code></td>
+<td>border basis</td>
+</tr>
+<tr>
+<td>Backend</td>
+<td>sympy</td>
+<td>sagemath</td>
+<td>sagemath</td>
+</tr>
+<tr>
+<td>Storage</td>
+<td>plain text</td>
+<td>plain text</td>
+<td>plain text</td>
+</tr>
+<tr>
+<td>Preprocessor</td>
+<td>none</td>
+<td>none (lex variant: Chain)</td>
+<td>none</td>
+</tr>
+<tr>
+<td>Generator class</td>
+<td><code>ParityGenerator(n)</code></td>
+<td><code>GroebnerGenerator(sampler, num_polynomials)</code></td>
+<td><code>BorderBasisGenerator(sampler, num_polynomials, …)</code></td>
+</tr>
+<tr>
+<td>Experiments</td>
+<td>toy, scaling (n∈{5,7,10})</td>
+<td>toy, scaling, ablation (degrevlex/lex)</td>
+<td>toy, finite_field (GF 5/7/11/17/31), ablation</td>
+</tr>
+<tr>
+<td>Algorithm</td>
+<td>inversions count</td>
+<td>SageMath <code>ideal.groebner_basis()</code></td>
+<td><code>core/algorithm.py::BorderBasisCalculator</code> (port of arXiv:2505.23696 Alg 4.1)</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>parity</strong>: <code>sign(σ) = (−1)^(#inversions)</code>; <code>count_inversions</code>, <code>permutation_parity</code>
+  helpers in <code>core/generator.py</code>.</li>
+<li><strong>groebner</strong>: QQ samples with ≥3-digit numerator/denominator rejected
+  (<code>_has_large_rational_coefficients</code>, threshold 100). <code>--training_order lex</code>
+  recomputes the basis in a lex ring at load time.</li>
+<li><strong>border</strong>: requires a 0-dimensional ideal (<code>ideal.dimension() == 0</code>), retried up
+  to 100 seeds; <code>BorderBasisCalculator</code> does L-stable span → optimal order ideal via
+  <code>scipy.optimize.milp</code> → basis transformation; uses <code>sortedcontainers.SortedList</code>.</li>
+</ul>
+<p>The <code>scripts/train.py</code> of each experiment is a thin <code>click</code> wrapper:
+<code>parity/scaling</code> exposes <code>--n</code> (rewrites data paths + save_dir + wandb name);
+<code>groebner/toy</code> exposes <code>--training_order {degrevlex,lex}</code>, <code>--data_config_path</code>,
+<code>--config_path</code>, <code>--dryrun</code>.</p>
+<hr />
+<h2 id="9-templatestask_template">9. <code>templates/task_template/</code></h2>
+<p>Same layout as a real task, with <code>TODO</code>s. The runnable, consistent pattern:</p>
+<ul>
+<li><code>core/generator.py::TaskGenerator(**params)</code> with <code>__call__(seed)</code> (raises until filled).</li>
+<li><code>core/parser.py::TaskParser.process_sample(source)</code> — only if storing pickle/JSON.</li>
+<li><code>core/train.py::run_training(cfg, dryrun=False)</code> — sets <code>dataset_load_preprocessor = TaskParser()</code>
+  (comment says remove for plain text).</li>
+<li><code>experiments/toy/scripts/generate.py</code> — builds <code>TaskGenerator(**cfg.problem_generator)</code>
+  and runs <code>DatasetPipeline.from_config(cfg.dataset, instance_generator=…)</code>.</li>
+<li><code>experiments/toy/configs/data.yaml</code> — has a <code>problem_generator: {}</code> block + <code>dataset:</code>.</li>
+<li>README has the fill-in checklist.</li>
+</ul>
+<p>To create a task: <code>cp -r templates/task_template my_new_task</code>, fill the <code>core/</code>
+modules, edit the three configs, then <code>generate.py → train.py --dryrun → evaluate.py</code>.</p>
+<hr />
+<h2 id="10-known-issues-gotchas-and-conventions">10. Known issues, gotchas, and conventions</h2>
+<ul>
+<li><strong>Run scripts from their <code>scripts/</code> dir.</strong> Config paths are relative to it, and
+  <code>sys.path.insert(0, parents[4])</code> makes the repo root importable. Running from
+  elsewhere breaks both.</li>
+<li><strong><code>[UNK]</code> / token validation</strong>: a symbol in the data isn't in <code>lexer.yaml</code>. Widen
+  <code>numbers</code> or add to <code>misc</code>; set <code>validate_train_tokens: true</code> to fail fast.</li>
+<li><strong><code>max_sequence_length</code></strong>: polynomial bases get long; toy configs use 2048.
+  Too small ⇒ truncation ⇒ stuck loss.</li>
+<li><strong>Determinism</strong>: <code>set_seed</code> enables deterministic algorithms + sets
+  <code>CUBLAS_WORKSPACE_CONFIG</code>. Same <code>root_seed</code> ⇒ identical datasets.</li>
+<li><strong>SageMath RNG is global</strong>: generators call <code>randstate.set_random_seed(seed)</code> before sampling.</li>
+<li><strong>wandb</strong>: optional; <code>no_wandb: true</code> or <code>WANDB_MODE=disabled</code> to skip.</li>
+<li><strong>No <code>src/</code>, no <code>examples/</code>, no <code>CustomTrainer.py</code>, no <code>environment.yml</code>, no
+  Kaggle remote</strong> in this repo (unlike the previous CALT layout). Custom training
+  hooks go through <code>shared/logging.py</code> or by subclassing <code>calt.trainer.trainer.Trainer</code>.</li>
+<li><strong>Internal cross-references</strong> in code/docstrings to <code>issac2026_experiments/*</code>
+  point at the upstream <code>HiroshiKERA/calt@experiment/issac2026</code> branch the tasks
+  were ported from — not files in this repo.</li>
+</ul>
+<hr />
+<h2 id="11-end-to-end-data-flow">11. End-to-end data flow</h2>
+<pre><code>1. GENERATE
+   scripts/generate.py
+     load data.yaml → set_seed(root_seed)
+     (poly tasks) PolynomialSampler(**sampler) ; &lt;Task&gt;Generator(sampler, **problem_generator)
+     DatasetPipeline.from_config(cfg.dataset, instance_generator=gen).run()
+       for seed in 0..N-1 (parallel, n_jobs): problem,answer = gen(seed)
+       serialize → &quot;&lt;input&gt; # &lt;output&gt;&quot; → train_raw.txt / test_raw.txt (+ *_stats.yaml)
+
+2. TRAIN
+   scripts/train.py → core/train.py::run_training(cfg, …)
+     IOPipeline.from_config(cfg.data)[.dataset_load_preprocessor = …].build() → io_dict
+     ModelPipeline.from_io_dict(cfg.model, io_dict).build()                   → BART model
+     TrainerPipeline.from_io_dict(cfg.train, model, io_dict).build()
+     .train() → .save_model() → .evaluate_and_save_generation() → float rate
+     writes &lt;save_dir&gt;/{model.safetensors, tokenizer.json, train.yaml, eval_results*.json}
+
+3. EVALUATE
+   scripts/evaluate.py
+     load_eval_results(output_dir/&quot;results&quot;)  → (generated, references)
+     print exact-match rate ; show_examples(... successes=True/False)
+</code></pre>
+  </main>
+<script>
+  // ---- filter sidebar by keyword ----
+  function filterToc(q) {
+    q = q.trim().toLowerCase();
+    document.querySelectorAll('.toc li').forEach(function (li) {
+      var a = li.querySelector('a');
+      var text = a ? a.textContent.toLowerCase() : '';
+      li.classList.toggle('hidden', q !== '' && !text.includes(q));
+    });
+  }
+  // ---- scroll-spy: highlight the section currently in view ----
+  var links = {};
+  document.querySelectorAll('.toc a').forEach(function (a) {
+    var id = decodeURIComponent(a.getAttribute('href').slice(1));
+    links[id] = a;
+  });
+  var headings = Array.from(document.querySelectorAll('.content h2, .content h3'))
+    .filter(function (h) { return links[h.id]; });
+  function onScroll() {
+    var pos = window.scrollY + 90;
+    var current = null;
+    headings.forEach(function (h) { if (h.offsetTop <= pos) current = h; });
+    Object.values(links).forEach(function (a) { a.classList.remove('active'); });
+    if (current && links[current.id]) {
+      links[current.id].classList.add('active');
+      links[current.id].scrollIntoView({ block: 'nearest' });
+    }
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+</script>
+</body>
+</html>

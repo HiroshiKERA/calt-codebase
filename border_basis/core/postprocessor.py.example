@@ -1,0 +1,18 @@
+"""
+PER-TASK post-processor — applies ONLY to the border_basis task.
+
+To enable: copy this file to `border_basis/core/postprocessor.py` (drop the
+`.example` suffix) and edit `postprocess()`.
+
+Execution order:
+    raw line → [border load chain] → (input, target) → base hook → THIS HOOK → final
+
+See `shared/base_postprocessor.py.example` for general guidance.
+"""
+
+from __future__ import annotations
+
+
+def postprocess(input_text: str, target_text: str) -> tuple[str, str]:
+    """Identity by default. Edit for border-specific transformations."""
+    return input_text, target_text
