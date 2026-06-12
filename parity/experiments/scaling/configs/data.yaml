@@ -1,0 +1,16 @@
+# Parity scaling: larger dataset, permutation length controlled by --n CLI flag.
+
+problem_generator:
+  n: 7
+
+dataset:
+  save_dir: "../data"        # generate.py overrides to "../data_n{N}"
+  num_train_samples: 50000
+  num_test_samples: 1000
+  batch_size: 5000
+  n_jobs: 8
+  root_seed: 42
+  verbose: true
+  backend: "sympy"
+  save_text: true
+  save_json: false

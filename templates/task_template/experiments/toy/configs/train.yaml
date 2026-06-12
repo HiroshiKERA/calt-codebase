@@ -1,0 +1,38 @@
+# Model and training config.
+# Start with this small model, then scale up in experiments/scaling/.
+model:
+  model_type: generic
+  num_encoder_layers: 3
+  num_encoder_heads: 4
+  num_decoder_layers: 3
+  num_decoder_heads: 4
+  d_model: 256
+  encoder_ffn_dim: 1024
+  decoder_ffn_dim: 1024
+  max_sequence_length: 512   # TODO: set to 2× your longest expected sequence
+
+train:
+  save_dir: ../outputs/results
+  num_train_epochs: 100      # TODO: adjust
+  learning_rate: 0.0003
+  weight_decay: 0.0
+  warmup_ratio: 0.05
+  batch_size: 32
+  test_batch_size: 32
+  lr_scheduler_type: linear
+  max_grad_norm: 1.0
+  optimizer: adamw_torch
+  num_workers: 2
+  seed: 42
+  wandb:
+    project: calt-experiments
+    group: [TASK_NAME]         # TODO: replace with your task name
+    name: toy
+    no_wandb: false
+
+data:
+  train_dataset_path: ../data/train_raw.txt    # TODO: adjust (.txt or .pkl)
+  test_dataset_path: ../data/test_raw.txt
+  lexer_config: ../configs/lexer.yaml
+  validate_train_tokens: false
+  validate_test_tokens: false

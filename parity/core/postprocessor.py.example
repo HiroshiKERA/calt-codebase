@@ -1,0 +1,18 @@
+"""
+PER-TASK post-processor — applies ONLY to the parity task.
+
+To enable: copy this file to `parity/core/postprocessor.py` (drop the
+`.example` suffix) and edit `postprocess()`.
+
+NOTE: parity does not currently wire user hooks in its training script
+(it has no SageMath/FGLM/Expanded load chain). If you want to use this,
+follow the same wiring pattern used in `groebner_basis/core/train.py` and
+add it to `parity/core/train.py`.
+"""
+
+from __future__ import annotations
+
+
+def postprocess(input_text: str, target_text: str) -> tuple[str, str]:
+    """Identity by default. Edit for parity-specific transformations."""
+    return input_text, target_text

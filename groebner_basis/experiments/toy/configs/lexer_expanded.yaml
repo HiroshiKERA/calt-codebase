@@ -1,0 +1,31 @@
+# Lexer EXPANDED — C/E form for the Gröbner basis task.
+#
+# Each monomial is tokenized as:
+#   C<coeff> E<exp_x> E<exp_y>     for one term in 2 variables (x, y)
+# Polynomials within a sample are separated by ' | '.
+# Terms within a polynomial are separated by ' + ' (sign attached to the coefficient).
+#
+# Example: "2*x^2*y + 5*x - 7" → "C2 E2 E1 + C5 E1 E0 + C-7 E0 E0"
+#
+# To use this format instead of the default raw text format, point train.yaml's
+# data.lexer_config to this file instead of lexer.yaml.
+#
+# Reference: ISSAC '26 paper §2.2 + issac2026_experiments/polynomial_reduction/configs/.
+
+vocab:
+  range:
+    coefficients: ["C", -99, 99]  # coefficient range (must cover everything you see)
+    exponents:    ["E", 0, 5]     # exponent per variable (max_degree=4 in our config, with safety margin)
+  misc: ["+", "|"]
+  special_tokens: {}
+  flags:
+    include_base_vocab: true
+    include_base_special_tokens: true
+
+number_policy:
+  attach_sign: true
+  digit_group: 0
+  allow_float: false
+
+strict: true
+include_base_vocab: true

@@ -1,0 +1,38 @@
+# Parity ablation — train.yaml is the base; --model_size CLI overrides model/*.
+
+model:
+  model_type: generic
+  num_encoder_layers: 2
+  num_encoder_heads: 4
+  num_decoder_layers: 2
+  num_decoder_heads: 4
+  d_model: 128
+  encoder_ffn_dim: 512
+  decoder_ffn_dim: 512
+  max_sequence_length: 64
+
+train:
+  save_dir: ../outputs/results
+  num_train_epochs: 100
+  learning_rate: 0.0005
+  weight_decay: 0.01
+  warmup_ratio: 0.1
+  batch_size: 64
+  test_batch_size: 64
+  lr_scheduler_type: cosine
+  max_grad_norm: 1.0
+  optimizer: adamw_torch
+  num_workers: 2
+  seed: 42
+  wandb:
+    project: calt-experiments
+    group: parity_ablation
+    name: ablation
+    no_wandb: false
+
+data:
+  train_dataset_path: ../../toy/data/train_raw.txt
+  test_dataset_path: ../../toy/data/test_raw.txt
+  lexer_config: ../../toy/configs/lexer.yaml
+  validate_train_tokens: false
+  validate_test_tokens: false

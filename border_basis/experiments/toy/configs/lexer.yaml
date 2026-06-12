@@ -1,0 +1,16 @@
+vocab:
+  range:
+    numbers: ["", -10, 10]  # GF(7) coefficients are 0-6
+  misc: ["+", "-", "*", "^", "x", "y", "|"]
+  special_tokens: {}
+  flags:
+    include_base_vocab: true
+    include_base_special_tokens: true
+
+number_policy:
+  attach_sign: true
+  digit_group: 1
+  allow_float: false
+
+strict: true
+include_base_vocab: true

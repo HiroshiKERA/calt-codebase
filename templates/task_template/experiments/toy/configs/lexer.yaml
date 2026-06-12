@@ -1,0 +1,18 @@
+# Vocabulary config — defines which tokens the model can produce.
+# Add every token that can appear in your input or output strings.
+vocab:
+  range:
+    numbers: ["", -99, 99]   # TODO: adjust range for your coefficient values
+  misc: ["+", "-", "*", "^", "|"]   # TODO: add symbols specific to your task
+  special_tokens: {}
+  flags:
+    include_base_vocab: true
+    include_base_special_tokens: true
+
+number_policy:
+  attach_sign: true
+  digit_group: 0
+  allow_float: false
+
+strict: false
+include_base_vocab: true
