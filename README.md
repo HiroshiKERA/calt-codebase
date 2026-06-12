@@ -1,5 +1,3 @@
-# NOT THE REAL CALT-CODEBASE, go on https://github.com/HiroshiKERA/calt-codebase
-
 # calt-codebase
 
 [![Documentation](https://img.shields.io/badge/docs-online-brightgreen)](https://maximefaure.github.io/CALT/)
