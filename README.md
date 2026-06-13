@@ -7,8 +7,8 @@
 > 📖 **[Read the full documentation online](https://maximefaure.github.io/CALT/)**
 
 Experiments for learning **algebraic computations** with Transformer models,
-built on top of the [CALT library](https://github.com/HiroshiKERA/calt)
-(`pip install calt-x`).
+built on top of the [CALT library](https://github.com/HiroshiKERA/calt) 
+(`calt-x`, available from [conda-forge](https://github.com/conda-forge/calt-x-feedstock)).
 
 The idea: frame an algebraic problem as a *translation task* (input expression →
 output expression) and let a Transformer learn the rule from many examples.
@@ -57,9 +57,37 @@ Every task follows the same layout:
 
 ---
 
+## Installation
+
+We recommend installing the dependencies in a dedicated conda environment.
+
+```bash
+conda create -n calt-env python=3.11
+conda activate calt-env
+conda install -c conda-forge calt-x
+```
+
+Some experiments in this repository, including the polynomial tasks, require additional packages:
+
+```bash
+conda install -c conda-forge sage matplotlib click sortedcontainers
+```
+
+`calt-x` currently supports Python `>=3.11,<3.13`.
+
+You can check the available versions of `calt-x` with:
+
+```bash
+conda search calt-x --channel conda-forge
+```
+
+The conda-forge feedstock is available here: [conda-forge/calt-x-feedstock](https://github.com/conda-forge/calt-x-feedstock).
+
+---
+
 ## Quick start
 
-First, activate the conda environment that has `calt-x` installed:
+First, activate the conda environment that has the required dependencies installed:
 
 ```bash
 conda activate calt-env
@@ -108,18 +136,11 @@ See the checklist in `templates/task_template/README.md`.
 
 ## Dependencies
 
-```bash
-pip install calt-x omegaconf matplotlib click   # or: conda install calt-x
-```
-
-- Python `>=3.10,<3.13`
-- `calt-x` is on both [PyPI](https://pypi.org/project/calt-x/) and
-  [conda-forge](https://github.com/conda-forge/calt-x-feedstock). It provides the
-  four pipelines (`DatasetPipeline`, `IOPipeline`, `ModelPipeline`,
-  `TrainerPipeline`) and pulls in PyTorch, HuggingFace Transformers and (for
-  polynomial tasks) SageMath.
-- `wandb` is optional — used by `shared/logging.py`; set `no_wandb: true` in a
-  `train.yaml` (or `WANDB_MODE=disabled`) to skip it.
+- Python `>=3.11,<3.13`
+- [`calt-x`](https://github.com/HiroshiKERA/calt), installed from [conda-forge](https://github.com/conda-forge/calt-x-feedstock)
+- SageMath (`sage`), required for polynomial tasks such as Gröbner basis and border basis experiments
+- Experiment utilities: `matplotlib`, `click`, and `sortedcontainers`
+- `wandb` is optional — used by `shared/logging.py`; set `no_wandb: true` in a `train.yaml` or set `WANDB_MODE=disabled` to skip it.
 
 ---
 
