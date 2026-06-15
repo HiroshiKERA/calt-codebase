@@ -660,6 +660,68 @@ and `success_rate` coincide and are computed as plain classification accuracy
 > With an older `calt-x`, `model_type: encoder_classifier` raises
 > *"Unsupported model type"* — keep `generic` until the library is updated.
 
+### 11.7 Custom input and positional embeddings
+
+Both the **input (token) embedding** and the **positional embedding** are chosen
+by config and can be replaced with your own — without editing the library. The
+built-ins keep the previous behavior, so existing configs are unaffected.
+
+| config key (in `train.yaml`'s `model:` block) | default | built-in values |
+|---|---|---|
+| `input_embedding_type` | `token` | `token` (aliases `default`, `learned`) — a plain `nn.Embedding` |
+| `use_positional_embedding` | `generic` | `generic`/`learned`, `sinusoidal`, `rope`, `none` |
+
+**Pick a built-in** — just set the key in your config:
+
+```yaml
+model:
+  model_type: generic
+  use_positional_embedding: rope      # try sinusoidal / rope / none
+```
+
+**Plug in your own.** Register a factory **before the model is built** (e.g. at
+the top of your task's `scripts/train.py`, before calling `run_training`), then
+select it by name in the config:
+
+```python
+import torch.nn as nn
+from calt.models import register_input_embedding, register_positional_embedding
+
+class MyEmbedding(nn.Module):
+    def __init__(self, vocab_size, d_model):
+        super().__init__()
+        self.emb = nn.Embedding(vocab_size, d_model)
+    def forward(self, input_ids):           # (B, S) long -> (B, S, d_model)
+        return self.emb(input_ids)
+
+register_input_embedding(
+    "my_emb", lambda vocab_size, d_model, **kw: MyEmbedding(vocab_size, d_model))
+register_positional_embedding(
+    "my_pe", lambda d_model, max_len, **kw: MyPositional(d_model, max_len))
+```
+
+```yaml
+model:
+  input_embedding_type: my_emb
+  use_positional_embedding: my_pe
+```
+
+**Factory contract.**
+- input embedding: receives `vocab_size`, `d_model` (extra config keys are
+  forwarded as kwargs) → returns an `nn.Module` mapping `input_ids` of shape
+  `(batch, seq)` to `(batch, seq, d_model)`.
+- positional embedding: receives `d_model`, `max_len` → returns an `nn.Module`
+  mapping `(batch, seq, d_model)` to `(batch, seq, d_model)` (or `None` for
+  "no positional embedding").
+
+An unknown name raises `ValueError` listing the supported types. These hooks
+apply to the `generic` and `encoder_classifier` models (not `bart`, which is
+HuggingFace's own model).
+
+> **Requirement.** Like the encoder-only model (§11.6), the pluggable embeddings
+> ship with the CALT library — they are available once you run against a `calt-x`
+> build that includes them (see [§14.4](#144--compatibility-with-upstream-calt-x-from-hiroshikeracalt)).
+
 ---
 
 
