@@ -453,6 +453,26 @@ data:
 Paths are written **relative to the `scripts/` directory** (that's where you run
 the scripts from). The `shared.paths` helpers resolve them regardless of cwd.
 
+**Choosing the model architecture (`model_type`).** The default `generic` (and
+`bart`) are **encoder-decoder** models that *generate* the answer token by token.
+For tasks whose answer is a **single token** — e.g. `parity` (`+1` / `-1`) — you
+can instead pick an **encoder-only classification** model, which is lighter and
+often more accurate on such tasks:
+
+```yaml
+model:
+  model_type: encoder_classifier   # encoder-only (alias: encoder_only)
+  num_encoder_layers: 3
+  num_encoder_heads: 4
+  d_model: 256
+  encoder_ffn_dim: 1024
+  max_sequence_length: 256
+  # decoder_* fields are ignored for this model_type
+```
+
+See [§11.6](#116-encoder-only-model-for-single-token-tasks-eg-parity) for what
+it does and when to use it.
+
 ---
 
 ## 8. The three tasks
@@ -465,6 +485,10 @@ the scripts from). The `shared.paths` helpers resolve them regardless of cwd.
 - **Experiments**: `toy/` (n=5) and `scaling/` (n ∈ {5, 7, 10}, via `--n`).
 - **Why**: parity is a *global* property — the model must compare all pairs, not
   just look at one element. A clean probe of attention over the full sequence.
+- **Architecture**: the answer is a single token (`+1` / `-1`), so besides the
+  default encoder-decoder you can use the lighter **encoder-only** classification
+  model — run `train.py --config_path ../configs/train_encoder.yaml`, see
+  [§11.6](#116-encoder-only-model-for-single-token-tasks-eg-parity).
 
 ### 8.2 `groebner_basis` — Gröbner basis of ⟨f1, f2⟩
 
@@ -586,6 +610,55 @@ subclass `calt.trainer.trainer.Trainer`, then build the trainer pipeline and
 swap in your class (see the CALT library docs / [AI_CONTEXT.md](AI_CONTEXT.md)).
 The lightweight alternative — extra logging without changing the loss — is the
 `CustomLoggingCallback` above.
+
+### 11.6 Encoder-only model for single-token tasks (e.g. parity)
+
+By default every task uses an **encoder-decoder** model (`model_type: generic`
+or `bart`) that generates the answer one token at a time. When the answer is a
+**single token** — as in `parity`, whose target is `+1` or `-1` — that decoder
+is unnecessary. You can opt into an **encoder-only classification** model:
+
+```yaml
+# in train.yaml
+model:
+  model_type: encoder_classifier   # alias: encoder_only
+  num_encoder_layers: 3
+  num_encoder_heads: 4
+  d_model: 256
+  encoder_ffn_dim: 1024
+  max_sequence_length: 256
+```
+
+For the toy parity task a ready-made config is provided — just run:
+
+```bash
+cd parity/experiments/toy/scripts
+python train.py --config_path ../configs/train_encoder.yaml
+```
+
+**What it does.** It encodes the input, mean-pools the encoder output over the
+real (non-padded) positions, and classifies that vector over the vocabulary; the
+predicted class **is** a token id, so it decodes straight back to `+1` / `-1`.
+The classification target is read from the answer token in the data, so it reuses
+the **same dataset and tokenizer** as the encoder-decoder — no regeneration or
+re-tokenization needed.
+
+**When to use it.** Tasks with a fixed, single-token answer (parity is the
+canonical case). It is lighter and frequently more accurate there. Do **not**
+use it for tasks with variable-length outputs (`groebner_basis`, `border_basis`):
+those need the encoder-decoder to generate a sequence.
+
+**Effect on metrics.** Because there is no generated sequence, `token_accuracy`
+and `success_rate` coincide and are computed as plain classification accuracy
+(predicted token vs. the answer token). The exact-match evaluation
+(`evaluate.py`) still works unchanged — the model wraps its prediction as
+`[BOS, token, EOS]` so decoding behaves like the encoder-decoder.
+
+> **Requirement.** This `model_type` ships with the CALT library. It is available
+> once you run against a `calt-x` build that includes the `encoder_classifier`
+> model (see [§14.4](#144--compatibility-with-upstream-calt-x-from-hiroshikeracalt)).
+> With an older `calt-x`, `model_type: encoder_classifier` raises
+> *"Unsupported model type"* — keep `generic` until the library is updated.
 
 ---
 
