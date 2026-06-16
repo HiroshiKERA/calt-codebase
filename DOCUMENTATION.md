@@ -706,6 +706,19 @@ model:
   use_positional_embedding: my_pe
 ```
 
+**Ready-to-run example.** A plug-and-play example you can copy and adapt is
+provided for the parity toy task:
+
+```bash
+cd parity/experiments/toy/scripts
+python train_custom_embedding.py            # uses configs/train_custom_embedding.yaml
+python train_custom_embedding.py --dryrun   # quick smoke test
+```
+
+`train_custom_embedding.py` defines a custom input embedding, registers it, and
+`configs/train_custom_embedding.yaml` selects it by name — replace the module
+with your own and you are done.
+
 **Factory contract.**
 - input embedding: receives `vocab_size`, `d_model` (extra config keys are
   forwarded as kwargs) → returns an `nn.Module` mapping `input_ids` of shape
