@@ -1,0 +1,49 @@
+# Parity (toy, n=5) demonstrating CUSTOM embeddings.
+#
+# This config selects, BY NAME, embeddings that are registered in
+# scripts/train_custom_embedding.py — the names below must match the names used
+# in the register_* calls there:
+#   - input_embedding_type: layernorm_token   (a custom input embedding)
+#   - use_positional_embedding: rope          (a built-in, picked via config only)
+#
+# Run it with:
+#     cd parity/experiments/toy/scripts
+#     python train_custom_embedding.py
+#
+# See DOCUMENTATION.md §11.7. Requires a calt-x build with the pluggable
+# embeddings (and, for model_type: encoder_classifier, the encoder-only model).
+model:
+  model_type: encoder_classifier
+  input_embedding_type: layernorm_token   # custom (registered in the train script)
+  use_positional_embedding: rope          # built-in: generic | sinusoidal | rope | none
+  num_encoder_layers: 2
+  num_encoder_heads: 4
+  d_model: 128
+  encoder_ffn_dim: 512
+  max_sequence_length: 64
+
+train:
+  save_dir: ../outputs/results_custom_emb
+  num_train_epochs: 100
+  learning_rate: 0.0005
+  weight_decay: 0.01
+  warmup_ratio: 0.1
+  batch_size: 64
+  test_batch_size: 64
+  lr_scheduler_type: cosine
+  max_grad_norm: 1.0
+  optimizer: adamw_torch
+  num_workers: 2
+  seed: 42
+  wandb:
+    project: calt-experiments
+    group: parity
+    name: toy_n5_custom_emb
+    no_wandb: false
+
+data:
+  train_dataset_path: ../data/train_raw.txt
+  test_dataset_path: ../data/test_raw.txt
+  lexer_config: ../configs/lexer.yaml
+  validate_train_tokens: false
+  validate_test_tokens: false

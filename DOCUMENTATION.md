@@ -453,6 +453,26 @@ data:
 Paths are written **relative to the `scripts/` directory** (that's where you run
 the scripts from). The `shared.paths` helpers resolve them regardless of cwd.
 
+**Choosing the model architecture (`model_type`).** The default `generic` (and
+`bart`) are **encoder-decoder** models that *generate* the answer token by token.
+For tasks whose answer is a **single token** — e.g. `parity` (`+1` / `-1`) — you
+can instead pick an **encoder-only classification** model, which is lighter and
+often more accurate on such tasks:
+
+```yaml
+model:
+  model_type: encoder_classifier   # encoder-only (alias: encoder_only)
+  num_encoder_layers: 3
+  num_encoder_heads: 4
+  d_model: 256
+  encoder_ffn_dim: 1024
+  max_sequence_length: 256
+  # decoder_* fields are ignored for this model_type
+```
+
+See [§11.6](#116-encoder-only-model-for-single-token-tasks-eg-parity) for what
+it does and when to use it.
+
 ---
 
 ## 8. The three tasks
@@ -465,6 +485,10 @@ the scripts from). The `shared.paths` helpers resolve them regardless of cwd.
 - **Experiments**: `toy/` (n=5) and `scaling/` (n ∈ {5, 7, 10}, via `--n`).
 - **Why**: parity is a *global* property — the model must compare all pairs, not
   just look at one element. A clean probe of attention over the full sequence.
+- **Architecture**: the answer is a single token (`+1` / `-1`), so besides the
+  default encoder-decoder you can use the lighter **encoder-only** classification
+  model — run `train.py --config_path ../configs/train_encoder.yaml`, see
+  [§11.6](#116-encoder-only-model-for-single-token-tasks-eg-parity).
 
 ### 8.2 `groebner_basis` — Gröbner basis of ⟨f1, f2⟩
 
@@ -586,6 +610,130 @@ subclass `calt.trainer.trainer.Trainer`, then build the trainer pipeline and
 swap in your class (see the CALT library docs / [AI_CONTEXT.md](AI_CONTEXT.md)).
 The lightweight alternative — extra logging without changing the loss — is the
 `CustomLoggingCallback` above.
+
+### 11.6 Encoder-only model for single-token tasks (e.g. parity)
+
+By default every task uses an **encoder-decoder** model (`model_type: generic`
+or `bart`) that generates the answer one token at a time. When the answer is a
+**single token** — as in `parity`, whose target is `+1` or `-1` — that decoder
+is unnecessary. You can opt into an **encoder-only classification** model:
+
+```yaml
+# in train.yaml
+model:
+  model_type: encoder_classifier   # alias: encoder_only
+  num_encoder_layers: 3
+  num_encoder_heads: 4
+  d_model: 256
+  encoder_ffn_dim: 1024
+  max_sequence_length: 256
+```
+
+For the toy parity task a ready-made config is provided — just run:
+
+```bash
+cd parity/experiments/toy/scripts
+python train.py --config_path ../configs/train_encoder.yaml
+```
+
+**What it does.** It encodes the input, mean-pools the encoder output over the
+real (non-padded) positions, and classifies that vector over the vocabulary; the
+predicted class **is** a token id, so it decodes straight back to `+1` / `-1`.
+The classification target is read from the answer token in the data, so it reuses
+the **same dataset and tokenizer** as the encoder-decoder — no regeneration or
+re-tokenization needed.
+
+**When to use it.** Tasks with a fixed, single-token answer (parity is the
+canonical case). It is lighter and frequently more accurate there. Do **not**
+use it for tasks with variable-length outputs (`groebner_basis`, `border_basis`):
+those need the encoder-decoder to generate a sequence.
+
+**Effect on metrics.** Because there is no generated sequence, `token_accuracy`
+and `success_rate` coincide and are computed as plain classification accuracy
+(predicted token vs. the answer token). The exact-match evaluation
+(`evaluate.py`) still works unchanged — the model wraps its prediction as
+`[BOS, token, EOS]` so decoding behaves like the encoder-decoder.
+
+> **Requirement.** This `model_type` ships with the CALT library. It is available
+> once you run against a `calt-x` build that includes the `encoder_classifier`
+> model (see [§14.4](#144--compatibility-with-upstream-calt-x-from-hiroshikeracalt)).
+> With an older `calt-x`, `model_type: encoder_classifier` raises
+> *"Unsupported model type"* — keep `generic` until the library is updated.
+
+### 11.7 Custom input and positional embeddings
+
+Both the **input (token) embedding** and the **positional embedding** are chosen
+by config and can be replaced with your own — without editing the library. The
+built-ins keep the previous behavior, so existing configs are unaffected.
+
+| config key (in `train.yaml`'s `model:` block) | default | built-in values |
+|---|---|---|
+| `input_embedding_type` | `token` | `token` (aliases `default`, `learned`) — a plain `nn.Embedding` |
+| `use_positional_embedding` | `generic` | `generic`/`learned`, `sinusoidal`, `rope`, `none` |
+
+**Pick a built-in** — just set the key in your config:
+
+```yaml
+model:
+  model_type: generic
+  use_positional_embedding: rope      # try sinusoidal / rope / none
+```
+
+**Plug in your own.** Register a factory **before the model is built** (e.g. at
+the top of your task's `scripts/train.py`, before calling `run_training`), then
+select it by name in the config:
+
+```python
+import torch.nn as nn
+from calt.models import register_input_embedding, register_positional_embedding
+
+class MyEmbedding(nn.Module):
+    def __init__(self, vocab_size, d_model):
+        super().__init__()
+        self.emb = nn.Embedding(vocab_size, d_model)
+    def forward(self, input_ids):           # (B, S) long -> (B, S, d_model)
+        return self.emb(input_ids)
+
+register_input_embedding(
+    "my_emb", lambda vocab_size, d_model, **kw: MyEmbedding(vocab_size, d_model))
+register_positional_embedding(
+    "my_pe", lambda d_model, max_len, **kw: MyPositional(d_model, max_len))
+```
+
+```yaml
+model:
+  input_embedding_type: my_emb
+  use_positional_embedding: my_pe
+```
+
+**Ready-to-run example.** A plug-and-play example you can copy and adapt is
+provided for the parity toy task:
+
+```bash
+cd parity/experiments/toy/scripts
+python train_custom_embedding.py            # uses configs/train_custom_embedding.yaml
+python train_custom_embedding.py --dryrun   # quick smoke test
+```
+
+`train_custom_embedding.py` defines a custom input embedding, registers it, and
+`configs/train_custom_embedding.yaml` selects it by name — replace the module
+with your own and you are done.
+
+**Factory contract.**
+- input embedding: receives `vocab_size`, `d_model` (extra config keys are
+  forwarded as kwargs) → returns an `nn.Module` mapping `input_ids` of shape
+  `(batch, seq)` to `(batch, seq, d_model)`.
+- positional embedding: receives `d_model`, `max_len` → returns an `nn.Module`
+  mapping `(batch, seq, d_model)` to `(batch, seq, d_model)` (or `None` for
+  "no positional embedding").
+
+An unknown name raises `ValueError` listing the supported types. These hooks
+apply to the `generic` and `encoder_classifier` models (not `bart`, which is
+HuggingFace's own model).
+
+> **Requirement.** Like the encoder-only model (§11.6), the pluggable embeddings
+> ship with the CALT library — they are available once you run against a `calt-x`
+> build that includes them (see [§14.4](#144--compatibility-with-upstream-calt-x-from-hiroshikeracalt)).
 
 ---
 
