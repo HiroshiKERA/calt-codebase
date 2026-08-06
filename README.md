@@ -35,6 +35,7 @@ calt-codebase/
 ├── parity/          # Permutation parity: predict sign(σ) ∈ {+1, -1}
 ├── groebner_basis/  # Gröbner basis of ⟨f1, f2⟩
 ├── border_basis/    # Border basis of a zero-dimensional ideal
+├── issac2026_experiments/  # Code behind the ISSAC 2026 paper (see its own README)
 └── templates/       # Copy task_template/ to create a new task
 ```
 
