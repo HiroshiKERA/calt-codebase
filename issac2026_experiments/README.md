@@ -18,11 +18,11 @@ paper and the code that produced it something a reader has to take on trust.
 issac2026_experiments/
 ├── arithmetic_addition/         A-Addition            (Tables 1, 2, 3)
 ├── arithmetic_factorization/    A-Factorization       (Table 1)
-├── polynomial_multiplication/   P-Multiplication      (Tables 1, 2, 3)
-├── polynomial_reduction/        P-Reduction           (Tables 1, 2, 6)
+├── polynomial_multiplication/   P-Multiplication      (Tables 1, 2, 3, 8)
+├── polynomial_reduction/        P-Reduction           (Tables 1, 2, 8)
 ├── digit_product/               A-Multiplication-DL   (Table 4)
 ├── relu_recurrence/             A-ReLU Recurrence     (Table 4)
-├── groebner/                    Groebner bases        (Table 5)
+├── groebner/                    Groebner bases        (Tables 5, 6, 7, 8)
 ├── evaluate/                    collects every run into one success-rate table
 └── sh/                          generate_all_datasets.sh, train_all.sh
 ```
@@ -73,10 +73,34 @@ python3 evaluate/run_all_eval.py     # -> evaluate/success_rate_table.{csv,md}
 - **Monomial order** — `groebner/train.py --training_order lex` moves the
   sampled system into a lex ring and recomputes the basis at load time; the
   dataset on disk is degrevlex either way.
-- **Input representation** — Table 6 compares `model_type: generic` against
-  `model_type: monomial` on the same expanded-form data.
+- **Problem size** — the Table 5 rows are 2 variables at degree 4. The other
+  scales of Table 6 (degree 16, degree 32, and a 5x5 square system) have their
+  own configs; `groebner/sh/generate_scale_datasets.sh` then
+  `groebner/sh/train_scale.sh` runs them, both orders each.
+- **Input representation** — Table 8 compares `model_type: generic` against
+  `model_type: monomial` on the same expanded-form data, at a budget of 32
+  epochs fixed across all tasks. These are the `train_repr_standard.yaml` /
+  `train_repr_monomial.yaml` configs, launched by the `sh/train_representation.sh`
+  of each task directory.
+
+  Two things to know before running them. `groebner/train.py` needs
+  `--expanded_form`, because the Table 5 runs read raw polynomial strings and
+  the monomial embedding cannot. And the monomial configs have to spell out
+  `monomial_separators: ["+", "|"]`: the model defaults to `["+", "||"]`, while
+  the expanded form here is built with `delimiter=" | "`, so without that line
+  every sample fails the model's alignment check.
+
+  Because the budget is fixed at 32 epochs and, for P-Groebner, the input
+  representation changes, these success rates are not comparable with the ones
+  in Tables 1 to 5. The paper says so in Section 5.5.
 
 ## Two additions that are not in the paper's tables
+
+**`groebner/measure_gb_basis_stats.py`** — the degree and the term count of the
+basis under each order, which is Table 7. The timing script above answers how
+long the computer algebra system takes; this one answers how much the model has
+to generate. `bash sh/measure_gb_basis_stats.sh` runs the paper's setting and
+the same scale points as the timing sweep.
 
 **`groebner/measure_gb_timing.py`** — the classical side of the Table 5
 comparison. Times a Groebner basis in lex and in degrevlex on the same systems,

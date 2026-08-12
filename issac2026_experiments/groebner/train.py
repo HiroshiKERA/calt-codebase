@@ -13,6 +13,7 @@ from sage.all import GF, QQ, RR, ZZ, PolynomialRing  # type: ignore
 
 from calt.io import (
     ChainLoadPreprocessor,
+    ExpandedFormLoadPreprocessor,
     IOPipeline,
     TextToSageLoadPreprocessor,
 )
@@ -27,16 +28,21 @@ class _GroebnerLexOrderPreprocessor:
     - 出力: (input_text, target_text) 文字列
         input_text: F_lex を ' | ' で連結した文字列
         target_text: G_lex (lex Groebner basis) を ' | ' で連結した文字列
+
+    emit_objects=True のときは文字列ではなく dict {"problem", "answer"} を返す。
+    ExpandedFormLoadPreprocessor をこの後ろに繋ぐ場合に使う（Section 5.5 の
+    monomial embedding は C/E expanded form を要求するため）。
     """
 
-    def __init__(self, ring_src, delimiter: str = "|"):
+    def __init__(self, ring_src, delimiter: str = "|", emit_objects: bool = False):
         self.R_src = ring_src
         base = ring_src.base_ring()
         names = ring_src.variable_names()
         self.R_lex = PolynomialRing(base, names, order="lex")
         self.delimiter = delimiter
+        self.emit_objects = emit_objects
 
-    def process_sample(self, source: dict[str, Any]) -> tuple[str, str]:
+    def process_sample(self, source: dict[str, Any]) -> tuple[str, str] | dict[str, Any]:
         if not isinstance(source, dict):
             raise TypeError(
                 f"_GroebnerLexOrderPreprocessor expects dict source, got {type(source).__name__}"
@@ -46,6 +52,9 @@ class _GroebnerLexOrderPreprocessor:
         F_lex = [self.R_lex(f) for f in F_src]
         I_lex = self.R_lex.ideal(F_lex)
         G_lex = list(I_lex.groebner_basis())
+
+        if self.emit_objects:
+            return {"problem": F_lex, "answer": G_lex}
 
         sep = f" {self.delimiter} "
         input_text = sep.join(str(f) for f in F_lex)
@@ -76,11 +85,19 @@ class _GroebnerLexOrderPreprocessor:
     help="Which monomial order to train on. "
     "'degrevlex' uses dataset as-is, 'lex' converts F,G to lex order and recomputes GB.",
 )
+@click.option(
+    "--expanded_form",
+    is_flag=True,
+    help="Feed C/E expanded form ('C<c> E<e1> E<e2>' terms joined by '+', "
+    "polynomials joined by '|') instead of raw polynomial strings. Required by "
+    "the monomial token embedding of Section 5.5; use configs/lexer_ce.yaml.",
+)
 def main(
     config_path: str,
     dryrun: bool,
     data_config_path: str,
     training_order: str,
+    expanded_form: bool,
 ) -> None:
     """Train a model for Groebner basis task."""
     cfg = OmegaConf.load(config_path)
@@ -108,11 +125,11 @@ def main(
 
     io_pipeline = IOPipeline.from_config(cfg.data)
 
-    # training_order='lex' のときだけ、データロード時に
-    # - テキスト -> Sage 多項式 (TextToSageLoadPreprocessor)
-    # - degrevlex -> lex への ring 変換 + Groebner 基底の再計算
-    # を行う。
-    if training_order == "lex":
+    # データロード時の前処理は二つの理由で必要になる:
+    #   training_order='lex' -> degrevlex -> lex の ring 変換 + GB 再計算
+    #   expanded_form        -> 生の多項式文字列 -> C/E expanded form
+    # どちらの場合もまず テキスト -> Sage 多項式 (TextToSageLoadPreprocessor)。
+    if training_order == "lex" or expanded_form:
         data_cfg = OmegaConf.load(data_config_path)
         sampler_cfg = dict(OmegaConf.to_container(data_cfg.sampler, resolve=True))
         symbols = sampler_cfg.get("symbols", "x,y")
@@ -137,10 +154,18 @@ def main(
         R_src = PolynomialRing(field, names, order=order)
 
         text_to_sage = TextToSageLoadPreprocessor(delimiter="|", ring=R_src)
-        lex_pre = _GroebnerLexOrderPreprocessor(R_src, delimiter="|")
-        io_pipeline.dataset_load_preprocessor = ChainLoadPreprocessor(
-            text_to_sage, lex_pre
-        )
+        steps = [text_to_sage]
+        if training_order == "lex":
+            # expanded form を後段に繋ぐ場合は文字列ではなく Sage オブジェクトを渡す
+            steps.append(
+                _GroebnerLexOrderPreprocessor(
+                    R_src, delimiter="|", emit_objects=expanded_form
+                )
+            )
+        if expanded_form:
+            # polynomial_multiplication / polynomial_reduction と同じ ' | ' 区切り
+            steps.append(ExpandedFormLoadPreprocessor(delimiter=" | "))
+        io_pipeline.dataset_load_preprocessor = ChainLoadPreprocessor(*steps)
 
     io_dict = io_pipeline.build()
 
