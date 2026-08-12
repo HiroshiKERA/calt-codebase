@@ -1,0 +1,35 @@
+# Groebner task over GF(7), square 5x5 system: 5 polynomials in 5 variables.
+#
+# Fourth row of the scale comparison. A square system of n polynomials in n
+# variables is generically zero-dimensional, which is the regime where the
+# classical lex penalty shows up without needing a large degree: 80.8x at n=5
+# (Table 6), at max_degree 4.
+#
+# Note the variable set: the default lexer only knows x and y, so training on
+# this dataset needs configs/lexer_5x5.yaml.
+
+sampler:
+  symbols: "x,y,z,w,v"
+  field_str: "GF7"
+  order: "degrevlex"
+  max_num_terms: 5
+  max_degree: 4
+  min_degree: 1
+  max_coeff: 0         # not used for finite fields
+  degree_sampling: "uniform"
+  term_sampling: "uniform"
+
+problem_generator:
+  num_polynomials: 5
+
+dataset:
+  save_dir: "./data/GF7_5x5"
+  num_train_samples: 100000
+  num_test_samples: 1000
+  batch_size: 10000
+  n_jobs: 32
+  root_seed: 42
+  verbose: true
+  backend: "sagemath"
+  save_text: true
+  save_json: false

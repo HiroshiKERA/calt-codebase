@@ -1,0 +1,19 @@
+# Groebner lexer for the 5x5 system: same as lexer.yaml with the three extra
+# variable symbols (z, w, v) that data_GF7_5x5.yaml samples in.
+
+vocab:
+  range:
+    numbers: ["", -100, 100]
+  misc: ["+", "-", "*", "^", "x", "y", "z", "w", "v", "|", "/"]
+  special_tokens: {}
+  flags:
+    include_base_vocab: true
+    include_base_special_tokens: true
+
+number_policy:
+  attach_sign: true
+  digit_group: 1
+  allow_float: false
+
+strict: true
+include_base_vocab: true
