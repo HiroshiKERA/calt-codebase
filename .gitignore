@@ -40,3 +40,10 @@ shared/base_postprocessor.py
 
 # Logs
 *.log
+
+# ISSAC 2026 paper experiments: datasets, checkpoints and run logs
+issac2026_experiments/*/data/
+issac2026_experiments/*/results*/
+issac2026_experiments/*/logs/
+issac2026_experiments/*/wandb/
+issac2026_experiments/.notify_state/

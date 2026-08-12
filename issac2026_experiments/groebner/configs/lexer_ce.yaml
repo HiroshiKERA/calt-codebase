@@ -1,0 +1,28 @@
+# Groebner lexer for C/E expanded form (train.py --expanded_form).
+#
+# The default configs/lexer.yaml tokenizes raw polynomial strings ("3*x^2*y +
+# 2"); this one tokenizes the C/E form the monomial embedding requires:
+# "C3 E2 E1 + C2 E0 E0" per polynomial, polynomials joined by " | ".
+#
+# Ranges are deliberately wider than the data needs. Coefficients over GF(7) are
+# 0..6, but a lex Groebner basis can reach degrees well above the max_degree 4 of
+# the input system, and a token missing from the vocabulary aborts training at
+# the validation step rather than silently.
+
+vocab:
+  range:
+    coefficients: ["C", -99, 99]
+    exponents: ["E", 0, 40]
+  misc: ["+", "|"]
+  special_tokens: {}
+  flags:
+    include_base_vocab: true
+    include_base_special_tokens: true
+
+number_policy:
+  attach_sign: true
+  digit_group: 3
+  allow_float: false
+
+strict: true
+include_base_vocab: true
