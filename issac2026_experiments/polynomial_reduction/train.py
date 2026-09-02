@@ -140,7 +140,7 @@ def main(
 
     trainer_pipeline.train()
     trainer_pipeline.save_model()
-    success_rate = trainer_pipeline.evaluate_and_save_generation()
+    success_rate = trainer_pipeline.evaluate_and_save_generation(max_length=int(cfg.model.max_sequence_length))
     print(f"Success rate: {100 * success_rate:.1f}%")
 
 

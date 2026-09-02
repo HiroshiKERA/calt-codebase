@@ -25,7 +25,7 @@ train:
   weight_decay: 0.01
   warmup_ratio: 0.1
   batch_size: 128
-  test_batch_size: 128
+  test_batch_size: 64
   lr_scheduler_type: linear
   max_grad_norm: 1.0
   optimizer: adamw_torch

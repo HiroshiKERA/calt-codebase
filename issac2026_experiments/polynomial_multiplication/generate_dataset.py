@@ -95,7 +95,7 @@ def main(config_path):
 
     pipeline = DatasetPipeline.from_config(
         cfg.dataset,
-        problem_generator=problem_generator,
+        instance_generator=problem_generator,
         statistics_calculator=statistics_calculator,
     )
     pipeline.run()

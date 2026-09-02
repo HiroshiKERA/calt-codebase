@@ -113,7 +113,7 @@ def main(config_path: str) -> None:
     problem_generator = IntegerFactorizationGenerator(**gen_cfg)
     pipeline = DatasetPipeline.from_config(
         cfg.dataset,
-        problem_generator=problem_generator,
+        instance_generator=problem_generator,
         statistics_calculator=integer_factor_stats_calc,
     )
     pipeline.run()

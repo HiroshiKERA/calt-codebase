@@ -121,7 +121,7 @@ def main(config_path: str) -> None:
     problem_generator = ArithmeticAdditionGenerator(**gen_cfg)
     pipeline = DatasetPipeline.from_config(
         cfg.dataset,
-        problem_generator=problem_generator,
+        instance_generator=problem_generator,
         statistics_calculator=arithmetic_addition_stats_calc,
     )
     pipeline.run()

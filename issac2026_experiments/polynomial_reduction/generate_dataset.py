@@ -65,7 +65,7 @@ def main(config_path: str) -> None:
     )
     pipeline = DatasetPipeline.from_config(
         cfg.dataset,
-        problem_generator=problem_generator,
+        instance_generator=problem_generator,
     )
     pipeline.run()
     print("Dataset generation completed.")

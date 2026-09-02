@@ -21,9 +21,9 @@ train:
   # Halved against train_GF7.yaml because the sequences are ~2x longer; raise
   # gradient_accumulation_steps to keep the effective batch at 128 if the
   # comparison against the degree 4 row should hold the optimizer fixed.
-  batch_size: 64
-  gradient_accumulation_steps: 2
-  test_batch_size: 64
+  batch_size: 4
+  gradient_accumulation_steps: 32
+  test_batch_size: 8
   lr_scheduler_type: linear
   max_grad_norm: 1.0
   optimizer: adamw_torch
