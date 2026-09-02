@@ -1,0 +1,162 @@
+[
+  {
+    "config_path": "configs/data_GF7.yaml",
+    "field": "GF7",
+    "symbols": "x,y",
+    "num_polynomials": 2,
+    "max_degree": 4,
+    "num_variables": 2,
+    "num_samples": 1000,
+    "timed_out": 0,
+    "timeout_s": 60.0,
+    "root_seed": 42,
+    "degrevlex": {
+      "n_systems": 1000,
+      "n_polynomials": 2229,
+      "mean_degree_per_poly": 2.4091520861372815,
+      "mean_terms_per_system": 6.896,
+      "mean_max_degree": 2.7,
+      "mean_terms_per_poly": 3.0937640197397935,
+      "mean_basis_size": 2.229
+    },
+    "lex": {
+      "n_systems": 1000,
+      "n_polynomials": 1988,
+      "mean_degree_per_poly": 3.2077464788732395,
+      "mean_terms_per_system": 6.496,
+      "mean_max_degree": 3.611,
+      "mean_terms_per_poly": 3.267605633802817,
+      "mean_basis_size": 1.988
+    },
+    "ratio_degree_per_poly": 1.3314835943032495,
+    "ratio_terms_per_system": 0.9419953596287703
+  },
+  {
+    "config_path": "configs/data.yaml",
+    "field": "QQ",
+    "symbols": "x,y",
+    "num_polynomials": 2,
+    "max_degree": 4,
+    "num_variables": 2,
+    "num_samples": 1000,
+    "timed_out": 0,
+    "timeout_s": 60.0,
+    "root_seed": 42,
+    "degrevlex": {
+      "n_systems": 1000,
+      "n_polynomials": 1932,
+      "mean_degree_per_poly": 2.0745341614906834,
+      "mean_terms_per_system": 3.976,
+      "mean_max_degree": 2.268,
+      "mean_terms_per_poly": 2.0579710144927534,
+      "mean_basis_size": 1.932
+    },
+    "lex": {
+      "n_systems": 1000,
+      "n_polynomials": 1872,
+      "mean_degree_per_poly": 2.5224358974358974,
+      "mean_terms_per_system": 4.338,
+      "mean_max_degree": 2.821,
+      "mean_terms_per_poly": 2.3173076923076925,
+      "mean_basis_size": 1.872
+    },
+    "ratio_degree_per_poly": 1.2159047290035312,
+    "ratio_terms_per_system": 1.091046277665996
+  },
+  {
+    "config_path": "configs/data_GF7.yaml",
+    "field": "GF7",
+    "symbols": "x,y",
+    "num_polynomials": 2,
+    "max_degree": 16,
+    "num_variables": 2,
+    "num_samples": 200,
+    "timed_out": 0,
+    "timeout_s": 120.0,
+    "root_seed": 42,
+    "degrevlex": {
+      "n_systems": 200,
+      "n_polynomials": 643,
+      "mean_degree_per_poly": 7.900466562986003,
+      "mean_terms_per_system": 24.36,
+      "mean_max_degree": 8.585,
+      "mean_terms_per_poly": 7.576982892690514,
+      "mean_basis_size": 3.215
+    },
+    "lex": {
+      "n_systems": 200,
+      "n_polynomials": 466,
+      "mean_degree_per_poly": 26.326180257510728,
+      "mean_terms_per_system": 36.135,
+      "mean_max_degree": 25.77,
+      "mean_terms_per_poly": 15.508583690987125,
+      "mean_basis_size": 2.33
+    },
+    "ratio_degree_per_poly": 3.332231083775472,
+    "ratio_terms_per_system": 1.483374384236453
+  },
+  {
+    "config_path": "configs/data_GF7.yaml",
+    "field": "GF7",
+    "symbols": "x,y",
+    "num_polynomials": 2,
+    "max_degree": 32,
+    "num_variables": 2,
+    "num_samples": 200,
+    "timed_out": 0,
+    "timeout_s": 120.0,
+    "root_seed": 42,
+    "degrevlex": {
+      "n_systems": 200,
+      "n_polynomials": 867,
+      "mean_degree_per_poly": 16.696655132641293,
+      "mean_terms_per_system": 132.3,
+      "mean_max_degree": 17.095,
+      "mean_terms_per_poly": 30.519031141868513,
+      "mean_basis_size": 4.335
+    },
+    "lex": {
+      "n_systems": 200,
+      "n_polynomials": 509,
+      "mean_degree_per_poly": 72.70726915520629,
+      "mean_terms_per_system": 105.17,
+      "mean_max_degree": 73.33,
+      "mean_terms_per_poly": 41.32416502946955,
+      "mean_basis_size": 2.545
+    },
+    "ratio_degree_per_poly": 4.354600881290677,
+    "ratio_terms_per_system": 0.7949357520786091
+  },
+  {
+    "config_path": "configs/data_GF7.yaml",
+    "field": "GF7",
+    "symbols": "x,y,z,w,v",
+    "num_polynomials": 5,
+    "max_degree": 4,
+    "num_variables": 5,
+    "num_samples": 200,
+    "timed_out": 0,
+    "timeout_s": 120.0,
+    "root_seed": 42,
+    "degrevlex": {
+      "n_systems": 200,
+      "n_polynomials": 1692,
+      "mean_degree_per_poly": 2.910756501182033,
+      "mean_terms_per_system": 95.96,
+      "mean_max_degree": 3.07,
+      "mean_terms_per_poly": 11.342789598108746,
+      "mean_basis_size": 8.46
+    },
+    "lex": {
+      "n_systems": 200,
+      "n_polynomials": 964,
+      "mean_degree_per_poly": 10.276970954356846,
+      "mean_terms_per_system": 139.76,
+      "mean_max_degree": 9.665,
+      "mean_terms_per_poly": 28.99585062240664,
+      "mean_basis_size": 4.82
+    },
+    "ratio_degree_per_poly": 3.5306872801567075,
+    "ratio_terms_per_system": 1.456440183409754
+  }
+]
