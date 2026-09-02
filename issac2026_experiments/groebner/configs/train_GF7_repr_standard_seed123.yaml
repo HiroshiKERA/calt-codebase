@@ -1,0 +1,45 @@
+# Section 5.5, input representation: standard token embedding on P-Groebner.
+#
+# Run with train.py --expanded_form, so that this arm and the monomial arm read
+# the *same* C/E expanded-form data and differ only in the embedding. That is
+# also what separates this run from Table 5's: Table 5 trains on raw polynomial
+# strings (configs/train_GF7.yaml, configs/lexer.yaml) for 64 epochs, this one
+# on expanded form for 32. The two numbers are not comparable, and the paper
+# should not present them as if they were.
+
+model:
+  model_type: generic
+  num_encoder_layers: 6
+  num_encoder_heads: 8
+  num_decoder_layers: 6
+  num_decoder_heads: 8
+  d_model: 512
+  encoder_ffn_dim: 2048
+  decoder_ffn_dim: 2048
+  max_sequence_length: 2048
+
+train:
+  save_dir: ./results/GF7_repr_standard_seed123
+  num_train_epochs: 32
+  learning_rate: 0.0001
+  weight_decay: 0.01
+  warmup_ratio: 0.1
+  batch_size: 128
+  test_batch_size: 64
+  lr_scheduler_type: linear
+  max_grad_norm: 1.0
+  optimizer: adamw_torch
+  num_workers: 4
+  seed: 123
+  wandb:
+    project: calt-issac26
+    group: groebner_repr
+    name: groebner_GF7_repr_standard
+    no_wandb: False
+
+data:
+  train_dataset_path: ./data/GF7/train_raw.txt
+  test_dataset_path: ./data/GF7/test_raw.txt
+  lexer_config: ./configs/lexer_ce.yaml
+  validate_train_tokens: true
+  validate_test_tokens: true

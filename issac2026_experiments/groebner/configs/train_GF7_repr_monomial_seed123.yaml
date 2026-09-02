@@ -1,0 +1,49 @@
+# Section 5.5, input representation: monomial token embedding on P-Groebner.
+#
+# Identical to train_GF7_repr_standard.yaml except for model_type and the two
+# keys the monomial model needs. Run with train.py --expanded_form.
+#
+# `monomial_separators` has to be spelled out. The model's default is
+# ["+", "||"], but train.py builds its expanded form with
+# ExpandedFormLoadPreprocessor(delimiter=" | "), so the polynomial separator is
+# "|". Without this line "|" is not a follow class and the model's alignment
+# check rejects every sample.
+
+model:
+  model_type: monomial
+  num_variables: 2
+  monomial_separators: ["+", "|"]
+  num_encoder_layers: 6
+  num_encoder_heads: 8
+  num_decoder_layers: 6
+  num_decoder_heads: 8
+  d_model: 512
+  encoder_ffn_dim: 2048
+  decoder_ffn_dim: 2048
+  max_sequence_length: 2048
+
+train:
+  save_dir: ./results/GF7_repr_monomial_seed123
+  num_train_epochs: 32
+  learning_rate: 0.0001
+  weight_decay: 0.01
+  warmup_ratio: 0.1
+  batch_size: 128
+  test_batch_size: 128
+  lr_scheduler_type: linear
+  max_grad_norm: 1.0
+  optimizer: adamw_torch
+  num_workers: 4
+  seed: 123
+  wandb:
+    project: calt-issac26
+    group: groebner_repr
+    name: groebner_GF7_repr_monomial
+    no_wandb: False
+
+data:
+  train_dataset_path: ./data/GF7/train_raw.txt
+  test_dataset_path: ./data/GF7/test_raw.txt
+  lexer_config: ./configs/lexer_ce.yaml
+  validate_train_tokens: true
+  validate_test_tokens: true
