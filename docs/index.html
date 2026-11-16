@@ -174,6 +174,8 @@
 <li><a href="#113-reproducibility">11.3 Reproducibility</a></li>
 <li><a href="#114-disabling-wandb">11.4 Disabling wandb</a></li>
 <li><a href="#115-a-custom-trainer">11.5 A custom Trainer</a></li>
+<li><a href="#116-encoder-only-model-for-single-token-tasks-eg-parity">11.6 Encoder-only model for single-token tasks (e.g. parity)</a></li>
+<li><a href="#117-custom-input-and-positional-embeddings">11.7 Custom input and positional embeddings</a></li>
 </ul>
 </li>
 <li><a href="#12-troubleshooting">12. Troubleshooting</a><ul>
@@ -187,6 +189,16 @@
 </ul>
 </li>
 <li><a href="#13-glossary">13. Glossary</a></li>
+<li><a href="#14-extensions-tokenization-format-offline-preprocessing-user-hooks">14. Extensions: tokenization format, offline preprocessing, user hooks</a><ul>
+<li><a href="#141-tokenization-format-choice-between-raw-and-ce-expanded">14.1 — Tokenization format (choice between raw and C/E expanded)</a></li>
+<li><a href="#142-offline-preprocessing-skip-work-at-training-startup">14.2 — Offline preprocessing (skip work at training startup)</a></li>
+<li><a href="#143-user-post-processing-hooks-per-task-or-shared">14.3 — User post-processing hooks (per-task or shared)</a></li>
+<li><a href="#144-compatibility-with-upstream-calt-x-from-hiroshikeracalt">14.4 — Compatibility with upstream calt-x from HiroshiKERA/calt</a></li>
+<li><a href="#145-user-friendly-cli-tools">14.5 — User-friendly CLI tools</a></li>
+<li><a href="#146-built-in-safety-checks-added-in-this-codebase">14.6 — Built-in safety checks (added in this codebase)</a></li>
+<li><a href="#147-summary-of-files-addedmodified">14.7 — Summary of files added/modified</a></li>
+</ul>
+</li>
 <li><a href="#useful-links">Useful links</a></li>
 </ul>
 </div>
@@ -218,6 +230,11 @@ source-level reference aimed at AI assistants, see <a href="ai-context.html">AI_
 <li><a href="#11-advanced-usage">Advanced usage</a></li>
 <li><a href="#12-troubleshooting">Troubleshooting</a></li>
 <li><a href="#13-glossary">Glossary</a></li>
+<li><a href="#14-extensions-tokenization-format-offline-preprocessing-user-hooks">Extensions: tokenization format, offline preprocessing, user hooks</a><ul>
+<li>14.5 <a href="#145--user-friendly-cli-tools">User-friendly CLI tools (<code>run.sh</code>, <code>hooks.py</code>, <code>inspect_cache.py</code>)</a></li>
+<li>14.6 <a href="#146--built-in-safety-checks-added-in-this-codebase">Built-in safety checks</a></li>
+</ul>
+</li>
 </ol>
 <hr />
 <h2 id="1-what-is-this-project">1. What is this project?</h2>
@@ -281,7 +298,7 @@ the other — without that rule being programmed explicitly.</p>
 │                                                           │
 │  • DatasetPipeline  → generate (problem, answer) pairs    │
 │  • IOPipeline       → load, preprocess, tokenize          │
-│  • ModelPipeline    → build the Transformer (BART-based)  │
+│  • ModelPipeline    → build the Transformer (model_type)  │
 │  • TrainerPipeline  → train + evaluate                    │
 └─────────────────────────────────────────────────────────┘
 </code></pre>
@@ -449,7 +466,7 @@ python train.py --training_order lex  # Gröbner-specific variant (see §11)
    │  IOPipeline.from_config(cfg.data).build()
    │     read lines → split on &quot; # &quot; → tokenize with the lexer
    ▼  ModelPipeline.from_io_dict(cfg.model, io_dict).build()
-   │     build a BART encoder-decoder from cfg.model
+   │     build the model selected by cfg.model.model_type (generic = calt's own encoder-decoder)
    ▼  TrainerPipeline.from_io_dict(cfg.train, model, io_dict).build()
    │     train (cross-entropy + AdamW), evaluate periodically, log to wandb
    ▼
@@ -541,7 +558,7 @@ range. Set <code>validate_*_tokens: true</code> (see below) to catch gaps before
 </blockquote>
 <h3 id="73-trainyaml-model-training-data-paths">7.3 <code>train.yaml</code> — model + training + data paths</h3>
 <pre><code class="language-yaml">model:
-  model_type: generic        # BART encoder-decoder
+  model_type: generic        # calt's standard encoder-decoder (bart selects HF BART)
   num_encoder_layers: 3
   num_encoder_heads: 4
   num_decoder_layers: 3
@@ -579,6 +596,22 @@ data:
 </code></pre>
 <p>Paths are written <strong>relative to the <code>scripts/</code> directory</strong> (that's where you run
 the scripts from). The <code>shared.paths</code> helpers resolve them regardless of cwd.</p>
+<p><strong>Choosing the model architecture (<code>model_type</code>).</strong> The default <code>generic</code> (and
+<code>bart</code>) are <strong>encoder-decoder</strong> models that <em>generate</em> the answer token by token.
+For tasks whose answer is a <strong>single token</strong> — e.g. <code>parity</code> (<code>+1</code> / <code>-1</code>) — you
+can instead pick an <strong>encoder-only classification</strong> model, which is lighter and
+often more accurate on such tasks:</p>
+<pre><code class="language-yaml">model:
+  model_type: encoder_classifier   # encoder-only (alias: encoder_only)
+  num_encoder_layers: 3
+  num_encoder_heads: 4
+  d_model: 256
+  encoder_ffn_dim: 1024
+  max_sequence_length: 256
+  # decoder_* fields are ignored for this model_type
+</code></pre>
+<p>See <a href="#116-encoder-only-model-for-single-token-tasks-eg-parity">§11.6</a> for what
+it does and when to use it.</p>
 <hr />
 <h2 id="8-the-three-tasks">8. The three tasks</h2>
 <h3 id="81-parity-sign-of-a-permutation-start-here">8.1 <code>parity</code> — sign of a permutation ⭐ start here</h3>
@@ -589,6 +622,10 @@ the scripts from). The <code>shared.paths</code> helpers resolve them regardless
 <li><strong>Experiments</strong>: <code>toy/</code> (n=5) and <code>scaling/</code> (n ∈ {5, 7, 10}, via <code>--n</code>).</li>
 <li><strong>Why</strong>: parity is a <em>global</em> property — the model must compare all pairs, not
   just look at one element. A clean probe of attention over the full sequence.</li>
+<li><strong>Architecture</strong>: the answer is a single token (<code>+1</code> / <code>-1</code>), so besides the
+  default encoder-decoder you can use the lighter <strong>encoder-only</strong> classification
+  model — run <code>train.py --config_path ../configs/train_encoder.yaml</code>, see
+  <a href="#116-encoder-only-model-for-single-token-tasks-eg-parity">§11.6</a>.</li>
 </ul>
 <h3 id="82-groebner_basis-grobner-basis-of-f1-f2">8.2 <code>groebner_basis</code> — Gröbner basis of ⟨f1, f2⟩</h3>
 <ul>
@@ -708,6 +745,122 @@ subclass <code>calt.trainer.trainer.Trainer</code>, then build the trainer pipel
 swap in your class (see the CALT library docs / <a href="ai-context.html">AI_CONTEXT.md</a>).
 The lightweight alternative — extra logging without changing the loss — is the
 <code>CustomLoggingCallback</code> above.</p>
+<h3 id="116-encoder-only-model-for-single-token-tasks-eg-parity">11.6 Encoder-only model for single-token tasks (e.g. parity)</h3>
+<p>By default every task uses an <strong>encoder-decoder</strong> model (<code>model_type: generic</code>
+or <code>bart</code>) that generates the answer one token at a time. When the answer is a
+<strong>single token</strong> — as in <code>parity</code>, whose target is <code>+1</code> or <code>-1</code> — that decoder
+is unnecessary. You can opt into an <strong>encoder-only classification</strong> model:</p>
+<pre><code class="language-yaml"># in train.yaml
+model:
+  model_type: encoder_classifier   # alias: encoder_only
+  num_encoder_layers: 3
+  num_encoder_heads: 4
+  d_model: 256
+  encoder_ffn_dim: 1024
+  max_sequence_length: 256
+</code></pre>
+<p>For the toy parity task a ready-made config is provided — just run:</p>
+<pre><code class="language-bash">cd parity/experiments/toy/scripts
+python train.py --config_path ../configs/train_encoder.yaml
+</code></pre>
+<p><strong>What it does.</strong> It encodes the input, mean-pools the encoder output over the
+real (non-padded) positions, and classifies that vector over the vocabulary; the
+predicted class <strong>is</strong> a token id, so it decodes straight back to <code>+1</code> / <code>-1</code>.
+The classification target is read from the answer token in the data, so it reuses
+the <strong>same dataset and tokenizer</strong> as the encoder-decoder — no regeneration or
+re-tokenization needed.</p>
+<p><strong>When to use it.</strong> Tasks with a fixed, single-token answer (parity is the
+canonical case). It is lighter and frequently more accurate there. Do <strong>not</strong>
+use it for tasks with variable-length outputs (<code>groebner_basis</code>, <code>border_basis</code>):
+those need the encoder-decoder to generate a sequence.</p>
+<p><strong>Effect on metrics.</strong> Because there is no generated sequence, <code>token_accuracy</code>
+and <code>success_rate</code> coincide and are computed as plain classification accuracy
+(predicted token vs. the answer token). The exact-match evaluation
+(<code>evaluate.py</code>) still works unchanged — the model wraps its prediction as
+<code>[BOS, token, EOS]</code> so decoding behaves like the encoder-decoder.</p>
+<blockquote>
+<p><strong>Requirement.</strong> This <code>model_type</code> ships with the CALT library. It is available
+once you run against a <code>calt-x</code> build that includes the <code>encoder_classifier</code>
+model (see <a href="#144--compatibility-with-upstream-calt-x-from-hiroshikeracalt">§14.4</a>).
+With an older <code>calt-x</code>, <code>model_type: encoder_classifier</code> raises
+<em>"Unsupported model type"</em> — keep <code>generic</code> until the library is updated.</p>
+</blockquote>
+<h3 id="117-custom-input-and-positional-embeddings">11.7 Custom input and positional embeddings</h3>
+<p>Both the <strong>input (token) embedding</strong> and the <strong>positional embedding</strong> are chosen
+by config and can be replaced with your own — without editing the library. The
+built-ins keep the previous behavior, so existing configs are unaffected.</p>
+<table>
+<thead>
+<tr>
+<th>config key (in <code>train.yaml</code>'s <code>model:</code> block)</th>
+<th>default</th>
+<th>built-in values</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>input_embedding_type</code></td>
+<td><code>token</code></td>
+<td><code>token</code> (aliases <code>default</code>, <code>learned</code>) — a plain <code>nn.Embedding</code></td>
+</tr>
+<tr>
+<td><code>use_positional_embedding</code></td>
+<td><code>generic</code></td>
+<td><code>generic</code>/<code>learned</code>, <code>sinusoidal</code>, <code>rope</code>, <code>none</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Pick a built-in</strong> — just set the key in your config:</p>
+<pre><code class="language-yaml">model:
+  model_type: generic
+  use_positional_embedding: rope      # try sinusoidal / rope / none
+</code></pre>
+<p><strong>Plug in your own.</strong> Register a factory <strong>before the model is built</strong> (e.g. at
+the top of your task's <code>scripts/train.py</code>, before calling <code>run_training</code>), then
+select it by name in the config:</p>
+<pre><code class="language-python">import torch.nn as nn
+from calt.models import register_input_embedding, register_positional_embedding
+
+class MyEmbedding(nn.Module):
+    def __init__(self, vocab_size, d_model):
+        super().__init__()
+        self.emb = nn.Embedding(vocab_size, d_model)
+    def forward(self, input_ids):           # (B, S) long -&gt; (B, S, d_model)
+        return self.emb(input_ids)
+
+register_input_embedding(
+    &quot;my_emb&quot;, lambda vocab_size, d_model, **kw: MyEmbedding(vocab_size, d_model))
+register_positional_embedding(
+    &quot;my_pe&quot;, lambda d_model, max_len, **kw: MyPositional(d_model, max_len))
+</code></pre>
+<pre><code class="language-yaml">model:
+  input_embedding_type: my_emb
+  use_positional_embedding: my_pe
+</code></pre>
+<p><strong>Ready-to-run example.</strong> A plug-and-play example you can copy and adapt is
+provided for the parity toy task:</p>
+<pre><code class="language-bash">cd parity/experiments/toy/scripts
+python train_custom_embedding.py            # uses configs/train_custom_embedding.yaml
+python train_custom_embedding.py --dryrun   # quick smoke test
+</code></pre>
+<p><code>train_custom_embedding.py</code> defines a custom input embedding, registers it, and
+<code>configs/train_custom_embedding.yaml</code> selects it by name — replace the module
+with your own and you are done.</p>
+<p><strong>Factory contract.</strong>
+- input embedding: receives <code>vocab_size</code>, <code>d_model</code> (extra config keys are
+  forwarded as kwargs) → returns an <code>nn.Module</code> mapping <code>input_ids</code> of shape
+  <code>(batch, seq)</code> to <code>(batch, seq, d_model)</code>.
+- positional embedding: receives <code>d_model</code>, <code>max_len</code> → returns an <code>nn.Module</code>
+  mapping <code>(batch, seq, d_model)</code> to <code>(batch, seq, d_model)</code> (or <code>None</code> for
+  "no positional embedding").</p>
+<p>An unknown name raises <code>ValueError</code> listing the supported types. These hooks
+apply to the <code>generic</code> and <code>encoder_classifier</code> models (not <code>bart</code>, which is
+HuggingFace's own model).</p>
+<blockquote>
+<p><strong>Requirement.</strong> Like the encoder-only model (§11.6), the pluggable embeddings
+ship with the CALT library — they are available once you run against a <code>calt-x</code>
+build that includes them (see <a href="#144--compatibility-with-upstream-calt-x-from-hiroshikeracalt">§14.4</a>).</p>
+</blockquote>
 <hr />
 <h2 id="12-troubleshooting">12. Troubleshooting</h2>
 <h3 id="modulenotfounderror-no-module-named-calt"><code>ModuleNotFoundError: No module named 'calt'</code></h3>
@@ -818,6 +971,335 @@ truncating long bases, and inspect a few raw lines of <code>train_raw.txt</code>
 </tr>
 </tbody>
 </table>
+<hr />
+<h2 id="14-extensions-tokenization-format-offline-preprocessing-user-hooks">14. Extensions: tokenization format, offline preprocessing, user hooks</h2>
+<p>This codebase ships three extensions beyond what <code>calt-x</code> provides natively. All
+three are <strong>opt-in</strong> and <strong>backward compatible</strong>: if you don't use them, the
+training behaves exactly as the original codebase.</p>
+<h3 id="141-tokenization-format-choice-between-raw-and-ce-expanded">14.1 — Tokenization format (choice between <em>raw</em> and <em>C/E expanded</em>)</h3>
+<p><strong>What it does.</strong> Polynomial tasks (<code>groebner_basis</code>, <code>border_basis</code>) can be
+tokenized in two ways:</p>
+<table>
+<thead>
+<tr>
+<th>Format</th>
+<th>Lexer config</th>
+<th>Example of one term</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>raw</strong> (default)</td>
+<td><code>lexer.yaml</code></td>
+<td><code>"x ^ 2"</code> → <code>["x", "^", "2"]</code></td>
+</tr>
+<tr>
+<td><strong>C/E expanded</strong></td>
+<td><code>lexer_expanded.yaml</code></td>
+<td><code>"2*x^2*y"</code> → <code>["C2", "E2", "E1"]</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>How to switch</strong> — edit one line in <code>&lt;task&gt;/experiments/&lt;exp&gt;/configs/train.yaml</code>:</p>
+<pre><code class="language-yaml">data:
+  lexer_config: ../configs/lexer.yaml             # raw  (default)
+  # lexer_config: ../configs/lexer_expanded.yaml  # C/E expanded
+</code></pre>
+<p>The training pipeline auto-detects the format via <code>shared.calt_adapter.detect_lexer_format</code>
+and wires <code>ExpandedFormLoadPreprocessor</code> (a CALT-provided component) into the
+load chain when needed.</p>
+<p><strong>When to use which</strong>:
+- <strong>raw</strong> — paper-faithful reproduction (ISSAC '26 §5). Handles coefficient
+  swell on ℚ via <code>digit_group: 1</code>.
+- <strong>expanded</strong> — smaller fixed-size vocabulary, aligns with the
+  <code>polynomial_reduction</code> task in the paper. ⚠ Coefficients outside the declared
+  range produce OOV tokens — widen <code>coefficients: ["C", min, max]</code> accordingly.</p>
+<p><strong>Files touched by this extension</strong>:
+- <code>shared/calt_adapter.py</code> — adds <code>detect_lexer_format()</code> helper
+- <code>&lt;task&gt;/experiments/toy/configs/lexer_expanded.yaml</code> — new file per task
+- <code>&lt;task&gt;/core/train.py::build_load_preprocessor</code> — wires <code>ExpandedFormLoadPreprocessor</code></p>
+<h3 id="142-offline-preprocessing-skip-work-at-training-startup">14.2 — Offline preprocessing (skip work at training startup)</h3>
+<p><strong>The problem.</strong> Vanilla CALT applies the <code>dataset_load_preprocessor</code>
+(TextToSage → FGLM → ExpandedForm, depending on configuration) once <strong>at each
+training startup</strong>. On the Gröbner <code>--training_order lex</code> chain on 100k samples
+this means rerunning SageMath/FGLM (~1 minute) every single time you launch
+<code>train.py</code>. Worse, the per-batch tokenization (<code>UnifiedLexer.__call__</code>) and
+HF <code>tokenizer.__call__</code> run lazily in the data loader.</p>
+<p><strong>The fix — two cache levels.</strong></p>
+<pre><code>generate.py            → train_raw.txt
+preprocess.py          → cache (one of two flavors)
+train.py               → auto-detects cache, skips redundant work
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Cache directory</th>
+<th>Content</th>
+<th>Skipped at training</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>processed_&lt;order&gt;_&lt;format&gt;_ids/</code></td>
+<td><code>{"input_ids": [...], "target_ids": [...]}</code></td>
+<td>SageMath + UnifiedLexer + HF tokenizer (everything)</td>
+</tr>
+<tr>
+<td><code>processed_&lt;order&gt;_&lt;format&gt;/</code></td>
+<td><code>{"problem": str, "answer": str}</code></td>
+<td>SageMath / FGLM / ExpandedForm only</td>
+</tr>
+<tr>
+<td>(no cache)</td>
+<td>—</td>
+<td>nothing (original CALT behavior)</td>
+</tr>
+</tbody>
+</table>
+<p>Both flavors are produced by the same CLI:</p>
+<pre><code class="language-bash">cd groebner_basis/experiments/toy/scripts
+python preprocess.py --training_order lex                    # pretokenized (default)
+python preprocess.py --training_order lex --no-pretokenize   # strings only
+python preprocess.py --force                                  # rebuild
+</code></pre>
+<p><code>train.py</code> then picks the most aggressive cache available: pretok → strings → raw.</p>
+<p><strong>Cache invalidation by SHA256 hash.</strong> Each cache directory stores <code>_hash.txt</code>
+that fingerprints <code>(lexer.yaml + sampler dict + training_order + tokenizer vocab
++ user hook source)</code>. Any change → mismatch → <code>STALE</code> warning + automatic fallback.</p>
+<p><strong>Proof of zero online tokenization</strong> (monkey-patched spies on a 3-batch run
+through the data loader, see test in §14.4 below):</p>
+<pre><code>LEX calls during 3 batches:    0   ← UnifiedLexer disabled
+TOK __call__ during 3 batches: 0   ← HF tokenizer disabled
+TOK pad   during 3 batches:    &gt;0  ← only padding runs, on already-tokenized ids
+</code></pre>
+<p><strong>Files touched by this extension</strong>:
+- <code>shared/preprocess.py</code> — thin shim re-exporting <code>calt.preprocess</code>
+- <code>&lt;task&gt;/experiments/toy/scripts/preprocess.py</code> — CLI per task
+- <code>&lt;task&gt;/core/train.py::run_training</code> — adds the pretok → strings → raw hierarchy</p>
+<h3 id="143-user-post-processing-hooks-per-task-or-shared">14.3 — User post-processing hooks (per-task or shared)</h3>
+<p><strong>What it does.</strong> Two opt-in slots let you transform <code>(input_text, target_text)</code>
+between the load chain and tokenization, without editing any task's training code.</p>
+<table>
+<thead>
+<tr>
+<th>Slot</th>
+<th>File (create to enable)</th>
+<th>Scope</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Base hook</strong></td>
+<td><code>shared/base_postprocessor.py</code></td>
+<td>All tasks that wire user hooks (groebner + border)</td>
+</tr>
+<tr>
+<td><strong>Per-task</strong></td>
+<td><code>&lt;task&gt;/core/postprocessor.py</code></td>
+<td>One specific task, AFTER the base hook</td>
+</tr>
+</tbody>
+</table>
+<p>Each file exposes one function:</p>
+<pre><code class="language-python">def postprocess(input_text: str, target_text: str) -&gt; tuple[str, str]:
+    # Default identity. Edit me.
+    return input_text, target_text
+</code></pre>
+<p><strong>Activation rules</strong>:
+- If a file does NOT exist → that slot is skipped (no chain change, no cache
+  invalidation, no perf cost).
+- If a file DOES exist → its source code is folded into the cache hash, so
+  editing <code>postprocess()</code> automatically invalidates stale caches.</p>
+<p><strong>To enable</strong> copy the corresponding <code>.example</code> template:</p>
+<pre><code class="language-bash">cp shared/base_postprocessor.py.example shared/base_postprocessor.py
+# then edit shared/base_postprocessor.py
+</code></pre>
+<p><strong>Example — reverse the order of polynomials in the target</strong>:</p>
+<pre><code class="language-python">def postprocess(input_text, target_text):
+    parts = target_text.split(&quot; | &quot;)
+    return input_text, &quot; | &quot;.join(reversed(parts))
+</code></pre>
+<p>The chain ordering is:</p>
+<pre><code>raw line → [task load chain] → (input, target) → base hook → task hook → tokenizer
+</code></pre>
+<p><strong>Files touched by this extension</strong>:
+- <code>shared/user_postprocessor.py</code> — helper that loads hooks + computes hash contribution
+- <code>shared/base_postprocessor.py.example</code> — template (user copies + edits)
+- <code>&lt;task&gt;/core/postprocessor.py.example</code> — per-task template
+- <code>&lt;task&gt;/core/train.py::build_load_preprocessor</code> — appends <code>UserPostProcessorAdapter</code> to the chain when hook files exist</p>
+<h3 id="144-compatibility-with-upstream-calt-x-from-hiroshikeracalt">14.4 — Compatibility with upstream <code>calt-x</code> from <code>HiroshiKERA/calt</code></h3>
+<p>⚠ <strong>Important</strong> — this is the key question:</p>
+<blockquote>
+<p><em>If I <code>pip install calt-x</code> fresh from KERA's official repo, will all three
+ extensions work without any modification?</em></p>
+</blockquote>
+<p><strong>Answer</strong>: 2 of the 3 extensions work as-is; <strong>task 14.2's pre-tokenized cache
+requires 3 modifications to the installed <code>calt-x</code> package</strong>. Task 14.1 and 14.3
+work out of the box on vanilla CALT.</p>
+<table>
+<thead>
+<tr>
+<th>Extension</th>
+<th>Vanilla <code>calt-x</code> from KERA</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>14.1</strong> Tokenization format</td>
+<td>✅ Works</td>
+<td>Only uses CALT's existing <code>ExpandedFormLoadPreprocessor</code> + <code>ChainLoadPreprocessor</code>. The codebase adds <code>shared/calt_adapter.detect_lexer_format</code>, a pure Python YAML parser — no CALT touch.</td>
+</tr>
+<tr>
+<td><strong>14.3</strong> User hooks</td>
+<td>✅ Works</td>
+<td>Hooks are wrapped in <code>UserPostProcessorAdapter</code> that implements CALT's <code>process_sample</code> protocol. Plugs into the existing <code>ChainLoadPreprocessor</code> without any CALT change.</td>
+</tr>
+<tr>
+<td><strong>14.2</strong> Strings cache (<code>processed_*/</code>)</td>
+<td>⚠ Partial</td>
+<td>The JSONL format <code>{"problem", "answer"}</code> is the one CALT's <code>JsonlDefaultLoadPreprocessor</code> already reads. The cache itself works on vanilla CALT. <strong>BUT</strong> the helper module <code>calt.preprocess</code> (where <code>run_preprocess</code>, <code>compute_config_hash</code>, etc. live) does not ship in upstream CALT — you would need to move it into this repo's <code>shared/preprocess.py</code> (the codebase already has a shim there).</td>
+</tr>
+<tr>
+<td><strong>14.2</strong> Pre-tokenized cache (<code>processed_*_ids/</code>)</td>
+<td>❌ Doesn't work</td>
+<td>Needs 3 specific patches on <code>calt-x</code> (see below).</td>
+</tr>
+</tbody>
+</table>
+<p><strong>The 3 modifications needed in <code>calt-x</code> for the pretokenized path</strong>:</p>
+<ol>
+<li>
+<p><strong><code>calt/preprocess.py</code></strong> — new file (~470 lines) providing <code>preprocess_to_ids</code>,
+   <code>maybe_use_pretokenized_cache</code>, <code>compute_pretok_hash</code>, etc. Does not exist
+   upstream. Could equivalently live in <code>shared/</code>.</p>
+</li>
+<li>
+<p><strong><code>calt/io/base.py::StandardDataCollator.__call__</code></strong> — patched to detect
+   <code>list[int]</code> batches and call <code>self.tokenizer.pad(...)</code> instead of
+   <code>self.tokenizer(...)</code>. Without this patch, the collator tries to call the
+   tokenizer on integer lists and crashes (or worse, silently mis-tokenizes).</p>
+</li>
+<li>
+<p><strong><code>calt/io/pipeline.py::IOPipeline.build</code></strong> — patched to sniff the first
+   JSONL line for an <code>"input_ids"</code> key and load the dataset as pre-tokenized
+   <code>list[list[int]]</code> (bypassing <code>StandardDataset.load_file</code>'s text path and
+   disabling the UnifiedLexer in <code>__getitem__</code>).</p>
+</li>
+</ol>
+<p>In this codebase, those 3 modifications are applied <strong>locally to the installed
+<code>calt-x</code> in <code>site-packages/</code> only</strong> — never to the upstream git repo. The
+upstream <code>HiroshiKERA/calt</code> is untouched.</p>
+<p><strong>Three deployment options</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Setup</th>
+<th>Maintenance</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>A. Local patches (current)</strong></td>
+<td>Patches in <code>site-packages/calt/</code> only. Backup at <code>/data/.../backups/</code>.</td>
+<td>Re-apply after <code>pip install --upgrade calt-x</code>.</td>
+</tr>
+<tr>
+<td><strong>B. Submit upstream PR</strong></td>
+<td>Open a PR at <code>HiroshiKERA/calt</code> adding the 3 changes.</td>
+<td>Once merged, vanilla <code>pip install calt-x</code> is enough.</td>
+</tr>
+<tr>
+<td><strong>C. Don't use the pretokenized path</strong></td>
+<td>Use only the strings cache (<code>--no-pretokenize</code>).</td>
+<td>Vanilla CALT works; loses ~5–15% training speedup.</td>
+</tr>
+</tbody>
+</table>
+<p>A backup of the patched site-packages and the baseline (pre-modification) state
+both exist under <code>/data/t-maxime/backups/</code>.</p>
+<h3 id="145-user-friendly-cli-tools">14.5 — User-friendly CLI tools</h3>
+<p>To reduce the friction of using the three extensions, the codebase ships three
+small helpers (no flag-juggling, no Python edits needed for the common cases):</p>
+<h4 id="bash-taskexperimentsexpscriptsrunsh-all-in-one-workflow"><code>bash &lt;task&gt;/experiments/&lt;exp&gt;/scripts/run.sh</code> — all-in-one workflow</h4>
+<p>Runs <code>generate.py</code> → <code>preprocess.py</code> → <code>train.py</code> → <code>evaluate.py</code> in one
+command, with consistent flags everywhere. The script keeps the <code>--order</code> and
+<code>--lexer</code> choice synchronized across all three Python scripts, so you cannot
+forget to pass <code>--training_order</code> to <code>train.py</code> after building a cache for <code>lex</code>.</p>
+<pre><code class="language-bash">cd groebner_basis/experiments/toy/scripts
+bash run.sh                                  # defaults: degrevlex, raw, with cache
+bash run.sh --order lex                      # full lex run, cache + training matched
+bash run.sh --order lex --lexer expanded     # combine lex + C/E expanded vocab
+bash run.sh --no-preprocess --dryrun         # skip cache, dryrun smoke test
+bash run.sh --help                           # full usage
+</code></pre>
+<h4 id="python-sharedhookspy-manage-user-hooks-without-copying-files"><code>python shared/hooks.py</code> — manage user hooks without copying files</h4>
+<p>Instead of <code>cp shared/base_postprocessor.py.example shared/base_postprocessor.py</code>
+and remembering all paths, use:</p>
+<pre><code class="language-bash">python shared/hooks.py list                  # see what's active vs template-only
+python shared/hooks.py enable base           # copy template → live for base hook
+python shared/hooks.py enable groebner       # same for the per-task slot
+python shared/hooks.py disable base          # remove the live file
+</code></pre>
+<h4 id="python-sharedinspect_cachepy-inspect-whats-on-disk"><code>python shared/inspect_cache.py</code> — inspect what's on disk</h4>
+<p>Scans the repo for all <code>processed_*</code> directories and prints a human-readable
+summary (kind, order/format, sample counts, creation time, hash). Useful before
+launching a long training, to confirm the right cache will be picked up.</p>
+<pre><code class="language-bash">python shared/inspect_cache.py                            # all caches in repo
+python shared/inspect_cache.py groebner_basis/.../data/QQ # one specific data dir
+</code></pre>
+<h3 id="146-built-in-safety-checks-added-in-this-codebase">14.6 — Built-in safety checks (added in this codebase)</h3>
+<p>Before silently going wrong, the codebase emits clear errors / warnings:</p>
+<ul>
+<li>
+<p><strong><code>shared/calt_adapter.detect_lexer_format</code></strong> — if <code>train.yaml::data.lexer_config</code>
+  points to a file that does not exist, you get a <code>FileNotFoundError</code> listing
+  the lexer files actually present in that directory (instead of a generic
+  CALT exception three frames deep).</p>
+</li>
+<li>
+<p><strong><code>shared/user_postprocessor.get_user_postprocessors</code></strong> — if a hook file
+  exists but the function is misnamed / has the wrong signature / returns the
+  wrong type / crashes on a dummy <code>("dummy_input", "dummy_target")</code> call,
+  you get a specific <code>AttributeError</code>/<code>TypeError</code>/<code>RuntimeError</code> explaining
+  the expected shape (instead of a crash deep inside the DataLoader at
+  training time).</p>
+</li>
+<li>
+<p><strong><code>&lt;task&gt;/core/train.py::run_training</code></strong> — if you launch <code>train.py
+  --training_order lex</code> but only a cache for <code>degrevlex</code> exists (or vice versa),
+  you get a <code>⚠</code> warning suggesting either to re-run with the matching flag,
+  or to build the cache for the requested order.</p>
+</li>
+</ul>
+<h3 id="147-summary-of-files-addedmodified">14.7 — Summary of files added/modified</h3>
+<pre><code>NEW files (10):
+  shared/preprocess.py                                       (shim → calt.preprocess)
+  shared/user_postprocessor.py                               (hook helper)
+  shared/base_postprocessor.py.example                       (template)
+  groebner_basis/core/postprocessor.py.example
+  groebner_basis/experiments/toy/configs/lexer_expanded.yaml
+  groebner_basis/experiments/toy/scripts/preprocess.py
+  border_basis/core/postprocessor.py.example
+  border_basis/experiments/toy/configs/lexer_expanded.yaml
+  border_basis/experiments/toy/scripts/preprocess.py
+  parity/core/postprocessor.py.example
+
+MODIFIED files (7):
+  shared/calt_adapter.py                                     (+ detect_lexer_format)
+  groebner_basis/core/train.py                               (+ build_load_preprocessor, cache hierarchy, hook wiring)
+  groebner_basis/experiments/toy/scripts/evaluate.py         (match new output dirs)
+  groebner_basis/README.md                                   (docs)
+  border_basis/core/train.py                                 (same as groebner)
+  border_basis/experiments/toy/scripts/train.py              (+ --data_config_path)
+  border_basis/README.md                                     (docs)
+
+calt-x library — LOCAL patches only (site-packages, NOT upstream git):
+  + calt/preprocess.py                  (new module)
+  ~ calt/io/base.py                     (StandardDataCollator pretok branch)
+  ~ calt/io/pipeline.py                 (IOPipeline.build pretok detection)
+</code></pre>
 <hr />
 <h2 id="useful-links">Useful links</h2>
 <ul>
