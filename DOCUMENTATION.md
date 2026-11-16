@@ -81,7 +81,7 @@ the other — without that rule being programmed explicitly.
 │                                                           │
 │  • DatasetPipeline  → generate (problem, answer) pairs    │
 │  • IOPipeline       → load, preprocess, tokenize          │
-│  • ModelPipeline    → build the Transformer (BART-based)  │
+│  • ModelPipeline    → build the Transformer (model_type)  │
 │  • TrainerPipeline  → train + evaluate                    │
 └─────────────────────────────────────────────────────────┘
 ```
@@ -301,7 +301,7 @@ train_raw.txt
    │  IOPipeline.from_config(cfg.data).build()
    │     read lines → split on " # " → tokenize with the lexer
    ▼  ModelPipeline.from_io_dict(cfg.model, io_dict).build()
-   │     build a BART encoder-decoder from cfg.model
+   │     build the model selected by cfg.model.model_type (generic = calt's own encoder-decoder)
    ▼  TrainerPipeline.from_io_dict(cfg.train, model, io_dict).build()
    │     train (cross-entropy + AdamW), evaluate periodically, log to wandb
    ▼
@@ -413,7 +413,7 @@ strict: false
 
 ```yaml
 model:
-  model_type: generic        # BART encoder-decoder
+  model_type: generic        # calt's standard encoder-decoder (bart selects HF BART)
   num_encoder_layers: 3
   num_encoder_heads: 4
   num_decoder_layers: 3

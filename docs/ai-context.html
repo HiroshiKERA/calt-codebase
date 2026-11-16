@@ -149,7 +149,10 @@
 <li><a href="#36-sharedplottingpy">3.6 shared/plotting.py</a></li>
 </ul>
 </li>
-<li><a href="#4-how-calt-x-is-used-here-touchpoints">4. How calt-x is used here (touchpoints)</a></li>
+<li><a href="#4-how-calt-x-is-used-here-touchpoints">4. How calt-x is used here (touchpoints)</a><ul>
+<li><a href="#41-model-types-and-custom-embeddings">4.1 Model types and custom embeddings</a></li>
+</ul>
+</li>
 <li><a href="#5-lexeryaml-schema-real">5. lexer.yaml schema (real)</a></li>
 <li><a href="#6-config-schemas-real">6. Config schemas (real)</a><ul>
 <li><a href="#datayaml">data.yaml</a></li>
@@ -174,7 +177,9 @@
 the real directory tree, the house API (<code>shared/</code>), the per-task <code>core/</code>
 contract, the exact way <code>calt-x</code> is used here, the config schemas, and known
 gotchas. Read this file to answer "how does this code work" questions.</p>
-<p>For a beginner-friendly walkthrough see <a href="index.html">DOCUMENTATION.md</a>.</p>
+<p>For a beginner-friendly walkthrough see <a href="index.html">DOCUMENTATION.md</a>.
+<code>docs/ai-context.html</code> is built from this file by <code>python build_docs.py --site</code>;
+rerun it after editing.</p>
 </blockquote>
 <hr />
 <h2 id="0-quick-facts">0. Quick facts</h2>
@@ -196,7 +201,7 @@ gotchas. Read this file to answer "how does this code work" questions.</p>
 </tr>
 <tr>
 <td>calt-x install</td>
-<td>pip: <code>pip install calt-x</code> · conda: <code>conda install calt-x</code> (conda-forge)</td>
+<td>pip: <code>pip install calt-x</code> · conda: <code>conda install -c conda-forge calt-x</code></td>
 </tr>
 <tr>
 <td>conda-forge feedstock</td>
@@ -208,19 +213,27 @@ gotchas. Read this file to answer "how does this code work" questions.</p>
 </tr>
 <tr>
 <td>Python</td>
-<td><code>&gt;=3.10,&lt;3.13</code></td>
+<td><code>&gt;=3.11,&lt;3.13</code> (calt-x itself: <code>&gt;=3.11</code>)</td>
 </tr>
 <tr>
 <td>Declared deps</td>
-<td><code>calt-x&gt;=0.1.0</code>, <code>omegaconf&gt;=2.3.0</code>, <code>matplotlib&gt;=3.7.0</code>, <code>click&gt;=8.0.0</code></td>
+<td><code>calt-x&gt;=1.2.0</code>, <code>omegaconf&gt;=2.3.0</code>, <code>matplotlib&gt;=3.7.0</code>, <code>click&gt;=8.0.0</code>, <code>sortedcontainers&gt;=2.4.0</code></td>
 </tr>
 <tr>
-<td>Optional dep</td>
-<td><code>wandb</code> (used by <code>shared/logging.py</code>; disable via <code>no_wandb</code>/<code>WANDB_MODE=disabled</code>)</td>
+<td>wandb</td>
+<td>installed with calt-x (imported by <code>shared/logging.py</code>); turn logging off with <code>no_wandb: true</code> or <code>WANDB_MODE=disabled</code></td>
 </tr>
 <tr>
 <td>Heavy transitive deps</td>
-<td>PyTorch, HuggingFace Transformers, <strong>SageMath</strong> (polynomial tasks)</td>
+<td>PyTorch, HuggingFace Transformers</td>
+</tr>
+<tr>
+<td>SageMath</td>
+<td>not pulled in by calt-x; install it separately for the polynomial tasks: <code>conda install -c conda-forge sage</code></td>
+</tr>
+<tr>
+<td>GPU</td>
+<td>On Linux, PyPI's torch 2.11+ is built for CUDA 13 and needs NVIDIA driver ≥ 580; with an older driver training runs on the CPU and calt logs a warning. Use <code>pip install "torch&lt;2.11"</code> (Python 3.11–3.14) or upgrade the driver</td>
 </tr>
 <tr>
 <td>Tasks</td>
@@ -244,10 +257,12 @@ gotchas. Read this file to answer "how does this code work" questions.</p>
 problem). A task has <code>core/</code> (reusable logic) and <code>experiments/&lt;name&gt;/</code> (configs +
 scripts). Cross-task utilities live in <code>shared/</code>.</p>
 <blockquote>
-<p>Note for older docs: this repo does <strong>not</strong> use the "C/E" (Coefficient/Exponent)
-token format, an <code>examples/</code> or <code>src/</code> directory, a <code>CustomTrainer</code> file, an
-<code>environment.yml</code>, or Kaggle remote execution. Those belonged to a previous
-layout. Tokenization here is the polynomial's printed string + per-digit numbers.</p>
+<p>Note for older docs: this repo does <strong>not</strong> have an <code>examples/</code> or <code>src/</code>
+directory, a <code>CustomTrainer</code> file, an <code>environment.yml</code>, or Kaggle remote
+execution. Those belonged to a previous layout. By default, tokenization is the
+polynomial's printed string + per-digit numbers; the "C/E"
+(Coefficient/Exponent) expanded form is opt-in for <code>groebner_basis</code> and
+<code>border_basis</code> by pointing <code>data.lexer_config</code> at <code>lexer_expanded.yaml</code>.</p>
 </blockquote>
 <hr />
 <h2 id="1-directory-tree-real">1. Directory tree (real)</h2>
@@ -256,28 +271,39 @@ layout. Tokenization here is the polynomial's printed string + per-digit numbers
 ├── README.md
 ├── DOCUMENTATION.md
 ├── AI_CONTEXT.md
-├── .gitignore                  # ignores **/outputs/ **/data/ **/results/ **/wandb/
+├── build_docs.py               # builds docs/index.html and docs/ai-context.html (--site)
+├── docs/                       # GitHub Pages: index.html, ai-context.html
+├── .gitignore                  # ignores */experiments/*/data/ and outputs/, processed_* caches,
+│                               #   **/wandb/, and the live (user) postprocessor.py hooks
 │
 ├── shared/                     # utilities imported by every task
-│   ├── __init__.py             # exports set_seed, load_config, paths.*, plotting.*
+│   ├── __init__.py             # exports set_seed, load_config, paths.* (not codebase_root), plotting.*
 │   ├── seed.py                 # set_seed()
 │   ├── config.py               # load_config(), save_config()
 │   ├── paths.py                # experiment_dir/data_dir/output_dir/config_dir/codebase_root
-│   ├── calt_adapter.py         # re-exports 4 pipelines + run_standard_training()
+│   ├── calt_adapter.py         # re-exports pipelines, load preprocessors, cache helpers,
+│   │                           #   run_standard_training()
 │   ├── logging.py              # CustomLoggingCallback
 │   ├── plotting.py             # load_eval_results, show_examples, showcase, plot_success_rate
+│   ├── preprocess.py           # offline preprocessing into processed_* caches
+│   ├── inspect_cache.py        # inspect those caches
+│   ├── hooks.py, user_postprocessor.py, base_postprocessor.py.example   # user hooks
 │   └── README.md
 │
 ├── parity/                     # task: sign of a permutation
 │   ├── core/{generator,formatter,parser,metrics,train}.py
 │   ├── experiments/toy/{configs,scripts}
+│   │   # toy/configs also has train_encoder.yaml (encoder_classifier) and
+│   │   # train_custom_embedding.yaml (+ scripts/train_custom_embedding.py)
 │   ├── experiments/scaling/{configs,scripts,data_n5,data_n7,data_n10}
 │   ├── experiments/ablation/{configs,scripts}
 │   └── notebooks/analysis.ipynb
 │
 ├── groebner_basis/             # task: Gröbner basis of ⟨f1,f2⟩
-│   ├── core/{generator,formatter,parser,metrics,train}.py
+│   ├── core/{generator,formatter,parser,metrics,train}.py   # + postprocessor.py.example
 │   ├── experiments/{toy,scaling,ablation}/{configs,scripts}
+│   │   # toy/configs: data, lexer, lexer_expanded, train .yaml
+│   │   # toy/scripts: generate, preprocess, train, evaluate .py + run.sh
 │   └── notebooks/analysis.ipynb
 │
 ├── border_basis/               # task: border basis of a 0-dim ideal
@@ -288,8 +314,8 @@ layout. Tokenization here is the polynomial's printed string + per-digit numbers
 └── templates/task_template/    # scaffold for a new task (same layout, TODOs)
 </code></pre>
 <p><code>experiments/scaling/data_n*/</code> contain committed <code>train_raw.txt</code>/<code>test_raw.txt</code>
-and <code>*_stats.yaml</code> for the parity scaling runs; most other <code>data/</code>, <code>outputs/</code>,
-<code>results/</code> dirs are git-ignored.</p>
+and <code>*_stats.yaml</code> for the parity scaling runs; <code>experiments/*/data/</code> and
+<code>experiments/*/outputs/</code> are git-ignored.</p>
 <hr />
 <h2 id="2-the-per-task-core-contract">2. The per-task <code>core/</code> contract</h2>
 <p>Every task exposes the same five modules. Signatures below are the real ones.</p>
@@ -344,13 +370,16 @@ stats for <code>DatasetPipeline</code>'s <code>statistics_calculator</code>); th
 CALT's default stats instead.</p>
 <h3 id="25-coretrainpy-run_training">2.5 <code>core/train.py</code> — <code>run_training(...)</code></h3>
 <p>The function the <code>scripts/train.py</code> entry point calls. Drives the 4 CALT pipelines.</p>
-<pre><code class="language-python"># parity / border (simple text):
+<pre><code class="language-python"># parity:
 def run_training(cfg: DictConfig, dryrun: bool = False) -&gt; float
+
+# border:
+def run_training(cfg: DictConfig, data_cfg: DictConfig | None = None, dryrun: bool = False) -&gt; float
 
 # groebner (supports the lex variant):
 def run_training(cfg, data_cfg=None, training_order=&quot;degrevlex&quot;, dryrun=False) -&gt; float
 </code></pre>
-<p>Body (all tasks share this shape):</p>
+<p>Body of parity, the template and <code>run_standard_training</code>:</p>
 <pre><code class="language-python">if dryrun: apply_dryrun_settings(cfg)
 save_dir = cfg.train.get(&quot;save_dir&quot;, cfg.train.get(&quot;output_dir&quot;, &quot;./results&quot;))
 os.makedirs(save_dir, exist_ok=True)
@@ -365,9 +394,16 @@ trainer_pipeline.train()
 trainer_pipeline.save_model()
 return trainer_pipeline.evaluate_and_save_generation()   # float success rate
 </code></pre>
-<p>Gröbner's <code>run_training</code> additionally suffixes <code>save_dir</code> and <code>wandb.name</code> with
-<code>_{training_order}</code> and, for <code>lex</code>, builds the source ring from <code>data_cfg.sampler</code>
-and wires <code>ChainLoadPreprocessor(TextToSageLoadPreprocessor, GroebnerLexOrderPreprocessor)</code>.</p>
+<p><code>groebner_basis</code> and <code>border_basis</code> have a second shape: they build the load
+preprocessor with <code>build_load_preprocessor(...)</code> (chaining <code>TextToSage</code> parsing,
+the C/E expanded form when <code>lexer_expanded.yaml</code> is used, and user hooks), and the IO
+pipeline with <code>build_io_pipeline_with_cache(...)</code>, which picks a pre-tokenized
+cache, a strings cache or the raw text (the cache hash includes
+<code>user_postprocessor_hash_contribution</code>). Gröbner's <code>run_training</code> additionally
+suffixes <code>save_dir</code> and <code>wandb.name</code> with <code>_{training_order}</code>; for <code>lex</code> it builds
+the source ring from <code>data_cfg.sampler</code> and wires
+<code>ChainLoadPreprocessor(TextToSageLoadPreprocessor, GroebnerLexOrderPreprocessor)</code>,
+and it raises if <code>lex</code> is combined with the expanded form.</p>
 <hr />
 <h2 id="3-shared-house-api-exact">3. <code>shared/</code> — house API (exact)</h2>
 <h3 id="31-sharedseedpy">3.1 <code>shared/seed.py</code></h3>
@@ -390,7 +426,12 @@ codebase_root(f)  -&gt; Path(f).resolve().parents[4]   # repo root
 </code></pre>
 <h3 id="34-sharedcalt_adapterpy">3.4 <code>shared/calt_adapter.py</code></h3>
 <p>Re-exports <code>DatasetPipeline</code>, <code>IOPipeline</code>, <code>ModelPipeline</code>, <code>TrainerPipeline</code>,
-<code>apply_dryrun_settings</code>. Plus:</p>
+<code>apply_dryrun_settings</code>; the load preprocessors <code>ChainLoadPreprocessor</code>,
+<code>ExpandedFormLoadPreprocessor</code>, <code>TextToSageLoadPreprocessor</code>; the format helper
+<code>detect_lexer_format</code>; and the cache
+helpers <code>build_io_pipeline_with_cache</code>, <code>build_ring_from_sampler</code>,
+<code>maybe_use_*_cache</code>, <code>preprocess_to_ids</code>, <code>run_preprocess</code> (falling back to
+<code>calt.preprocess</code> on older calt-x). Plus:</p>
 <pre><code class="language-python">def run_standard_training(cfg, load_preprocessor=None, dryrun=False) -&gt; float
 # one-call train→eval for tasks needing no custom Trainer; mirrors core/train.py.
 </code></pre>
@@ -417,12 +458,9 @@ def plot_success_rate(results_dir, ax=None) -&gt; plt.Axes
 # success rate vs step from eval_results/step_*.json
 </code></pre>
 <p><code>shared/__init__.py</code> exports: <code>set_seed, load_config, experiment_dir, data_dir,
-output_dir, config_dir, showcase, show_examples, load_eval_results, plot_success_rate</code>.</p>
-<blockquote>
-<p>Historical bug (now fixed): <code>evaluate.py</code> files import <code>show_examples</code>, which
-previously did not exist in <code>plotting.py</code> (only <code>showcase</code>). <code>show_examples</code> is
-now defined and exported.</p>
-</blockquote>
+output_dir, config_dir, showcase, load_eval_results, plot_success_rate</code>.
+<code>show_examples</code> and <code>codebase_root</code> are not exported: import them from
+<code>shared.plotting</code> and <code>shared.paths</code> (as the <code>evaluate.py</code> scripts do).</p>
 <hr />
 <h2 id="4-how-calt-x-is-used-here-touchpoints">4. How <code>calt-x</code> is used here (touchpoints)</h2>
 <p>This repo treats <code>calt-x</code> as a black box behind four pipelines. The exact imports
@@ -444,7 +482,7 @@ io_dict = io.build()        # keys: tokenizer, train_dataset, test_dataset, data
 
 # models
 from calt.models import ModelPipeline
-model = ModelPipeline.from_io_dict(cfg.model, io_dict).build()   # BART enc-dec
+model = ModelPipeline.from_io_dict(cfg.model, io_dict).build()   # model_type picks the model (generic: calt enc-dec)
 
 # trainer
 from calt.trainer import TrainerPipeline, apply_dryrun_settings
@@ -456,10 +494,59 @@ tp.trainer                                          # underlying HF Trainer (add
 # eval result loading
 from calt.io.visualization.comparison_vis import load_eval_results
 </code></pre>
-<p><code>apply_dryrun_settings(cfg)</code> mutates the config in place to reduce epochs/data.
-Exact internal signatures of these classes live in the installed <code>calt</code> package —
+<p><code>apply_dryrun_settings(cfg)</code> mutates the config in place: 1 epoch, batch sizes
+≤ 8, <code>num_workers: 0</code>, eval/save every 10 steps, 1000/100 train/test samples, a
+<code>dryrun-</code> prefix on the wandb name/group, and (since calt-x 1.6.1) always
+<code>no_wandb: true</code>, so a dryrun never logs to W&amp;B.</p>
+<p><code>evaluate_and_save_generation(max_length=None)</code> generates up to 512 tokens,
+capped at what the model's positional embedding allows (a larger explicit
+<code>max_length</code> is capped with a warning). Pass <code>max_length</code> for answers longer
+than 512 tokens.</p>
+<p>Exact internal signatures of these classes live in the installed <code>calt</code> package —
 verify against <code>pip show calt-x</code> / the library source rather than assuming, as the
-version is only pinned <code>&gt;=0.1.0</code>.</p>
+version is only pinned <code>&gt;=1.2.0</code>.</p>
+<h3 id="41-model-types-and-custom-embeddings">4.1 Model types and custom embeddings</h3>
+<p><code>model.model_type</code> selects the model (aliases in parentheses):</p>
+<table>
+<thead>
+<tr>
+<th><code>model_type</code></th>
+<th>Model</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>generic</code> (<code>transformer</code>, <code>calt</code>)</td>
+<td>calt's standard encoder-decoder</td>
+</tr>
+<tr>
+<td><code>bart</code></td>
+<td>HuggingFace BART</td>
+</tr>
+<tr>
+<td><code>decoder_only</code> (<code>decoder</code>)</td>
+<td>one causal stack over <code>[problem, answer]</code>; uses <code>num_layers</code>/<code>num_heads</code>/<code>ffn_dim</code>, falling back to the decoder/encoder keys</td>
+</tr>
+<tr>
+<td><code>encoder_classifier</code> (<code>encoder_only</code>)</td>
+<td>encoder + classification head (parity's <code>train_encoder.yaml</code>)</td>
+</tr>
+<tr>
+<td><code>monomial</code> (<code>monomial_transformer</code>)</td>
+<td>encoder-decoder over C/E monomials</td>
+</tr>
+<tr>
+<td><code>monomial_decoder_only</code> (<code>monomial_decoder</code>)</td>
+<td>decoder-only over C/E monomials</td>
+</tr>
+</tbody>
+</table>
+<p>For the <code>generic</code>, <code>decoder_only</code> and <code>encoder_classifier</code> models,
+<code>model.input_embedding_type</code> (default <code>token</code>) and <code>model.use_positional_embedding</code>
+(<code>generic</code>/<code>learned</code> (default), <code>sinusoidal</code>, <code>rope</code>, <code>none</code>) select the
+embeddings. Register custom ones with <code>calt.models.register_input_embedding</code> /
+<code>register_positional_embedding</code> before building the model (parity's
+<code>train_custom_embedding.py</code> registers an input embedding this way).</p>
 <hr />
 <h2 id="5-lexeryaml-schema-real">5. <code>lexer.yaml</code> schema (real)</h2>
 <pre><code class="language-yaml">vocab:
@@ -470,14 +557,14 @@ version is only pinned <code>&gt;=0.1.0</code>.</p>
   special_tokens: {}
   flags:
     include_base_vocab: true
-    include_base_special_tokens: true    # adds &lt;s&gt;, &lt;/s&gt;, [PAD], [UNK], [CLS], [SEP]
+    include_base_special_tokens: true    # adds [PAD], &lt;s&gt;, &lt;/s&gt;, [CLS] ([SEP] comes from the base vocab)
 
 number_policy:
   attach_sign: true     # &quot;-3&quot; one token vs &quot;- 3&quot; two tokens
-  digit_group: 1        # 1 = each digit its own token; 0 = whole numbers
-  allow_float: false
+  digit_group: 1        # 0 = whole numbers; d &gt;= 1 = groups of d digits (1 = each digit)
+  allow_float: false    # defaults to true when omitted
 
-strict: true            # raise on unknown token
+strict: true            # raise on unknown character; false emits &lt;unk&gt; instead
 include_base_vocab: true
 </code></pre>
 <p><strong>Polynomial tasks</strong> (<code>groebner</code>, <code>border</code>): <code>digit_group: 1</code>, misc includes
@@ -519,10 +606,10 @@ dataset:                 # forwarded to DatasetPipeline
   num_encoder_layers: 3
   num_encoder_heads: 4
   num_decoder_layers: 3
-  num_decoder_heads: 4
+  num_decoder_heads: 4           # ignored by generic (it uses the encoder heads)
   d_model: 256
   encoder_ffn_dim: 1024
-  decoder_ffn_dim: 1024
+  decoder_ffn_dim: 1024          # ignored by generic (it uses encoder_ffn_dim)
   max_sequence_length: 2048      # polynomial tasks need long sequences
 
 train:
@@ -533,7 +620,7 @@ train:
   warmup_ratio: 0.05
   batch_size: 16
   test_batch_size: 16
-  lr_scheduler_type: linear
+  lr_scheduler_type: linear      # any transformers SchedulerType name (see below)
   max_grad_norm: 1.0
   optimizer: adamw_torch
   num_workers: 2
@@ -545,9 +632,14 @@ data:
   test_dataset_path: ../data/QQ/test_raw.txt
   lexer_config: ../configs/lexer.yaml
   validate_train_tokens: false
-  validate_test_tokens: false
+  validate_test_tokens: false    # defaults to true when omitted
 </code></pre>
 <p>All paths are relative to the <code>scripts/</code> directory (the run location).</p>
+<p><code>lr_scheduler_type</code> is passed to transformers as is (since calt-x 1.6.1; before
+that, every value except <code>constant</code> silently became <code>linear</code>, so parity's <code>cosine</code>
+only takes effect from 1.6.1). Schedulers that need arguments, such as
+<code>cosine_with_min_lr</code>, take them from <code>train.lr_scheduler_kwargs</code>; an unknown name
+or missing arguments raise when the trainer is built.</p>
 <hr />
 <h2 id="7-data-format-and-on-disk-outputs">7. Data format and on-disk outputs</h2>
 <p><strong>Dataset text</strong> (<code>train_raw.txt</code> / <code>test_raw.txt</code>): one example per line,</p>
@@ -562,9 +654,13 @@ data:
 </ul>
 <p><strong>Generation stats</strong>: <code>train_stats.yaml</code> / <code>test_stats.yaml</code> (YAML, not JSON):
 <code>total_time</code>, <code>num_samples</code>, <code>samples_per_second</code>, <code>generation_time:{mean,std,min,max}</code>.</p>
-<p><strong>Training outputs</strong> (<code>&lt;save_dir&gt;/</code>): <code>model.safetensors</code>, <code>tokenizer.json</code>,
-<code>train.yaml</code> (snapshot of the config used), <code>eval_results.json</code>
-(<code>[{"generated": ..., "reference": ...}, …]</code>), and <code>eval_results/step_*.json</code>.</p>
+<p><strong>Training outputs</strong> (<code>&lt;save_dir&gt;/</code>): the model weights (<code>pytorch_model.bin</code>, or
+<code>model.safetensors</code> with <code>train.save_safetensors: true</code>) with <code>config.json</code>,
+<code>tokenizer.json</code> and the tokenizer configs, <code>checkpoint-*/</code>, <code>train.yaml</code>
+(snapshot of the config used), and <code>eval_results/step_*.json</code>
+(<code>[{"generated": ..., "reference": ...}, …]</code>); the final
+<code>evaluate_and_save_generation()</code> also writes to <code>eval_results/step_&lt;global_step&gt;.json</code>
+(<code>eval_results.json</code> is only used when no step is known).</p>
 <hr />
 <h2 id="8-the-three-tasks-specifics">8. The three tasks (specifics)</h2>
 <table>
@@ -604,8 +700,8 @@ data:
 <tr>
 <td>Preprocessor</td>
 <td>none</td>
-<td>none (lex variant: Chain)</td>
-<td>none</td>
+<td>none by default (lex variant, expanded form, hooks: Chain)</td>
+<td>none by default (expanded form, hooks: Chain)</td>
 </tr>
 <tr>
 <td>Generator class</td>
@@ -615,7 +711,7 @@ data:
 </tr>
 <tr>
 <td>Experiments</td>
-<td>toy, scaling (n∈{5,7,10})</td>
+<td>toy, scaling (n∈{5,7,10}), ablation</td>
 <td>toy, scaling, ablation (degrevlex/lex)</td>
 <td>toy, finite_field (GF 5/7/11/17/31), ablation</td>
 </tr>
@@ -662,14 +758,19 @@ modules, edit the three configs, then <code>generate.py → train.py --dryrun �
 <li><strong>Run scripts from their <code>scripts/</code> dir.</strong> Config paths are relative to it, and
   <code>sys.path.insert(0, parents[4])</code> makes the repo root importable. Running from
   elsewhere breaks both.</li>
-<li><strong><code>[UNK]</code> / token validation</strong>: a symbol in the data isn't in <code>lexer.yaml</code>. Widen
-  <code>numbers</code> or add to <code>misc</code>; set <code>validate_train_tokens: true</code> to fail fast.</li>
-<li><strong><code>max_sequence_length</code></strong>: polynomial bases get long; toy configs use 2048.
-  Too small ⇒ truncation ⇒ stuck loss.</li>
+<li><strong>Unknown character / OOV token</strong>: a symbol in the data isn't in <code>lexer.yaml</code>.
+  Widen <code>numbers</code> or add to <code>misc</code>; set <code>validate_train_tokens: true</code> to fail fast.</li>
+<li><strong><code>max_sequence_length</code></strong>: polynomial bases get long (groebner toy uses 2048,
+  border toy 512, parity 64). Nothing is truncated: with the default learned (or
+  sinusoidal) positional embedding, sequences longer than 2 × <code>max_sequence_length</code>
+  raise a ValueError (<code>rope</code> extrapolates, <code>none</code> has no limit).</li>
+<li><strong>GPU not used</strong>: see the GPU row in §0 (CUDA 13 torch on an old driver).</li>
 <li><strong>Determinism</strong>: <code>set_seed</code> enables deterministic algorithms + sets
   <code>CUBLAS_WORKSPACE_CONFIG</code>. Same <code>root_seed</code> ⇒ identical datasets.</li>
 <li><strong>SageMath RNG is global</strong>: generators call <code>randstate.set_random_seed(seed)</code> before sampling.</li>
-<li><strong>wandb</strong>: optional; <code>no_wandb: true</code> or <code>WANDB_MODE=disabled</code> to skip.</li>
+<li><strong>wandb</strong>: <code>no_wandb: true</code> removes wandb from <code>report_to</code> (other loggers such as
+  tensorboard are kept; this also works on transformers v5, which ignores
+  <code>WANDB_DISABLED</code>), or set <code>WANDB_MODE=disabled</code>. <code>--dryrun</code> never logs to W&amp;B.</li>
 <li><strong>No <code>src/</code>, no <code>examples/</code>, no <code>CustomTrainer.py</code>, no <code>environment.yml</code>, no
   Kaggle remote</strong> in this repo (unlike the previous CALT layout). Custom training
   hooks go through <code>shared/logging.py</code> or by subclassing <code>calt.trainer.trainer.Trainer</code>.</li>
@@ -690,10 +791,10 @@ modules, edit the three configs, then <code>generate.py → train.py --dryrun �
 2. TRAIN
    scripts/train.py → core/train.py::run_training(cfg, …)
      IOPipeline.from_config(cfg.data)[.dataset_load_preprocessor = …].build() → io_dict
-     ModelPipeline.from_io_dict(cfg.model, io_dict).build()                   → BART model
+     ModelPipeline.from_io_dict(cfg.model, io_dict).build()                   → model (by model_type)
      TrainerPipeline.from_io_dict(cfg.train, model, io_dict).build()
      .train() → .save_model() → .evaluate_and_save_generation() → float rate
-     writes &lt;save_dir&gt;/{model.safetensors, tokenizer.json, train.yaml, eval_results*.json}
+     writes &lt;save_dir&gt;/{model weights, tokenizer.json, train.yaml, eval_results/step_*.json}
 
 3. EVALUATE
    scripts/evaluate.py
