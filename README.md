@@ -6,6 +6,10 @@
 
 > 📖 **[Read the full documentation online](https://maximefaure.github.io/CALT/)**
 
+- [CALT library](https://github.com/HiroshiKERA/calt) and its [documentation](https://hiroshikera.github.io/calt/)
+- [Task Builder (web app)](https://calt.mai2.org/): set up a task in the browser and download a ready-to-run project with the same layout as this repository
+- [Demo Notebook (Google Colab)](https://colab.research.google.com/github/HiroshiKERA/calt/blob/main/examples/demos/minimal_demo.ipynb)
+
 Experiments for learning **algebraic computations** with Transformer models,
 built on top of the [CALT library](https://github.com/HiroshiKERA/calt) 
 (`calt-x`, available from [conda-forge](https://github.com/conda-forge/calt-x-feedstock)).
@@ -59,21 +63,32 @@ Every task follows the same layout:
 
 ## Installation
 
-We recommend installing the dependencies in a dedicated conda environment.
+We recommend installing everything in one dedicated conda environment, with
+PyTorch from conda-forge in the same command:
 
 ```bash
-conda create -n calt-env python=3.11
+# The quotes around the package specs are required
+# With an NVIDIA GPU
+conda create -n calt-env -c conda-forge python=3.12 "calt-x>=1.6.1" "pytorch>=2.6=cuda*" sage matplotlib click sortedcontainers
+# Without an NVIDIA GPU (including macOS)
+conda create -n calt-env -c conda-forge python=3.12 "calt-x>=1.6.1" "pytorch>=2.6" sage matplotlib click sortedcontainers
 conda activate calt-env
-conda install -c conda-forge calt-x
+# Prints e.g. "12.9 True" with a GPU, "None False" without one
+python -c "import torch; print(torch.version.cuda, torch.cuda.is_available())"
 ```
 
-Some experiments in this repository, including the polynomial tasks, require additional packages:
+SageMath (`sage`) is needed for the polynomial tasks (Gröbner basis, border
+basis); `parity` runs without it. The GPU command needs NVIDIA driver 525 or
+newer. If conda cannot see the GPU (e.g. on an HPC login node), prefix the
+command with `CONDA_OVERRIDE_CUDA=12.9`. Do not install PyTorch with pip into
+this environment: PyPI's CUDA build of torch can make conda-forge packages such
+as SciPy and SageMath fail to import (``version `CXXABI_1.3.15' not found``).
+See [CALT's installation notes](https://github.com/HiroshiKERA/calt#installation)
+for details.
 
-```bash
-conda install -c conda-forge sage matplotlib click sortedcontainers
-```
-
-`calt-x` currently supports Python `>=3.11,<3.13`.
+The commands pin Python 3.12 because this repository declares
+`requires-python = ">=3.11,<3.13"` in `pyproject.toml`; `calt-x` itself supports
+Python `>=3.11`.
 
 You can check the available versions of `calt-x` with:
 
@@ -137,7 +152,7 @@ See the checklist in `templates/task_template/README.md`.
 ## Dependencies
 
 - Python `>=3.11,<3.13`
-- [`calt-x`](https://github.com/HiroshiKERA/calt), installed from [conda-forge](https://github.com/conda-forge/calt-x-feedstock)
+- [`calt-x`](https://github.com/HiroshiKERA/calt) `>=1.6.1` (from [conda-forge](https://github.com/conda-forge/calt-x-feedstock)) and PyTorch `>=2.6`, also from conda-forge
 - SageMath (`sage`), required for polynomial tasks such as Gröbner basis and border basis experiments
 - Experiment utilities: `matplotlib`, `click`, and `sortedcontainers`
 - `wandb` is optional — used by `shared/logging.py`; set `no_wandb: true` in a `train.yaml` or set `WANDB_MODE=disabled` to skip it.
@@ -147,5 +162,7 @@ See the checklist in `templates/task_template/README.md`.
 ## Links
 
 - CALT library: <https://github.com/HiroshiKERA/calt> · docs: <https://hiroshikera.github.io/calt/>
+- Task Builder (web app): <https://calt.mai2.org/>
+- Demo Notebook (Google Colab): <https://colab.research.google.com/github/HiroshiKERA/calt/blob/main/examples/demos/minimal_demo.ipynb>
 - Paper: *CALT: A Library for Computer Algebra with Transformer*, Kera et al. — [arXiv:2506.08600](https://arxiv.org/abs/2506.08600)
 - Border basis algorithm: *Computational Algebra with Attention*, Kera et al. — [arXiv:2505.23696](https://arxiv.org/abs/2505.23696)
