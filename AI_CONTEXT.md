@@ -18,15 +18,15 @@
 |----------|-------|
 | Repo role | Experiments for learning algebraic computations with Transformers |
 | Built on | `calt-x` library — provides the 4 pipelines |
-| calt-x install | pip: `pip install calt-x` · conda: `conda install -c conda-forge calt-x` |
+| calt-x install | conda (recommended, one command with PyTorch and SageMath): `conda create -n calt-env -c conda-forge python=3.12 "calt-x>=1.6.1" "pytorch>=2.6=cuda*" sage matplotlib click sortedcontainers` (no GPU: `"pytorch>=2.6"`) · without conda, e.g. Colab: `pip install calt-x matplotlib click` (no SageMath). Never pip-install torch into the conda env |
 | conda-forge feedstock | <https://github.com/conda-forge/calt-x-feedstock> (PyPI release → bot PR → merge if deps unchanged) |
 | Package name | `calt-experiments` (see `pyproject.toml`), version `0.1.0` |
 | Python | `>=3.11,<3.13` (calt-x itself: `>=3.11`) |
-| Declared deps | `calt-x>=1.2.0`, `omegaconf>=2.3.0`, `matplotlib>=3.7.0`, `click>=8.0.0`, `sortedcontainers>=2.4.0` |
+| Declared deps | `calt-x>=1.6.1`, `omegaconf>=2.3.0`, `matplotlib>=3.7.0`, `click>=8.0.0`, `sortedcontainers>=2.4.0` |
 | wandb | installed with calt-x (imported by `shared/logging.py`); turn logging off with `no_wandb: true` or `WANDB_MODE=disabled` |
 | Heavy transitive deps | PyTorch, HuggingFace Transformers |
-| SageMath | not pulled in by calt-x; install it separately for the polynomial tasks: `conda install -c conda-forge sage` |
-| GPU | On Linux, PyPI's torch 2.11+ is built for CUDA 13 and needs NVIDIA driver ≥ 580; with an older driver training runs on the CPU and calt logs a warning. Use `pip install "torch<2.11"` (Python 3.11–3.14) or upgrade the driver |
+| SageMath | not pulled in by calt-x; add `sage` to the same `conda create` (needed only for the polynomial tasks; `parity` runs without it) |
+| GPU | conda: PyTorch from conda-forge (`"pytorch>=2.6=cuda*"`) needs NVIDIA driver ≥ 525; set `CONDA_OVERRIDE_CUDA=12.9` where conda cannot see the GPU. pip without conda: PyPI's torch 2.11+ is built for CUDA 13 and needs driver ≥ 580; with an older driver training runs on the CPU and calt logs a warning; upgrade the driver or `pip install "torch<2.11"` |
 | Tasks | `parity`, `groebner_basis`, `border_basis` |
 | calt-x library source | <https://github.com/HiroshiKERA/calt> |
 | Papers | CALT: arXiv:2506.08600 · Border basis: arXiv:2505.23696 |
@@ -349,7 +349,7 @@ than 512 tokens.
 
 Exact internal signatures of these classes live in the installed `calt` package —
 verify against `pip show calt-x` / the library source rather than assuming, as the
-version is only pinned `>=1.2.0`.
+version is only pinned `>=1.6.1`.
 
 ### 4.1 Model types and custom embeddings
 

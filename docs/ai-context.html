@@ -201,7 +201,7 @@ rerun it after editing.</p>
 </tr>
 <tr>
 <td>calt-x install</td>
-<td>pip: <code>pip install calt-x</code> · conda: <code>conda install -c conda-forge calt-x</code></td>
+<td>conda (recommended, one command with PyTorch and SageMath): <code>conda create -n calt-env -c conda-forge python=3.12 "calt-x&gt;=1.6.1" "pytorch&gt;=2.6=cuda*" sage matplotlib click sortedcontainers</code> (no GPU: <code>"pytorch&gt;=2.6"</code>) · without conda, e.g. Colab: <code>pip install calt-x matplotlib click</code> (no SageMath). Never pip-install torch into the conda env</td>
 </tr>
 <tr>
 <td>conda-forge feedstock</td>
@@ -217,7 +217,7 @@ rerun it after editing.</p>
 </tr>
 <tr>
 <td>Declared deps</td>
-<td><code>calt-x&gt;=1.2.0</code>, <code>omegaconf&gt;=2.3.0</code>, <code>matplotlib&gt;=3.7.0</code>, <code>click&gt;=8.0.0</code>, <code>sortedcontainers&gt;=2.4.0</code></td>
+<td><code>calt-x&gt;=1.6.1</code>, <code>omegaconf&gt;=2.3.0</code>, <code>matplotlib&gt;=3.7.0</code>, <code>click&gt;=8.0.0</code>, <code>sortedcontainers&gt;=2.4.0</code></td>
 </tr>
 <tr>
 <td>wandb</td>
@@ -229,11 +229,11 @@ rerun it after editing.</p>
 </tr>
 <tr>
 <td>SageMath</td>
-<td>not pulled in by calt-x; install it separately for the polynomial tasks: <code>conda install -c conda-forge sage</code></td>
+<td>not pulled in by calt-x; add <code>sage</code> to the same <code>conda create</code> (needed only for the polynomial tasks; <code>parity</code> runs without it)</td>
 </tr>
 <tr>
 <td>GPU</td>
-<td>On Linux, PyPI's torch 2.11+ is built for CUDA 13 and needs NVIDIA driver ≥ 580; with an older driver training runs on the CPU and calt logs a warning. Use <code>pip install "torch&lt;2.11"</code> (Python 3.11–3.14) or upgrade the driver</td>
+<td>conda: PyTorch from conda-forge (<code>"pytorch&gt;=2.6=cuda*"</code>) needs NVIDIA driver ≥ 525; set <code>CONDA_OVERRIDE_CUDA=12.9</code> where conda cannot see the GPU. pip without conda: PyPI's torch 2.11+ is built for CUDA 13 and needs driver ≥ 580; with an older driver training runs on the CPU and calt logs a warning; upgrade the driver or <code>pip install "torch&lt;2.11"</code></td>
 </tr>
 <tr>
 <td>Tasks</td>
@@ -504,7 +504,7 @@ capped at what the model's positional embedding allows (a larger explicit
 than 512 tokens.</p>
 <p>Exact internal signatures of these classes live in the installed <code>calt</code> package —
 verify against <code>pip show calt-x</code> / the library source rather than assuming, as the
-version is only pinned <code>&gt;=1.2.0</code>.</p>
+version is only pinned <code>&gt;=1.6.1</code>.</p>
 <h3 id="41-model-types-and-custom-embeddings">4.1 Model types and custom embeddings</h3>
 <p><code>model.model_type</code> selects the model (aliases in parentheses):</p>
 <table>

@@ -4,7 +4,7 @@
 > **no prior knowledge of transformers or deep learning required.**
 >
 > This document describes **calt-codebase** (the experiment repository in this folder).
-> The underlying library it builds on is **calt-x** (`pip install calt-x`); for a
+> The underlying library it builds on is **calt-x** (on conda-forge and PyPI; see [§3](#3-installation)); for a
 > source-level reference aimed at AI assistants, see [AI_CONTEXT.md](AI_CONTEXT.md).
 
 ---
@@ -73,7 +73,7 @@ the other — without that rule being programmed explicitly.
 │  • shared/ utilities (seeds, configs, paths, plotting)    │
 │  • templates/ to scaffold new tasks                       │
 └──────────────────────────┬────────────────────────────────┘
-                           │ uses (pip install calt-x)
+                           │ uses (the calt-x package)
                            ▼
 ┌─────────────────────────────────────────────────────────┐
 │                       calt-x                              │
@@ -94,20 +94,34 @@ data-generation, tokenization, training and evaluation heavy lifting.
 
 ## 3. Installation
 
-`calt-x` is available on both **PyPI** and **conda-forge**:
+`calt-x` is available on both **conda-forge** and **PyPI**. For this repository,
+use a dedicated conda environment named `calt-env` that has SageMath, PyTorch
+and `calt-x` together, created in one command with PyTorch from conda-forge:
 
 ```bash
-# via pip
-pip install calt-x omegaconf matplotlib click
-
-# or via conda-forge
-conda install calt-x
+# The quotes around the package specs are required
+# With an NVIDIA GPU
+conda create -n calt-env -c conda-forge python=3.12 "calt-x>=1.6.1" "pytorch>=2.6=cuda*" sage matplotlib click sortedcontainers
+# Without an NVIDIA GPU (including macOS)
+conda create -n calt-env -c conda-forge python=3.12 "calt-x>=1.6.1" "pytorch>=2.6" sage matplotlib click sortedcontainers
+conda activate calt-env
 ```
 
-- Python `>=3.10,<3.13`.
-- `calt-x` pulls in PyTorch, HuggingFace Transformers, and (for the polynomial
-  tasks) **SageMath**. SageMath is large; the easiest way to get it is a conda
-  environment with a SageMath build, then install `calt-x` inside it.
+- Python `>=3.11,<3.13` for this repository (its `pyproject.toml`), hence
+  `python=3.12`; `calt-x` itself supports Python `>=3.11`.
+- `calt-x` pulls in PyTorch, HuggingFace Transformers and OmegaConf, but **not
+  SageMath**. `sage` is needed only for the polynomial tasks (Gröbner basis,
+  border basis); `parity` runs without it.
+- The GPU command needs NVIDIA driver 525 or newer. If conda cannot see the GPU
+  (e.g. on an HPC login node), prefix the command with `CONDA_OVERRIDE_CUDA=12.9`.
+- Do not install PyTorch with pip into this environment: PyPI's CUDA build of
+  torch can make conda-forge packages such as SciPy and SageMath fail to import
+  (``version `CXXABI_1.3.15' not found``). See
+  [CALT's installation notes](https://github.com/HiroshiKERA/calt#installation).
+- Without conda (e.g. Google Colab), `pip install calt-x matplotlib click` works for the tasks
+  that do not need SageMath, such as `parity`. On a Linux machine with an NVIDIA
+  GPU, PyPI's torch 2.11+ needs driver 580 or newer; otherwise run
+  `pip install "torch<2.11"` (see [CALT's installation notes](https://github.com/HiroshiKERA/calt#installation)).
 - A GPU is strongly recommended for training (CPU works but is very slow).
 - `wandb` is optional (used for live training curves). Disable it with
   `no_wandb: true` in `train.yaml` or `WANDB_MODE=disabled`.
@@ -117,17 +131,6 @@ conda install calt-x
 > When a new version is released on PyPI, a bot automatically opens a PR on the
 > feedstock; merging it is enough when dependencies are unchanged. If dependencies
 > change (or a CI build fails), the feedstock maintainer updates `meta.yaml` by hand.
-
-### Recommended: use a dedicated conda environment
-
-The safest setup is a dedicated environment named `calt-env` that bundles
-SageMath, PyTorch, and `calt-x` together:
-
-```bash
-conda create -n calt-env python=3.12
-conda activate calt-env
-conda install calt-x omegaconf matplotlib click
-```
 
 > **Important** — always activate this environment before running any script in
 > this repo, otherwise Python will not find `calt-x` and you will get a
@@ -741,8 +744,8 @@ HuggingFace's own model).
 ## 12. Troubleshooting
 
 ### `ModuleNotFoundError: No module named 'calt'`
-`calt-x` isn't installed in the active environment: `pip install calt-x`
-(inside the env that has SageMath, for polynomial tasks).
+`calt-x` isn't installed in the active environment. Activate `calt-env` (see
+[§3](#3-installation)), or create it with the `conda create` command there.
 
 ### `ModuleNotFoundError: No module named 'shared'` (or your task)
 Run scripts from inside their `scripts/` directory, or ensure the
