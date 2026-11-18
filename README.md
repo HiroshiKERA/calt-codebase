@@ -78,13 +78,13 @@ that do not need SageMath, such as `parity`.
    With an NVIDIA GPU:
 
    ```bash
-   conda create -n calt-env -c conda-forge python=3.12 "calt-x>=1.6.1" "pytorch>=2.6=cuda*" sage matplotlib click sortedcontainers
+   conda create -n calt-env -c conda-forge "calt-x>=1.6.1" "pytorch>=2.6=cuda*" sage matplotlib click sortedcontainers
    ```
 
    Without an NVIDIA GPU (including macOS):
 
    ```bash
-   conda create -n calt-env -c conda-forge python=3.12 "calt-x>=1.6.1" "pytorch>=2.6" sage matplotlib click sortedcontainers
+   conda create -n calt-env -c conda-forge "calt-x>=1.6.1" "pytorch>=2.6" sage matplotlib click sortedcontainers
    ```
 
 2. Activate the environment:
@@ -100,20 +100,21 @@ that do not need SageMath, such as `parity`.
    python -c "import torch; print(torch.version.cuda, torch.cuda.is_available())"
    ```
 
-The commands pin Python 3.12 because this repository declares
-`requires-python = ">=3.11,<3.13"` in `pyproject.toml`; `calt-x` itself supports
-Python `>=3.11`. The available versions of `calt-x` on conda-forge are listed by
-`conda search calt-x --channel conda-forge`, and the feedstock is
+This repository supports Python `>=3.11`, like `calt-x`; conda picks a Python
+version that all the packages support. The available versions of `calt-x` on
+conda-forge are listed by `conda search calt-x --channel conda-forge`, and the
+feedstock is
 [conda-forge/calt-x-feedstock](https://github.com/conda-forge/calt-x-feedstock).
 
 ### With pip (tasks without SageMath)
 
-1. Create a virtual environment with Python 3.11 or 3.12 (use `python3.11` if
-   that is what you have), and activate it. On Windows, run
-   `py -3.12 -m venv calt-env` and `calt-env\Scripts\activate` instead.
+1. Create a virtual environment with Python 3.11 or newer, and activate it.
+   Check the version with `python3 --version`; if it is older, use e.g.
+   `python3.12` instead of `python3`. On Windows, run `py -3 -m venv calt-env`
+   and `calt-env\Scripts\activate` instead.
 
    ```bash
-   python3.12 -m venv calt-env
+   python3 -m venv calt-env
    source calt-env/bin/activate
    ```
 
@@ -201,7 +202,7 @@ See the checklist in `templates/task_template/README.md`.
 
 ## Dependencies
 
-- Python `>=3.11,<3.13`
+- Python `>=3.11`
 - [`calt-x`](https://github.com/HiroshiKERA/calt) `>=1.6.1` (from [conda-forge](https://github.com/conda-forge/calt-x-feedstock), or PyPI with pip) and PyTorch `>=2.6`, from the same source
 - SageMath (`sage`), required for polynomial tasks such as Gröbner basis and border basis experiments
 - Experiment utilities: `matplotlib`, `click`, and `sortedcontainers`

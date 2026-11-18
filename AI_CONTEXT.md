@@ -18,10 +18,10 @@
 |----------|-------|
 | Repo role | Experiments for learning algebraic computations with Transformers |
 | Built on | `calt-x` library — provides the 4 pipelines |
-| calt-x install | conda (recommended, one command with PyTorch and SageMath): `conda create -n calt-env -c conda-forge python=3.12 "calt-x>=1.6.1" "pytorch>=2.6=cuda*" sage matplotlib click sortedcontainers` (no GPU: `"pytorch>=2.6"`) · without conda, e.g. Colab: `pip install calt-x matplotlib click` (no SageMath). Never pip-install torch into the conda env |
+| calt-x install | conda (recommended, one command with PyTorch and SageMath): `conda create -n calt-env -c conda-forge "calt-x>=1.6.1" "pytorch>=2.6=cuda*" sage matplotlib click sortedcontainers` (no GPU: `"pytorch>=2.6"`) · without conda, e.g. Colab: `pip install calt-x matplotlib click` (no SageMath). Never pip-install torch into the conda env |
 | conda-forge feedstock | <https://github.com/conda-forge/calt-x-feedstock> (PyPI release → bot PR → merge if deps unchanged) |
 | Package name | `calt-experiments` (see `pyproject.toml`), version `0.1.0` |
-| Python | `>=3.11,<3.13` (calt-x itself: `>=3.11`) |
+| Python | `>=3.11` (same as calt-x) |
 | Declared deps | `calt-x>=1.6.1`, `omegaconf>=2.3.0`, `matplotlib>=3.7.0`, `click>=8.0.0`, `sortedcontainers>=2.4.0` |
 | wandb | installed with calt-x (imported by `shared/logging.py`); turn logging off with `no_wandb: true` or `WANDB_MODE=disabled` |
 | Heavy transitive deps | PyTorch, HuggingFace Transformers |
