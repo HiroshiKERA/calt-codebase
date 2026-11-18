@@ -798,7 +798,9 @@ modules, edit the three configs, then <code>generate.py → train.py --dryrun �
 
 3. EVALUATE
    scripts/evaluate.py
-     load_eval_results(output_dir/&quot;results&quot;)  → (generated, references)
+     load_eval_results(output_dir/&quot;results[_&lt;suffix&gt;]&quot;)  → (generated, references)
+     # suffix mirrors train.py and its option: _&lt;training_order&gt; (groebner),
+     # _&lt;model_size&gt; (ablation), _n&lt;n&gt; (parity scaling), _GF&lt;p&gt; (border finite_field)
      print exact-match rate ; show_examples(... successes=True/False)
 </code></pre>
   </main>

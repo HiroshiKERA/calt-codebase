@@ -983,12 +983,9 @@ upstream `HiroshiKERA/calt` is untouched.
 
 | Option | Setup | Maintenance |
 |---|---|---|
-| **A. Local patches (current)** | Patches in `site-packages/calt/` only. Backup at `/data/.../backups/`. | Re-apply after `pip install --upgrade calt-x`. |
+| **A. Local patches (current)** | Patches in `site-packages/calt/` only. | Re-apply after `pip install --upgrade calt-x`. |
 | **B. Submit upstream PR** | Open a PR at `HiroshiKERA/calt` adding the 3 changes. | Once merged, vanilla `pip install calt-x` is enough. |
 | **C. Don't use the pretokenized path** | Use only the strings cache (`--no-pretokenize`). | Vanilla CALT works; loses ~5–15% training speedup. |
-
-A backup of the patched site-packages and the baseline (pre-modification) state
-both exist under `/data/t-maxime/backups/`.
 
 ### 14.5 — User-friendly CLI tools
 

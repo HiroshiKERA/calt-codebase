@@ -62,6 +62,7 @@ python preprocess.py                          # cache (pretokenized) for degrevl
 python preprocess.py --training_order lex     # cache (pretokenized) for lex order
 python preprocess.py --no-pretokenize         # cache stops at post-FGLM strings (legacy mode)
 python train.py --training_order lex          # auto-detects cache → fast startup
+python evaluate.py --training_order lex       # reads ../outputs/results_lex/
 ```
 
 Two cache flavors live side-by-side; `train.py` prefers the pre-tokenized one:
