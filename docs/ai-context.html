@@ -386,9 +386,11 @@ os.makedirs(save_dir, exist_ok=True)
 OmegaConf.save(cfg, os.path.join(save_dir, &quot;train.yaml&quot;))
 
 io_pipeline = IOPipeline.from_config(cfg.data)
-# (parity only, when a user hook exists)
-# io_pipeline.dataset_load_preprocessor = build_load_preprocessor()
+# parity, when a user hook exists:
+#   io_pipeline.dataset_load_preprocessor = build_load_preprocessor()
 #   → ChainLoadPreprocessor(RawLineToTupleAdapter(), UserPostProcessorAdapter(hooks))
+# run_standard_training, when its load_preprocessor argument is given:
+#   io_pipeline.dataset_load_preprocessor = load_preprocessor
 io_dict = io_pipeline.build()
 model = ModelPipeline.from_io_dict(cfg.model, io_dict).build()
 trainer_pipeline = TrainerPipeline.from_io_dict(cfg.train, model, io_dict).build()

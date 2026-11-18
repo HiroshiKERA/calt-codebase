@@ -85,7 +85,7 @@ def cmd_enable(name: str) -> int:
     tmpl = ROOT / tmpl_rel
     if live.exists():
         print(f"Slot {name!r} is already ACTIVE at {live_rel}")
-        print(f"  → edit it directly, then `--force` your preprocess.py to rebuild caches.")
+        print("  → edit it directly, then `--force` your preprocess.py to rebuild caches.")
         print("    (groebner and border only; parity has no cache)")
         return 0
     if not tmpl.exists():
@@ -94,7 +94,7 @@ def cmd_enable(name: str) -> int:
     shutil.copyfile(tmpl, live)
     print(f"✓ Enabled slot {name!r}: copied {tmpl_rel} → {live_rel}")
     print(f"  Now edit {live_rel} to write your transformation.")
-    print(f"  Then rebuild caches: python <task>/.../preprocess.py --force")
+    print("  Then rebuild caches: python <task>/.../preprocess.py --force")
     print("  (groebner and border only; parity has no cache)")
     return 0
 
@@ -110,8 +110,8 @@ def cmd_disable(name: str) -> int:
         return 0
     live.unlink()
     print(f"✓ Disabled slot {name!r}: removed {live_rel}")
-    print(f"  Caches were hashed with the hook source — they will be detected STALE on next run.")
-    print(f"  Rebuild caches: python <task>/.../preprocess.py --force")
+    print("  Caches were hashed with the hook source — they will be detected STALE on next run.")
+    print("  Rebuild caches: python <task>/.../preprocess.py --force")
     print("  (groebner and border only; parity has no cache)")
     return 0
 
