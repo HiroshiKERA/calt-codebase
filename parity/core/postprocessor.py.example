@@ -2,12 +2,9 @@
 PER-TASK post-processor — applies ONLY to the parity task.
 
 To enable: copy this file to `parity/core/postprocessor.py` (drop the
-`.example` suffix) and edit `postprocess()`.
-
-NOTE: parity does not currently wire user hooks in its training script
-(it has no SageMath/FGLM/Expanded load chain). If you want to use this,
-follow the same wiring pattern used in `groebner_basis/core/train.py` and
-add it to `parity/core/train.py`.
+`.example` suffix) and edit `postprocess()`. `parity/core/train.py` applies
+it to every "input # output" line before tokenization, after the base hook
+(`shared/base_postprocessor.py`) if that one exists too.
 """
 
 from __future__ import annotations

@@ -49,3 +49,13 @@ python generate.py
 python train.py
 python evaluate.py
 ```
+
+## User post-processing hooks (optional)
+
+Two opt-in slots inject custom `(input, target)` transformations before
+tokenization. Identical mechanism to `groebner_basis`, see
+[groebner_basis/README.md](../groebner_basis/README.md#user-post-processing-hooks-optional).
+parity has no preprocessing cache, so the hooks run on the raw text every time.
+
+Per-task slot for this task: `parity/core/postprocessor.py` (copy the
+`.example` file and edit).

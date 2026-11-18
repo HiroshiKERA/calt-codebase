@@ -620,7 +620,7 @@ it does and when to use it.</p>
 <ul>
 <li><strong>Input</strong>: one-line notation of a permutation σ, e.g. <code>2 0 1</code>.</li>
 <li><strong>Output</strong>: <code>+1</code> (even) or <code>-1</code> (odd), where <code>sign(σ) = (−1)^(#inversions)</code>.</li>
-<li><strong>Storage</strong>: plain text, no preprocessor, <code>sympy</code> backend (no SageMath needed).</li>
+<li><strong>Storage</strong>: plain text, no preprocessor by default (user hooks optional), <code>sympy</code> backend (no SageMath needed).</li>
 <li><strong>Experiments</strong>: <code>toy/</code> (n=5) and <code>scaling/</code> (n ∈ {5, 7, 10}, via <code>--n</code>).</li>
 <li><strong>Why</strong>: parity is a <em>global</em> property — the model must compare all pairs, not
   just look at one element. A clean probe of attention over the full sequence.</li>
@@ -1097,7 +1097,7 @@ between the load chain and tokenization, without editing any task's training cod
 <tr>
 <td><strong>Base hook</strong></td>
 <td><code>shared/base_postprocessor.py</code></td>
-<td>All tasks that wire user hooks (groebner + border)</td>
+<td>All three tasks (groebner, border, parity)</td>
 </tr>
 <tr>
 <td><strong>Per-task</strong></td>
@@ -1115,7 +1115,8 @@ between the load chain and tokenization, without editing any task's training cod
 - If a file does NOT exist → that slot is skipped (no chain change, no cache
   invalidation, no perf cost).
 - If a file DOES exist → its source code is folded into the cache hash, so
-  editing <code>postprocess()</code> automatically invalidates stale caches.</p>
+  editing <code>postprocess()</code> automatically invalidates stale caches. Parity has
+  no cache: it applies the hooks to the raw text on every run.</p>
 <p><strong>To enable</strong> copy the corresponding <code>.example</code> template:</p>
 <pre><code class="language-bash">cp shared/base_postprocessor.py.example shared/base_postprocessor.py
 # then edit shared/base_postprocessor.py

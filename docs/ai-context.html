@@ -379,14 +379,18 @@ def run_training(cfg: DictConfig, data_cfg: DictConfig | None = None, dryrun: bo
 # groebner (supports the lex variant):
 def run_training(cfg, data_cfg=None, training_order=&quot;degrevlex&quot;, dryrun=False) -&gt; float
 </code></pre>
-<p>Body of parity, the template and <code>run_standard_training</code>:</p>
+<p>Body of the template and <code>run_standard_training</code> (parity adds the hook line shown):</p>
 <pre><code class="language-python">if dryrun: apply_dryrun_settings(cfg)
 save_dir = cfg.train.get(&quot;save_dir&quot;, cfg.train.get(&quot;output_dir&quot;, &quot;./results&quot;))
 os.makedirs(save_dir, exist_ok=True)
 OmegaConf.save(cfg, os.path.join(save_dir, &quot;train.yaml&quot;))
 
 io_pipeline = IOPipeline.from_config(cfg.data)
-# (groebner lex only) io_pipeline.dataset_load_preprocessor = ChainLoadPreprocessor(...)
+# parity, when a user hook exists:
+#   io_pipeline.dataset_load_preprocessor = build_load_preprocessor()
+#   → ChainLoadPreprocessor(RawLineToTupleAdapter(), UserPostProcessorAdapter(hooks))
+# run_standard_training, when its load_preprocessor argument is given:
+#   io_pipeline.dataset_load_preprocessor = load_preprocessor
 io_dict = io_pipeline.build()
 model = ModelPipeline.from_io_dict(cfg.model, io_dict).build()
 trainer_pipeline = TrainerPipeline.from_io_dict(cfg.train, model, io_dict).build()
@@ -394,7 +398,9 @@ trainer_pipeline.train()
 trainer_pipeline.save_model()
 return trainer_pipeline.evaluate_and_save_generation()   # float success rate
 </code></pre>
-<p><code>groebner_basis</code> and <code>border_basis</code> have a second shape: they build the load
+<p>Parity's <code>build_load_preprocessor()</code> takes no arguments and returns the
+preprocessor or <code>None</code> (there is no cache, so no format is returned).
+<code>groebner_basis</code> and <code>border_basis</code> have a second shape: they build the load
 preprocessor with <code>build_load_preprocessor(...)</code> (chaining <code>TextToSage</code> parsing,
 the C/E expanded form when <code>lexer_expanded.yaml</code> is used, and user hooks), and the IO
 pipeline with <code>build_io_pipeline_with_cache(...)</code>, which picks a pre-tokenized
@@ -699,7 +705,7 @@ or missing arguments raise when the trainer is built.</p>
 </tr>
 <tr>
 <td>Preprocessor</td>
-<td>none</td>
+<td>none by default (hooks: Chain)</td>
 <td>none by default (lex variant, expanded form, hooks: Chain)</td>
 <td>none by default (expanded form, hooks: Chain)</td>
 </tr>
