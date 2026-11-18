@@ -190,7 +190,7 @@ def run_training(cfg: DictConfig, data_cfg: DictConfig | None = None, dryrun: bo
 def run_training(cfg, data_cfg=None, training_order="degrevlex", dryrun=False) -> float
 ```
 
-Body of parity, the template and `run_standard_training`:
+Body of the template and `run_standard_training` (parity adds the hook line shown):
 
 ```python
 if dryrun: apply_dryrun_settings(cfg)
@@ -199,7 +199,9 @@ os.makedirs(save_dir, exist_ok=True)
 OmegaConf.save(cfg, os.path.join(save_dir, "train.yaml"))
 
 io_pipeline = IOPipeline.from_config(cfg.data)
-# (groebner lex only) io_pipeline.dataset_load_preprocessor = ChainLoadPreprocessor(...)
+# (parity only, when a user hook exists)
+# io_pipeline.dataset_load_preprocessor = build_load_preprocessor()
+#   → ChainLoadPreprocessor(RawLineToTupleAdapter(), UserPostProcessorAdapter(hooks))
 io_dict = io_pipeline.build()
 model = ModelPipeline.from_io_dict(cfg.model, io_dict).build()
 trainer_pipeline = TrainerPipeline.from_io_dict(cfg.train, model, io_dict).build()
@@ -208,6 +210,8 @@ trainer_pipeline.save_model()
 return trainer_pipeline.evaluate_and_save_generation()   # float success rate
 ```
 
+Parity's `build_load_preprocessor()` takes no arguments and returns the
+preprocessor or `None` (there is no cache, so no format is returned).
 `groebner_basis` and `border_basis` have a second shape: they build the load
 preprocessor with `build_load_preprocessor(...)` (chaining `TextToSage` parsing,
 the C/E expanded form when `lexer_expanded.yaml` is used, and user hooks), and the IO
@@ -516,7 +520,7 @@ or missing arguments raise when the trainer is built.
 | Output | `+1` / `-1` | Gröbner basis `g1 \| …` | border basis |
 | Backend | sympy | sagemath | sagemath |
 | Storage | plain text | plain text | plain text |
-| Preprocessor | none | none by default (lex variant, expanded form, hooks: Chain) | none by default (expanded form, hooks: Chain) |
+| Preprocessor | none by default (hooks: Chain) | none by default (lex variant, expanded form, hooks: Chain) | none by default (expanded form, hooks: Chain) |
 | Generator class | `ParityGenerator(n)` | `GroebnerGenerator(sampler, num_polynomials)` | `BorderBasisGenerator(sampler, num_polynomials, …)` |
 | Experiments | toy, scaling (n∈{5,7,10}), ablation | toy, scaling, ablation (degrevlex/lex) | toy, finite_field (GF 5/7/11/17/31), ablation |
 | Algorithm | inversions count | SageMath `ideal.groebner_basis()` | `core/algorithm.py::BorderBasisCalculator` (port of arXiv:2505.23696 Alg 4.1) |

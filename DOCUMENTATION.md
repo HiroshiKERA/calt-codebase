@@ -484,7 +484,7 @@ it does and when to use it.
 
 - **Input**: one-line notation of a permutation σ, e.g. `2 0 1`.
 - **Output**: `+1` (even) or `-1` (odd), where `sign(σ) = (−1)^(#inversions)`.
-- **Storage**: plain text, no preprocessor, `sympy` backend (no SageMath needed).
+- **Storage**: plain text, no preprocessor by default (user hooks optional), `sympy` backend (no SageMath needed).
 - **Experiments**: `toy/` (n=5) and `scaling/` (n ∈ {5, 7, 10}, via `--n`).
 - **Why**: parity is a *global* property — the model must compare all pairs, not
   just look at one element. A clean probe of attention over the full sequence.
@@ -901,7 +901,7 @@ between the load chain and tokenization, without editing any task's training cod
 
 | Slot | File (create to enable) | Scope |
 |---|---|---|
-| **Base hook**    | `shared/base_postprocessor.py`         | All tasks that wire user hooks (groebner + border) |
+| **Base hook**    | `shared/base_postprocessor.py`         | All three tasks (groebner, border, parity) |
 | **Per-task**     | `<task>/core/postprocessor.py`         | One specific task, AFTER the base hook |
 
 Each file exposes one function:
@@ -916,7 +916,8 @@ def postprocess(input_text: str, target_text: str) -> tuple[str, str]:
 - If a file does NOT exist → that slot is skipped (no chain change, no cache
   invalidation, no perf cost).
 - If a file DOES exist → its source code is folded into the cache hash, so
-  editing `postprocess()` automatically invalidates stale caches.
+  editing `postprocess()` automatically invalidates stale caches. Parity has
+  no cache: it applies the hooks to the raw text on every run.
 
 **To enable** copy the corresponding `.example` template:
 

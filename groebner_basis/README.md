@@ -115,7 +115,7 @@ after the load chain (lex recomputation, expanded form, etc.) has run, before to
 
 | Slot | File (create to enable) | Scope |
 |---|---|---|
-| Base hook   | `shared/base_postprocessor.py`         | Applied to every task that wires user hooks (groebner + border) |
+| Base hook   | `shared/base_postprocessor.py`         | Applied to every task (groebner, border, parity) |
 | Per-task    | `groebner_basis/core/postprocessor.py` | Applied to groebner only, AFTER the base hook |
 
 Each file must expose:
