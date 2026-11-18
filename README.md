@@ -214,5 +214,5 @@ See the checklist in `templates/task_template/README.md`.
 - CALT library: <https://github.com/HiroshiKERA/calt> · docs: <https://hiroshikera.github.io/calt/>
 - Task Builder (web app): <https://calt.mai2.org/>
 - Demo Notebook (Google Colab): <https://colab.research.google.com/github/HiroshiKERA/calt/blob/main/examples/demos/minimal_demo.ipynb>
-- Paper: *CALT: A Library for Computer Algebra with Transformer*, Kera et al. — [arXiv:2506.08600](https://arxiv.org/abs/2506.08600)
-- Border basis algorithm: *Computational Algebra with Attention*, Kera et al. — [arXiv:2505.23696](https://arxiv.org/abs/2505.23696)
+- *CALT: A Library for Computer Algebra with Transformer*, Kera et al. — [arXiv:2506.08600](https://arxiv.org/abs/2506.08600)
+- *Computational Algebra with Attention: Transformer Oracles for Border Basis Algorithms*, Kera et al. — [arXiv:2505.23696](https://arxiv.org/abs/2505.23696)
