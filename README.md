@@ -65,40 +65,84 @@ Every task follows the same layout:
 
 ## Installation
 
-We recommend installing everything in one dedicated conda environment, with
-PyTorch from conda-forge in the same command:
+You can install the dependencies with conda or with pip. We recommend conda: it
+installs everything in one dedicated environment, with PyTorch from conda-forge
+in the same command, and it also provides SageMath (`sage`), which the
+polynomial tasks (Gröbner basis, border basis) need. pip works for the tasks
+that do not need SageMath, such as `parity`.
 
-```bash
-# The quotes around the package specs are required
-# With an NVIDIA GPU
-conda create -n calt-env -c conda-forge python=3.12 "calt-x>=1.6.1" "pytorch>=2.6=cuda*" sage matplotlib click sortedcontainers
-# Without an NVIDIA GPU (including macOS)
-conda create -n calt-env -c conda-forge python=3.12 "calt-x>=1.6.1" "pytorch>=2.6" sage matplotlib click sortedcontainers
-conda activate calt-env
-# Prints e.g. "12.9 True" with a GPU, "None False" without one
-python -c "import torch; print(torch.version.cuda, torch.cuda.is_available())"
-```
+### With conda (recommended)
 
-SageMath (`sage`) is needed for the polynomial tasks (Gröbner basis, border
-basis); `parity` runs without it. The GPU command needs NVIDIA driver 525 or
-newer. If conda cannot see the GPU (e.g. on an HPC login node), prefix the
-command with `CONDA_OVERRIDE_CUDA=12.9`. Do not install PyTorch with pip into
-this environment: PyPI's CUDA build of torch can make conda-forge packages such
-as SciPy and SageMath fail to import (``version `CXXABI_1.3.15' not found``).
-See [CALT's installation notes](https://github.com/HiroshiKERA/calt#installation)
-for details.
+1. Create the environment. Keep the quotes around the package specs.
+
+   With an NVIDIA GPU:
+
+   ```bash
+   conda create -n calt-env -c conda-forge python=3.12 "calt-x>=1.6.1" "pytorch>=2.6=cuda*" sage matplotlib click sortedcontainers
+   ```
+
+   Without an NVIDIA GPU (including macOS):
+
+   ```bash
+   conda create -n calt-env -c conda-forge python=3.12 "calt-x>=1.6.1" "pytorch>=2.6" sage matplotlib click sortedcontainers
+   ```
+
+2. Activate the environment:
+
+   ```bash
+   conda activate calt-env
+   ```
+
+3. Check PyTorch. It prints e.g. `12.9 True` with a GPU and `None False`
+   without one.
+
+   ```bash
+   python -c "import torch; print(torch.version.cuda, torch.cuda.is_available())"
+   ```
 
 The commands pin Python 3.12 because this repository declares
 `requires-python = ">=3.11,<3.13"` in `pyproject.toml`; `calt-x` itself supports
-Python `>=3.11`.
+Python `>=3.11`. The available versions of `calt-x` on conda-forge are listed by
+`conda search calt-x --channel conda-forge`, and the feedstock is
+[conda-forge/calt-x-feedstock](https://github.com/conda-forge/calt-x-feedstock).
 
-You can check the available versions of `calt-x` with:
+### With pip (tasks without SageMath)
 
-```bash
-conda search calt-x --channel conda-forge
-```
+1. Create a virtual environment with Python 3.11 or 3.12 (use `python3.11` if
+   that is what you have), and activate it. On Windows, run
+   `py -3.12 -m venv calt-env` and `calt-env\Scripts\activate` instead.
 
-The conda-forge feedstock is available here: [conda-forge/calt-x-feedstock](https://github.com/conda-forge/calt-x-feedstock).
+   ```bash
+   python3.12 -m venv calt-env
+   source calt-env/bin/activate
+   ```
+
+2. Install the dependencies. pip installs PyTorch from PyPI along with `calt-x`.
+
+   ```bash
+   pip install calt-x matplotlib click
+   ```
+
+3. Check PyTorch. On a Linux machine with an NVIDIA GPU, PyPI's torch 2.11 and
+   later needs driver 580 or newer; if this prints `False` there, run
+   `pip install "torch<2.11"`.
+
+   ```bash
+   python -c "import torch; print(torch.version.cuda, torch.cuda.is_available())"
+   ```
+
+### Notes on GPUs and conda
+
+- **NVIDIA driver:** the conda GPU command (`"pytorch>=2.6=cuda*"`) needs driver
+  525 or newer.
+- **GPU not visible to conda** (e.g. on an HPC login node): prefix the command
+  with `CONDA_OVERRIDE_CUDA=12.9`.
+- **No pip torch in the conda environment:** PyPI's CUDA build of torch can make
+  conda-forge packages such as SciPy and SageMath fail to import
+  (``version `CXXABI_1.3.15' not found``).
+
+See [CALT's installation notes](https://github.com/HiroshiKERA/calt#installation)
+for details.
 
 ---
 
@@ -109,6 +153,10 @@ First, activate the conda environment that has the required dependencies install
 ```bash
 conda activate calt-env
 ```
+
+If you installed with pip, activate that environment instead
+(`source calt-env/bin/activate`) and use `parity/experiments/toy/scripts`, since
+`groebner_basis` needs SageMath.
 
 Then run the 3-step workflow:
 
@@ -154,7 +202,7 @@ See the checklist in `templates/task_template/README.md`.
 ## Dependencies
 
 - Python `>=3.11,<3.13`
-- [`calt-x`](https://github.com/HiroshiKERA/calt) `>=1.6.1` (from [conda-forge](https://github.com/conda-forge/calt-x-feedstock)) and PyTorch `>=2.6`, also from conda-forge
+- [`calt-x`](https://github.com/HiroshiKERA/calt) `>=1.6.1` (from [conda-forge](https://github.com/conda-forge/calt-x-feedstock), or PyPI with pip) and PyTorch `>=2.6`, from the same source
 - SageMath (`sage`), required for polynomial tasks such as Gröbner basis and border basis experiments
 - Experiment utilities: `matplotlib`, `click`, and `sortedcontainers`
 - `wandb` is optional — used by `shared/logging.py`; set `no_wandb: true` in a `train.yaml` or set `WANDB_MODE=disabled` to skip it.
