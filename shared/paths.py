@@ -44,7 +44,7 @@ def config_dir(script_file: str) -> Path:
 
 def codebase_root(script_file: str) -> Path:
     """
-    Return the calt-codebase-new root (4 levels above a script in
+    Return the calt-codebase root (4 levels above a script in
     <task>/experiments/<exp>/scripts/).
     """
     return Path(script_file).resolve().parents[4]
