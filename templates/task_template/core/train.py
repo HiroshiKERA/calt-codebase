@@ -2,7 +2,9 @@
 Training runner for [TASK NAME].
 
 Copy this file to your task's core/train.py and adjust:
-  1. The import of the custom parser (or remove it if not needed).
+  1. Plain text data ("input # output" lines) needs no parser. To load
+     *_data.jsonl or transform samples at load time, implement core/parser.py
+     and uncomment the two TaskParser lines below.
   2. The run_training signature if your task has extra options.
 """
 
@@ -17,7 +19,7 @@ from shared.calt_adapter import (
     apply_dryrun_settings,
 )
 
-from .parser import TaskParser
+# from .parser import TaskParser
 
 
 def run_training(cfg: DictConfig, dryrun: bool = False) -> float:
@@ -44,7 +46,7 @@ def run_training(cfg: DictConfig, dryrun: bool = False) -> float:
     OmegaConf.save(cfg, os.path.join(save_dir, "train.yaml"))
 
     io_pipeline = IOPipeline.from_config(cfg.data)
-    io_pipeline.dataset_load_preprocessor = TaskParser()  # remove if using plain text
+    # io_pipeline.dataset_load_preprocessor = TaskParser()  # see the module docstring
     io_dict = io_pipeline.build()
 
     model = ModelPipeline.from_io_dict(cfg.model, io_dict).build()

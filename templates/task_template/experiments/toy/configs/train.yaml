@@ -26,12 +26,12 @@ train:
   seed: 42
   wandb:
     project: calt-experiments
-    group: [TASK_NAME]         # TODO: replace with your task name
+    group: TASK_NAME           # TODO: replace with your task name
     name: toy
     no_wandb: false
 
 data:
-  train_dataset_path: ../data/train_raw.txt    # TODO: adjust (.txt or .pkl)
+  train_dataset_path: ../data/train_raw.txt    # TODO: adjust (*_data.jsonl needs core/parser.py)
   test_dataset_path: ../data/test_raw.txt
   lexer_config: ../configs/lexer.yaml
   validate_train_tokens: false

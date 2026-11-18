@@ -2,8 +2,9 @@
 Metrics and per-sample statistics for [TASK NAME].
 
 Two functions:
-  instance_stats  →  passed to DatasetPipeline as statistics_calculator
-                     called per sample during generation
+  instance_stats  →  optional; once implemented, pass it to DatasetPipeline
+                     as statistics_calculator in scripts/generate.py.
+                     Called per sample during generation.
   success_rate    →  called after training to report accuracy
 """
 

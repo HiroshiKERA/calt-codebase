@@ -528,11 +528,15 @@ Then work through the checklist in `templates/task_template/README.md`:
    - `problem`/`answer` may be a string, a list (joined with ` | `), or a
      SageMath object (`str()` is called automatically).
 2. **`core/formatter.py`** — define how objects become strings (handy for tests).
-3. **`core/parser.py`** — only needed if you store data as pickle/JSON; plain
-   text needs no parser.
-4. **`core/metrics.py`** — `instance_stats(problem, answer)` and `success_rate`.
+3. **`core/parser.py`** — only needed to read the JSON Lines files
+   (`dataset.save_json: true`) or to transform samples at load time; plain text
+   needs no parser, so `core/train.py` leaves it off until you enable it.
+4. **`core/metrics.py`** — `success_rate`, and optionally `instance_stats(problem, answer)`
+   (pass it to `DatasetPipeline` in `generate.py` to add per-sample statistics to `{split}_stats.yaml`).
 5. **`experiments/toy/configs/`** — set `data.yaml` (sizes, sampler/generator
-   params), `lexer.yaml` (vocabulary for *your* symbols), `train.yaml` (model + paths).
+   params), `lexer.yaml` (vocabulary for *your* symbols), `train.yaml` (model + paths),
+   and replace `task_template` in the imports of `experiments/toy/scripts/*.py`
+   with your task's folder name.
 6. **Run**: `python generate.py && python train.py --dryrun && python evaluate.py`.
 
 **Generator contract**: one argument `seed: int`; deterministic given the seed;
@@ -841,9 +845,9 @@ load chain when needed.
 ### 14.2 — Offline preprocessing (skip work at training startup)
 
 **The problem.** Vanilla CALT applies the `dataset_load_preprocessor`
-(TextToSage → FGLM → ExpandedForm, depending on configuration) once **at each
-training startup**. On the Gröbner `--training_order lex` chain on 100k samples
-this means rerunning SageMath/FGLM (~1 minute) every single time you launch
+(TextToSage → lex recomputation or ExpandedForm, depending on configuration) once
+**at each training startup**. On the Gröbner `--training_order lex` chain on a
+large dataset this means recomputing every lex basis in SageMath every single time you launch
 `train.py`. Worse, the per-batch tokenization (`UnifiedLexer.__call__`) and
 HF `tokenizer.__call__` run lazily in the data loader.
 
@@ -858,7 +862,7 @@ train.py               → auto-detects cache, skips redundant work
 | Cache directory | Content | Skipped at training |
 |---|---|---|
 | `processed_<order>_<format>_ids/` | `{"input_ids": [...], "target_ids": [...]}` | SageMath + UnifiedLexer + HF tokenizer (everything) |
-| `processed_<order>_<format>/`     | `{"problem": str, "answer": str}` | SageMath / FGLM / ExpandedForm only |
+| `processed_<order>_<format>/`     | `{"problem": str, "answer": str}` | SageMath (lex recomputation / ExpandedForm) only |
 | (no cache) | — | nothing (original CALT behavior) |
 
 Both flavors are produced by the same CLI:

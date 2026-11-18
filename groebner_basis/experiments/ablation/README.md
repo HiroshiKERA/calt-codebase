@@ -4,7 +4,7 @@
 
 | Knob | Choices |
 |------|---------|
-| `--training_order` | `degrevlex` (use stored basis as-is), `lex` (FGLM at load time) |
+| `--training_order` | `degrevlex` (use stored basis as-is), `lex` (recomputed at load time) |
 
 Lex bases are typically larger and have larger coefficients, so accuracy is
 expected to drop vs degrevlex (see Table 5 of the ISSAC2026 paper: 42.4% degrevlex

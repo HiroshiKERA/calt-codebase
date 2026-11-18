@@ -28,11 +28,12 @@ python evaluate.py    # report success rate
 
 ## Checklist for creating a new task
 
-- [ ] Fill in `core/generator.py` — implement `sample_instance(seed) → (problem, answer)`
+- [ ] Fill in `core/generator.py` — implement `TaskGenerator.__call__(seed) → (problem, answer)`
 - [ ] Fill in `core/formatter.py` — define string format for problem and answer
-- [ ] Fill in `core/parser.py` — implement `process_sample` for the load preprocessor
-- [ ] Fill in `core/metrics.py` — implement `instance_stats` and `success_rate`
-- [ ] Update `experiments/toy/configs/data.yaml` — dataset size, seed, backend
+- [ ] Optional: fill in `core/parser.py` and enable it in `core/train.py` — only for JSON Lines data or load-time transformations; plain text needs no parser
+- [ ] Optional: implement `instance_stats` in `core/metrics.py` and pass it to `DatasetPipeline` in `scripts/generate.py`
+- [ ] Replace `task_template` in the imports of `experiments/toy/scripts/*.py` with your task's folder name
+- [ ] Update `experiments/toy/configs/data.yaml` — `problem_generator` parameters, dataset size, seed, backend
 - [ ] Update `experiments/toy/configs/lexer.yaml` — token vocabulary for your task
 - [ ] Update `experiments/toy/configs/train.yaml` — model and training hyperparameters
 - [ ] Update this README

@@ -742,9 +742,11 @@ or missing arguments raise when the trainer is built.</p>
 <p>Same layout as a real task, with <code>TODO</code>s. The runnable, consistent pattern:</p>
 <ul>
 <li><code>core/generator.py::TaskGenerator(**params)</code> with <code>__call__(seed)</code> (raises until filled).</li>
-<li><code>core/parser.py::TaskParser.process_sample(source)</code> — only if storing pickle/JSON.</li>
-<li><code>core/train.py::run_training(cfg, dryrun=False)</code> — sets <code>dataset_load_preprocessor = TaskParser()</code>
-  (comment says remove for plain text).</li>
+<li><code>core/parser.py::TaskParser.process_sample(source)</code> — only for JSON Lines input
+  (<code>dataset.save_json: true</code> → <code>*_data.jsonl</code>) or load-time transformations; DatasetWriter
+  no longer writes pickle.</li>
+<li><code>core/train.py::run_training(cfg, dryrun=False)</code> — the <code>TaskParser</code> lines are commented
+  out; plain text needs no parser.</li>
 <li><code>experiments/toy/scripts/generate.py</code> — builds <code>TaskGenerator(**cfg.problem_generator)</code>
   and runs <code>DatasetPipeline.from_config(cfg.dataset, instance_generator=…)</code>.</li>
 <li><code>experiments/toy/configs/data.yaml</code> — has a <code>problem_generator: {}</code> block + <code>dataset:</code>.</li>

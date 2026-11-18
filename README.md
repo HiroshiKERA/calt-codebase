@@ -192,7 +192,7 @@ bash run.sh
 cp -r templates/task_template my_new_task
 # Edit my_new_task/core/generator.py  → implement TaskGenerator.__call__(seed)
 # Edit my_new_task/core/formatter.py  → define the string format
-# Edit my_new_task/core/parser.py     → only if data is stored as pickle/JSON
+# Edit my_new_task/core/parser.py     → only for JSON Lines data or load-time transformations
 # Update configs in my_new_task/experiments/toy/configs/
 ```
 

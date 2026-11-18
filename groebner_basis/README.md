@@ -1,26 +1,34 @@
 # groebner_basis
 
-**Task**: Given a polynomial f and generators g1, g2, g3, predict the remainder
-of f on division by the Gröbner basis of the ideal ⟨g1, g2, g3⟩.
+**Task**: Given two polynomials f1, f2, predict the Gröbner basis of the ideal
+⟨f1, f2⟩.
 
 ## The math
 
-Let R = ℤ[x, y, z] and I = ⟨g1, g2, g3⟩ ⊂ R.
+Let R = k[x, y] and I = ⟨f1, f2⟩ ⊂ R.
 
-1. Compute G = grevlex Gröbner basis of I  (using Buchberger's algorithm).
-2. Compute r = I.reduce(f)  (remainder of the division of f by G).
+1. Sample f1, f2 ∈ R at random.
+2. Compute G = the degrevlex Gröbner basis of I (SageMath).
 
-The model receives (f, G) as input and must predict r.
+The model receives (f1, f2) as input and must predict G, element by element.
 
-**Why is this hard?** Even knowing G, computing r requires a multi-step
-polynomial division algorithm. The model must learn this algorithm implicitly.
+**Why is this hard?** Computing G takes many reduction steps whose number and
+size are not visible from the input, and over ℚ the coefficients of G can grow
+far beyond those of f1, f2.
 
 ## Data
 
-- Field: ℤ (integers)
-- Variables: x, y, z
-- Polynomials: 2–5 terms, degree ≤ 4, coefficients in [-10, 10]
-- Stored as: pickle (SageMath objects)
+- Field: ℚ in the shipped configs (`field_str: "QQ"`); `core/generator.py` also
+  supports GF(p) and ℤ through `field_str`
+- Variables: x, y
+- Polynomials (toy): 1–5 terms, degree 1–4; over ℚ the coefficients are
+  fractions whose numerator and denominator are at most 10 in absolute value
+  (`PolynomialSampler` uses `num_bound`, default 10, for ℚ; `max_coeff` in
+  `data.yaml` applies to ℤ)
+- Over ℚ, samples where a coefficient of F or G has a numerator or denominator
+  of 100 or more are redrawn (up to 100 draws per seed)
+- Stored as text: `../data/QQ/train_raw.txt` and `test_raw.txt`, one
+  `f1 | f2 # g1 | … | gk` per line
 
 ## Experiments
 
@@ -28,7 +36,7 @@ polynomial division algorithm. The model must learn this algorithm implicitly.
 |---|---|
 | `toy/` | Small model, 1000 train samples — verify the pipeline runs |
 | `scaling/` | Larger models and datasets — measure scaling behavior |
-| `ablation/` | Order (grevlex vs. lex), pattern (remainder vs. quotients+remainder) |
+| `ablation/` | Training order: degrevlex (the stored basis) vs. lex (recomputed at load time) |
 
 ## Quick start
 
@@ -47,9 +55,9 @@ bash run.sh
 
 ## Offline preprocessing (optional, recommended for `lex` order)
 
-`train.py` applies the `dataset_load_preprocessor` (TextToSage → FGLM for lex,
+`train.py` applies the `dataset_load_preprocessor` (TextToSage → lex Gröbner basis for lex,
 TextToSage → ExpandedForm for C/E format) **every time it starts**. For large
-datasets and the `lex` chain that means several minutes of SageMath/FGLM
+datasets and the `lex` chain that means several minutes of SageMath
 recomputation before each run.
 
 `preprocess.py` runs that chain **once** offline and writes a JSONL cache. By
@@ -60,7 +68,7 @@ performs **zero tokenization at runtime** — only padding + GPU forward.
 cd groebner_basis/experiments/toy/scripts
 python preprocess.py                          # cache (pretokenized) for degrevlex
 python preprocess.py --training_order lex     # cache (pretokenized) for lex order
-python preprocess.py --no-pretokenize         # cache stops at post-FGLM strings (legacy mode)
+python preprocess.py --no-pretokenize         # cache stops at the preprocessed strings (legacy mode)
 python train.py --training_order lex          # auto-detects cache → fast startup
 python evaluate.py --training_order lex       # reads ../outputs/results_lex/
 ```
@@ -103,7 +111,7 @@ just copies the raw text. Still safe to use, but the speedup is zero.
 ## User post-processing hooks (optional)
 
 Two opt-in slots let you inject custom transformations of `(input_text, target_text)`
-after the load chain (FGLM/Expanded/etc.) has run, before tokenization:
+after the load chain (lex recomputation, expanded form, etc.) has run, before tokenization:
 
 | Slot | File (create to enable) | Scope |
 |---|---|---|
@@ -133,8 +141,9 @@ Examples and caveats are in [shared/base_postprocessor.py.example](../shared/bas
 
 ## Variants
 
-- `--order lex` : convert to lex order via FGLM before training
-- `--pattern 2` : predict quotients + remainder instead of remainder only
+- `--order lex` (run.sh) / `--training_order lex` (train.py, evaluate.py) :
+  train on the lex Gröbner basis, recomputed from (f1, f2) at load time with
+  SageMath's `libsingular:std` (see `core/parser.py`)
 
 ## Tokenization format (raw vs C/E expanded)
 
@@ -167,6 +176,6 @@ That's it. `core/train.py` calls `detect_lexer_format()` on the file and wires
   declared range produce OOV tokens — widen `coefficients` in `lexer_expanded.yaml`
   if you change the field or sampler.
 
-**Caveat — combining with `--order lex`**: both modes work together. The lex
-preprocessor runs first (recomputes G in lex order via FGLM), then expanded form
-runs on the lex-ordered output. See [core/train.py](core/train.py) `run_training()`.
+**Caveat — combining with `--order lex`**: not supported. `--training_order lex`
+with the expanded lexer raises a `ValueError` in `build_load_preprocessor`
+([core/train.py](core/train.py)); use the raw lexer for lex order.
