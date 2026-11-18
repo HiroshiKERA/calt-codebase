@@ -33,7 +33,7 @@ from shared.seed import set_seed
     "--training_order",
     type=click.Choice(["degrevlex", "lex"]),
     default="degrevlex",
-    help="Monomial order: degrevlex (default) or lex (FGLM at load time).",
+    help="Monomial order: degrevlex (default) or lex (recomputed at load time).",
 )
 @click.option("--dryrun", is_flag=True, help="Reduced settings for a fast smoke test.")
 def main(

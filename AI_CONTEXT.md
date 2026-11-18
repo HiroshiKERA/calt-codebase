@@ -542,9 +542,11 @@ The `scripts/train.py` of each experiment is a thin `click` wrapper:
 Same layout as a real task, with `TODO`s. The runnable, consistent pattern:
 
 - `core/generator.py::TaskGenerator(**params)` with `__call__(seed)` (raises until filled).
-- `core/parser.py::TaskParser.process_sample(source)` — only if storing pickle/JSON.
-- `core/train.py::run_training(cfg, dryrun=False)` — sets `dataset_load_preprocessor = TaskParser()`
-  (comment says remove for plain text).
+- `core/parser.py::TaskParser.process_sample(source)` — only for JSON Lines input
+  (`dataset.save_json: true` → `*_data.jsonl`) or load-time transformations; DatasetWriter
+  no longer writes pickle.
+- `core/train.py::run_training(cfg, dryrun=False)` — the `TaskParser` lines are commented
+  out; plain text needs no parser.
 - `experiments/toy/scripts/generate.py` — builds `TaskGenerator(**cfg.problem_generator)`
   and runs `DatasetPipeline.from_config(cfg.dataset, instance_generator=…)`.
 - `experiments/toy/configs/data.yaml` — has a `problem_generator: {}` block + `dataset:`.

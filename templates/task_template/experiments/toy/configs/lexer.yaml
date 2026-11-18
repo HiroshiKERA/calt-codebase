@@ -10,6 +10,8 @@ vocab:
     include_base_special_tokens: true
 
 number_policy:
+  # With attach_sign: true, write a binary minus with spaces ("x - 5"): with
+  # negative numbers in the vocabulary, "x-5" is read as x, -5 (calt-x <= 1.7.0).
   attach_sign: true
   digit_group: 0
   allow_float: false

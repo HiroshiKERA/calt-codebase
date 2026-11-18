@@ -3,9 +3,8 @@
 #
 # Usage:
 #   bash run.sh                                  # defaults: degrevlex, raw, with pretok cache
-#   bash run.sh --order lex                      # use lex order (FGLM)
-#   bash run.sh --lexer expanded                 # use C/E expanded vocab
-#   bash run.sh --order lex --lexer expanded     # combine
+#   bash run.sh --order lex                      # use lex order (recomputed at load time)
+#   bash run.sh --lexer expanded                 # use C/E expanded vocab (degrevlex only)
 #   bash run.sh --no-preprocess                  # skip preprocess.py (legacy training path)
 #   bash run.sh --dryrun                         # fast smoke test
 #   bash run.sh --force                          # rebuild caches even if hash matches

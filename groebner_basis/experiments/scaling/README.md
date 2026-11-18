@@ -5,7 +5,7 @@
 | Knob | Choices |
 |------|---------|
 | `--model_size` | `small`, `medium`, `large` |
-| `--training_order` | `degrevlex` (default), `lex` (FGLM at load time) |
+| `--training_order` | `degrevlex` (default), `lex` (recomputed at load time) |
 
 ## What this experiment varies vs `toy/`
 - Larger dataset: 50k train / 1k test (vs 1k / 200)

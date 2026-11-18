@@ -660,11 +660,15 @@ cd my_new_task
    - <code>problem</code>/<code>answer</code> may be a string, a list (joined with <code>|</code>), or a
      SageMath object (<code>str()</code> is called automatically).</li>
 <li><strong><code>core/formatter.py</code></strong> — define how objects become strings (handy for tests).</li>
-<li><strong><code>core/parser.py</code></strong> — only needed if you store data as pickle/JSON; plain
-   text needs no parser.</li>
-<li><strong><code>core/metrics.py</code></strong> — <code>instance_stats(problem, answer)</code> and <code>success_rate</code>.</li>
+<li><strong><code>core/parser.py</code></strong> — only needed to read the JSON Lines files
+   (<code>dataset.save_json: true</code>) or to transform samples at load time; plain text
+   needs no parser, so <code>core/train.py</code> leaves it off until you enable it.</li>
+<li><strong><code>core/metrics.py</code></strong> — <code>success_rate</code>, and optionally <code>instance_stats(problem, answer)</code>
+   (pass it to <code>DatasetPipeline</code> in <code>generate.py</code> to add per-sample statistics to <code>{split}_stats.yaml</code>).</li>
 <li><strong><code>experiments/toy/configs/</code></strong> — set <code>data.yaml</code> (sizes, sampler/generator
-   params), <code>lexer.yaml</code> (vocabulary for <em>your</em> symbols), <code>train.yaml</code> (model + paths).</li>
+   params), <code>lexer.yaml</code> (vocabulary for <em>your</em> symbols), <code>train.yaml</code> (model + paths),
+   and replace <code>task_template</code> in the imports of <code>experiments/toy/scripts/*.py</code>
+   with your task's folder name.</li>
 <li><strong>Run</strong>: <code>python generate.py &amp;&amp; python train.py --dryrun &amp;&amp; python evaluate.py</code>.</li>
 </ol>
 <p><strong>Generator contract</strong>: one argument <code>seed: int</code>; deterministic given the seed;
@@ -1022,9 +1026,9 @@ load chain when needed.</p>
 - <code>&lt;task&gt;/core/train.py::build_load_preprocessor</code> — wires <code>ExpandedFormLoadPreprocessor</code></p>
 <h3 id="142-offline-preprocessing-skip-work-at-training-startup">14.2 — Offline preprocessing (skip work at training startup)</h3>
 <p><strong>The problem.</strong> Vanilla CALT applies the <code>dataset_load_preprocessor</code>
-(TextToSage → FGLM → ExpandedForm, depending on configuration) once <strong>at each
-training startup</strong>. On the Gröbner <code>--training_order lex</code> chain on 100k samples
-this means rerunning SageMath/FGLM (~1 minute) every single time you launch
+(TextToSage → lex recomputation or ExpandedForm, depending on configuration) once
+<strong>at each training startup</strong>. On the Gröbner <code>--training_order lex</code> chain on a
+large dataset this means recomputing every lex basis in SageMath every single time you launch
 <code>train.py</code>. Worse, the per-batch tokenization (<code>UnifiedLexer.__call__</code>) and
 HF <code>tokenizer.__call__</code> run lazily in the data loader.</p>
 <p><strong>The fix — two cache levels.</strong></p>
@@ -1049,7 +1053,7 @@ train.py               → auto-detects cache, skips redundant work
 <tr>
 <td><code>processed_&lt;order&gt;_&lt;format&gt;/</code></td>
 <td><code>{"problem": str, "answer": str}</code></td>
-<td>SageMath / FGLM / ExpandedForm only</td>
+<td>SageMath (lex recomputation / ExpandedForm) only</td>
 </tr>
 <tr>
 <td>(no cache)</td>

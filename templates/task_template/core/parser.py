@@ -4,13 +4,15 @@ Load-time preprocessor for [TASK NAME].
 In CALT's pipeline, the dataset_load_preprocessor runs once when loading
 the dataset from disk, before the UnifiedLexer tokenizes the strings.
 
-If your data is stored as plain text (formatter.py already returns strings),
-this file may be minimal (just split on ' # ').
+Plain text data ("input # output" lines, the default output of
+DatasetPipeline) needs no parser: CALT splits each line on '#' itself, and
+core/train.py leaves the parser off. Use this file when you need to
+  - read the JSON Lines files (dataset.save_json: true writes *_data.jsonl,
+    one {"problem": ..., "answer": ...} object per line), or
+  - transform samples at load time (e.g. rebuild SageMath objects from the
+    strings and change their representation).
 
-If your data is stored as pickle (SageMath objects), this file does the
-conversion: pickle dict → (input_text, target_text).
-
-TODO: Choose the appropriate base and implement process_sample.
+TODO: implement process_sample, then enable it in core/train.py.
 """
 
 from typing import Any
@@ -33,19 +35,19 @@ class TaskParser:
         ----------
         source : str | dict
             str  → plain text line "input # output"
-            dict → {"problem": ..., "answer": ...} from JSON Lines or pickle
+            dict → {"problem": ..., "answer": ...} from JSON Lines
 
         Returns
         -------
         (input_text, target_text) — both tokenizable by the UnifiedLexer
         """
-        # TODO: implement for your storage format (text or pickle)
+        # TODO: implement for your storage format (text or JSON Lines)
         # Example for text format:
         # if isinstance(source, str):
         #     parts = source.strip().split(" # ", maxsplit=1)
         #     return parts[0].strip(), parts[1].strip()
 
-        # Example for pickle format:
+        # Example for JSON Lines (problem/answer as stored by DatasetPipeline):
         # if isinstance(source, dict):
         #     problem = source["problem"]
         #     answer = source["answer"]

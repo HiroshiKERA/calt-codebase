@@ -1,9 +1,9 @@
 """Materialize a JSONL preprocessing cache for the toy Gröbner experiment.
 
-Runs the load-time chain (TextToSage / FGLM-lex / ExpandedForm — whichever applies
-to your training_order + lexer.yaml) ONCE over train_raw.txt + test_raw.txt and
+Runs the load-time chain (TextToSage / lex recomputation / ExpandedForm — whichever
+applies to your training_order + lexer.yaml) ONCE over train_raw.txt + test_raw.txt and
 writes the result to `<data>/processed_<order>_<format>/`. Training will detect
-the cache automatically and skip the SageMath/FGLM step on subsequent runs.
+the cache automatically and skip the SageMath step on subsequent runs.
 
 Re-run this script whenever you change lexer.yaml, data.yaml's sampler, or the
 --training_order. The cache is hash-keyed so a stale cache is detected and
