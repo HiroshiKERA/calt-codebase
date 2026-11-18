@@ -4,15 +4,17 @@
 [![Built on calt-x](https://img.shields.io/badge/built%20on-calt--x-blue)](https://github.com/HiroshiKERA/calt)
 [![Paper](https://img.shields.io/badge/arXiv-2506.08600-b31b1b)](https://arxiv.org/abs/2506.08600)
 
-> 📖 **[Read the full documentation online](https://maximefaure.github.io/CALT/)**
-
-- [CALT library](https://github.com/HiroshiKERA/calt) and its [documentation](https://hiroshikera.github.io/calt/)
-- [Task Builder (web app)](https://calt.mai2.org/): set up a task in the browser and download a ready-to-run project with the same layout as this repository
+- [Documentation](https://maximefaure.github.io/CALT/)
+- [CALT library](https://github.com/HiroshiKERA/calt) ([documentation](https://hiroshikera.github.io/calt/))
 - [Demo Notebook (Google Colab)](https://colab.research.google.com/github/HiroshiKERA/calt/blob/main/examples/demos/minimal_demo.ipynb)
+- [Task Builder (web app)](https://calt.mai2.org/)
 
 Experiments for learning **algebraic computations** with Transformer models,
 built on top of the [CALT library](https://github.com/HiroshiKERA/calt) 
 (`calt-x`, available from [conda-forge](https://github.com/conda-forge/calt-x-feedstock)).
+With the [Task Builder](https://calt.mai2.org/) you can set up a task in the
+browser and download a ready-to-run project with the same layout as this
+repository.
 
 The idea: frame an algebraic problem as a *translation task* (input expression →
 output expression) and let a Transformer learn the rule from many examples.
