@@ -1050,7 +1050,9 @@ Before silently going wrong, the codebase emits clear errors / warnings:
   wrong type / crashes on a dummy `("dummy_input", "dummy_target")` call,
   you get a specific `AttributeError`/`TypeError`/`RuntimeError` explaining
   the expected shape (instead of a crash deep inside the DataLoader at
-  training time).
+  training time). If the file fails to import (e.g. a typo in an `import`
+  line), the import error is raised with a note naming the hook, instead of
+  the hook being silently skipped.
 
 - **`<task>/core/train.py::run_training`** — if you launch `train.py
   --training_order lex` but only a cache for `degrevlex` exists (or vice versa),
