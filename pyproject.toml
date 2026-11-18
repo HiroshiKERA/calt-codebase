@@ -2,7 +2,7 @@
 name = "calt-experiments"
 version = "0.1.0"
 description = "Experiments for learning algebraic computations with Transformers"
-requires-python = ">=3.11,<3.13"
+requires-python = ">=3.11"
 dependencies = [
     "calt-x>=1.6.1",
     "omegaconf>=2.3.0",

@@ -309,14 +309,14 @@ use a dedicated conda environment named <code>calt-env</code> that has SageMath,
 and <code>calt-x</code> together, created in one command with PyTorch from conda-forge:</p>
 <pre><code class="language-bash"># The quotes around the package specs are required
 # With an NVIDIA GPU
-conda create -n calt-env -c conda-forge python=3.12 &quot;calt-x&gt;=1.6.1&quot; &quot;pytorch&gt;=2.6=cuda*&quot; sage matplotlib click sortedcontainers
+conda create -n calt-env -c conda-forge &quot;calt-x&gt;=1.6.1&quot; &quot;pytorch&gt;=2.6=cuda*&quot; sage matplotlib click sortedcontainers
 # Without an NVIDIA GPU (including macOS)
-conda create -n calt-env -c conda-forge python=3.12 &quot;calt-x&gt;=1.6.1&quot; &quot;pytorch&gt;=2.6&quot; sage matplotlib click sortedcontainers
+conda create -n calt-env -c conda-forge &quot;calt-x&gt;=1.6.1&quot; &quot;pytorch&gt;=2.6&quot; sage matplotlib click sortedcontainers
 conda activate calt-env
 </code></pre>
 <ul>
-<li>Python <code>&gt;=3.11,&lt;3.13</code> for this repository (its <code>pyproject.toml</code>), hence
-  <code>python=3.12</code>; <code>calt-x</code> itself supports Python <code>&gt;=3.11</code>.</li>
+<li>Python <code>&gt;=3.11</code> for this repository (its <code>pyproject.toml</code>), like <code>calt-x</code>;
+  conda picks a Python version that all the packages support.</li>
 <li><code>calt-x</code> pulls in PyTorch, HuggingFace Transformers and OmegaConf, but <strong>not
   SageMath</strong>. <code>sage</code> is needed only for the polynomial tasks (Gröbner basis,
   border basis); <code>parity</code> runs without it.</li>

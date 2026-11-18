@@ -101,14 +101,14 @@ and `calt-x` together, created in one command with PyTorch from conda-forge:
 ```bash
 # The quotes around the package specs are required
 # With an NVIDIA GPU
-conda create -n calt-env -c conda-forge python=3.12 "calt-x>=1.6.1" "pytorch>=2.6=cuda*" sage matplotlib click sortedcontainers
+conda create -n calt-env -c conda-forge "calt-x>=1.6.1" "pytorch>=2.6=cuda*" sage matplotlib click sortedcontainers
 # Without an NVIDIA GPU (including macOS)
-conda create -n calt-env -c conda-forge python=3.12 "calt-x>=1.6.1" "pytorch>=2.6" sage matplotlib click sortedcontainers
+conda create -n calt-env -c conda-forge "calt-x>=1.6.1" "pytorch>=2.6" sage matplotlib click sortedcontainers
 conda activate calt-env
 ```
 
-- Python `>=3.11,<3.13` for this repository (its `pyproject.toml`), hence
-  `python=3.12`; `calt-x` itself supports Python `>=3.11`.
+- Python `>=3.11` for this repository (its `pyproject.toml`), like `calt-x`;
+  conda picks a Python version that all the packages support.
 - `calt-x` pulls in PyTorch, HuggingFace Transformers and OmegaConf, but **not
   SageMath**. `sage` is needed only for the polynomial tasks (Gröbner basis,
   border basis); `parity` runs without it.
