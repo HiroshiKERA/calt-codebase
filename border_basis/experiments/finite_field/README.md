@@ -3,7 +3,8 @@
 **Goal**: vary the size of the base finite field GF(p) and observe how the border
 basis structure changes with p.
 
-`p ∈ {2, 5, 7, 11}` is selectable via CLI flag.
+The prime `p` is chosen with the `--p` flag (any prime; the configs default to
+GF(7)).
 
 ## How to run
 ```bash

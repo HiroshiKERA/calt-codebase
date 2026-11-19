@@ -10,8 +10,8 @@
 #     cd parity/experiments/toy/scripts
 #     python train_custom_embedding.py
 #
-# See DOCUMENTATION.md §11.7. Requires a calt-x build with the pluggable
-# embeddings (and, for model_type: encoder_classifier, the encoder-only model).
+# See DOCUMENTATION.md §11.7 (the embedding registries ship with calt-x since
+# 1.6.0).
 model:
   model_type: encoder_classifier
   input_embedding_type: layernorm_token   # custom (registered in the train script)

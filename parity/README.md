@@ -29,17 +29,17 @@ This is known to require attention across the full sequence length.
 ## Data format
 
 Input  : space-separated integers — the one-line notation of σ
-Output : "+1" or "−1"
+Output : "+1" or "-1"
 
     "2 0 1"  →  "+1"
-    "3 0 2 1"  →  "−1"
+    "1 0 2"  →  "-1"
 
 ## Experiments
 
 | Experiment | What varies |
 |---|---|
-| `toy/` | n=5 permutations, 1000 samples — verify the pipeline |
-| `scaling/` | n ∈ {5, 8, 12} — does performance degrade with longer sequences? |
+| `toy/` | n=5 permutations, 5000 train / 500 test samples — verify the pipeline |
+| `scaling/` | n ∈ {5, 7, 10} (committed data; any n via `--n`) — does performance degrade with longer sequences? |
 
 ## Quick start
 

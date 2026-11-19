@@ -163,7 +163,7 @@ Then run the 3-step workflow:
 
 ```bash
 cd groebner_basis/experiments/toy/scripts
-python generate.py    # 1. generate data   → ../data/
+python generate.py    # 1. generate data   → ../data/QQ/
 python train.py       # 2. train model     → ../outputs/results_degrevlex/
 python evaluate.py    # 3. report success rate + sample predictions
 ```
@@ -192,7 +192,7 @@ bash run.sh
 cp -r templates/task_template my_new_task
 # Edit my_new_task/core/generator.py  → implement TaskGenerator.__call__(seed)
 # Edit my_new_task/core/formatter.py  → define the string format
-# Edit my_new_task/core/parser.py     → only for JSON Lines data or load-time transformations
+# Edit my_new_task/core/parser.py     → only to transform samples at load time
 # Update configs in my_new_task/experiments/toy/configs/
 ```
 

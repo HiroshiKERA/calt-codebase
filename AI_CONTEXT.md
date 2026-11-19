@@ -138,7 +138,7 @@ class BorderBasisGenerator:
 
 **Contract**: one arg `seed: int`; deterministic; returns `(problem, answer)`.
 Each side may be `str`, a `list` (CALT joins via `str()` + `' | '`), or a SageMath
-object (`str()` called automatically). Generators retry up to 100 seeds to skip
+object (`str()` called automatically). Generators redraw up to 100 times per seed to skip
 degenerate samples (large-rational rejection for QQ Gröbner; non-0-dim ideals for
 border basis).
 
@@ -375,7 +375,9 @@ For the `generic`, `decoder_only` and `encoder_classifier` models,
 (`generic`/`learned` (default), `sinusoidal`, `rope`, `none`) select the
 embeddings. Register custom ones with `calt.models.register_input_embedding` /
 `register_positional_embedding` before building the model (parity's
-`train_custom_embedding.py` registers an input embedding this way).
+`train_custom_embedding.py` registers an input embedding this way). The
+monomial models also read `model.use_positional_embedding`, but not
+`model.input_embedding_type`.
 
 ---
 
@@ -397,7 +399,10 @@ number_policy:
   digit_group: 1        # 0 = whole numbers; d >= 1 = groups of d digits (1 = each digit)
   allow_float: false    # defaults to true when omitted
 
-strict: true            # raise on unknown character; false emits <unk> instead
+strict: true            # raise on unknown character; false only defers the failure
+                        # (the lexer writes "<unk>", which is not in the vocabulary;
+                        # validate_*_tokens reports it at load time, otherwise the
+                        # tokenizer raises in the DataLoader)
 include_base_vocab: true
 ```
 
@@ -425,7 +430,7 @@ sampler:                 # polynomial tasks only (forwarded to PolynomialSampler
   term_sampling: "uniform"
 
 problem_generator:       # forwarded to the task's generator class
-  num_polynomials: 2     # parity uses: n: 7
+  num_polynomials: 2     # parity uses: n: 5 (toy); scaling sets it with --n
 
 dataset:                 # forwarded to DatasetPipeline
   save_dir: "../data/QQ"
@@ -524,7 +529,7 @@ or missing arguments raise when the trainer is built.
 | Storage | plain text | plain text | plain text |
 | Preprocessor | none by default (hooks: Chain) | none by default (lex variant, expanded form, hooks: Chain) | none by default (expanded form, hooks: Chain) |
 | Generator class | `ParityGenerator(n)` | `GroebnerGenerator(sampler, num_polynomials)` | `BorderBasisGenerator(sampler, num_polynomials, …)` |
-| Experiments | toy, scaling (n∈{5,7,10}), ablation | toy, scaling, ablation (degrevlex/lex) | toy, finite_field (GF 5/7/11/17/31), ablation |
+| Experiments | toy, scaling (n∈{5,7,10}), ablation | toy, scaling, ablation (degrevlex/lex) | toy, finite_field (any prime via `--p`, default GF7), ablation (model size) |
 | Algorithm | inversions count | SageMath `ideal.groebner_basis()` | `core/algorithm.py::BorderBasisCalculator` (port of arXiv:2505.23696 Alg 4.1) |
 
 - **parity**: `sign(σ) = (−1)^(#inversions)`; `count_inversions`, `permutation_parity`
@@ -532,8 +537,8 @@ or missing arguments raise when the trainer is built.
 - **groebner**: QQ samples with ≥3-digit numerator/denominator rejected
   (`_has_large_rational_coefficients`, threshold 100). `--training_order lex`
   recomputes the basis in a lex ring at load time.
-- **border**: requires a 0-dimensional ideal (`ideal.dimension() == 0`), retried up
-  to 100 seeds; `BorderBasisCalculator` does L-stable span → optimal order ideal via
+- **border**: requires a 0-dimensional ideal (`ideal.dimension() == 0`), redrawn up
+  to 100 times per seed; `BorderBasisCalculator` does L-stable span → optimal order ideal via
   `scipy.optimize.milp` → basis transformation; uses `sortedcontainers.SortedList`.
 
 The `scripts/train.py` of each experiment is a thin `click` wrapper:
@@ -548,9 +553,10 @@ The `scripts/train.py` of each experiment is a thin `click` wrapper:
 Same layout as a real task, with `TODO`s. The runnable, consistent pattern:
 
 - `core/generator.py::TaskGenerator(**params)` with `__call__(seed)` (raises until filled).
-- `core/parser.py::TaskParser.process_sample(source)` — only for JSON Lines input
-  (`dataset.save_json: true` → `*_data.jsonl`) or load-time transformations; DatasetWriter
-  no longer writes pickle.
+- `core/parser.py::TaskParser.process_sample(source)` — only for load-time
+  transformations, or to control how `*_data.jsonl` values become strings (calt's
+  default JSONL loader joins list elements with a space); plain text and JSONL both
+  load without it. DatasetWriter no longer writes pickle.
 - `core/train.py::run_training(cfg, dryrun=False)` — the `TaskParser` lines are commented
   out; plain text needs no parser.
 - `experiments/toy/scripts/generate.py` — builds `TaskGenerator(**cfg.problem_generator)`
@@ -598,7 +604,8 @@ modules, edit the three configs, then `generate.py → train.py --dryrun → eva
      load data.yaml → set_seed(root_seed)
      (poly tasks) PolynomialSampler(**sampler) ; <Task>Generator(sampler, **problem_generator)
      DatasetPipeline.from_config(cfg.dataset, instance_generator=gen).run()
-       for seed in 0..N-1 (parallel, n_jobs): problem,answer = gen(seed)
+       for i in 0..N-1 (parallel, n_jobs): seed = sha256(f"{root_seed}_{split}_{i}")[:16 bytes]
+                                            problem,answer = gen(seed)
        serialize → "<input> # <output>" → train_raw.txt / test_raw.txt (+ *_stats.yaml)
 
 2. TRAIN

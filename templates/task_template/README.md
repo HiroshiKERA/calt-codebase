@@ -30,7 +30,7 @@ python evaluate.py    # report success rate
 
 - [ ] Fill in `core/generator.py` — implement `TaskGenerator.__call__(seed) → (problem, answer)`
 - [ ] Fill in `core/formatter.py` — define string format for problem and answer
-- [ ] Optional: fill in `core/parser.py` and enable it in `core/train.py` — only for JSON Lines data or load-time transformations; plain text needs no parser
+- [ ] Optional: fill in `core/parser.py` and enable it in `core/train.py` — only to transform samples at load time, or to control how `*_data.jsonl` values become strings (calt's default JSONL loader joins list elements with a space); plain text and JSONL load without a parser
 - [ ] Optional: implement `instance_stats` in `core/metrics.py` and pass it to `DatasetPipeline` in `scripts/generate.py`
 - [ ] Replace `task_template` in the imports of `experiments/toy/scripts/*.py` with your task's folder name
 - [ ] Update `experiments/toy/configs/data.yaml` — `problem_generator` parameters, dataset size, seed, backend

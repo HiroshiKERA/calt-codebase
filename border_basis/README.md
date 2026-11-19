@@ -1,6 +1,6 @@
 # border_basis
 
-**Task**: Given polynomial generators of a zero-dimensional ideal I ⊂ K[x, y, z],
+**Task**: Given polynomial generators of a zero-dimensional ideal I ⊂ K[x, y],
 predict the border basis of I.
 
 ## The math
@@ -38,8 +38,9 @@ i.e., each border monomial τ reduces to a linear combination of O-monomials.
 - **Input**: polynomial generators g1, …, gk over GF(p) (a finite field)
 - **Output**: the elements of the border basis of ⟨g1,…,gk⟩
 
-Working over GF(p) ensures the ideal is automatically zero-dimensional
-(the variety V(I) ⊆ GF(p)^n is a finite set of at most p^n points).
+Over GF(p), three random generators in two variables give a zero-dimensional
+ideal with high probability; the generator checks `ideal.dimension() == 0` and
+redraws (up to 100 times per seed) otherwise.
 
 ## Status
 
@@ -65,10 +66,10 @@ O(log n) reducer lookup.
 | Experiment | What varies |
 |---|---|
 | `toy/` | Small field GF(7), 2 variables, small degree |
-| `finite_field/` | Compare GF(7), GF(11), GF(17), GF(31) |
-| `ablation/` | Number of generators, degree bounds |
+| `finite_field/` | GF(p) for any prime p chosen with `--p` (the configs default to GF(7)) |
+| `ablation/` | Model size (small / medium / large) on the toy GF(7) data |
 
-## Quick start (once TODO is filled)
+## Quick start
 
 ```bash
 cd border_basis/experiments/toy/scripts
@@ -101,6 +102,7 @@ data:
 - **expanded** — each term as `C<coef> E<exp_x> E<exp_y>`. Fixed-size vocab.
 
 When `expanded` is detected, `core/train.py` wires `ExpandedFormLoadPreprocessor` into
-the load chain and **requires** `--data_config_path` (it needs the source ring from
-`data.yaml`). See [groebner_basis/README.md](../groebner_basis/README.md#tokenization-format-raw-vs-ce-expanded)
+the load chain, which needs the source ring from `data.yaml`. `train.py` reads
+`../configs/data.yaml` automatically, so pass `--data_config_path` only if your data
+config lives elsewhere. See [groebner_basis/README.md](../groebner_basis/README.md#tokenization-format-raw-vs-ce-expanded)
 for details and trade-offs (they are identical for both tasks).
