@@ -31,7 +31,7 @@ train:
     no_wandb: false
 
 data:
-  train_dataset_path: ../data/train_raw.txt    # TODO: adjust (*_data.jsonl needs core/parser.py)
+  train_dataset_path: ../data/train_raw.txt    # TODO: adjust (or *_data.jsonl)
   test_dataset_path: ../data/test_raw.txt
   lexer_config: ../configs/lexer.yaml
   validate_train_tokens: false

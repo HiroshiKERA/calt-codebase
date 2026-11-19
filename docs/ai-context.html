@@ -343,7 +343,7 @@ and <code>*_stats.yaml</code> for the parity scaling runs; <code>experiments/*/d
 </code></pre>
 <p><strong>Contract</strong>: one arg <code>seed: int</code>; deterministic; returns <code>(problem, answer)</code>.
 Each side may be <code>str</code>, a <code>list</code> (CALT joins via <code>str()</code> + <code>' | '</code>), or a SageMath
-object (<code>str()</code> called automatically). Generators retry up to 100 seeds to skip
+object (<code>str()</code> called automatically). Generators redraw up to 100 times per seed to skip
 degenerate samples (large-rational rejection for QQ Gröbner; non-0-dim ideals for
 border basis).</p>
 <h3 id="22-coreformatterpy">2.2 <code>core/formatter.py</code></h3>
@@ -552,7 +552,9 @@ version is only pinned <code>&gt;=1.6.1</code>.</p>
 (<code>generic</code>/<code>learned</code> (default), <code>sinusoidal</code>, <code>rope</code>, <code>none</code>) select the
 embeddings. Register custom ones with <code>calt.models.register_input_embedding</code> /
 <code>register_positional_embedding</code> before building the model (parity's
-<code>train_custom_embedding.py</code> registers an input embedding this way).</p>
+<code>train_custom_embedding.py</code> registers an input embedding this way). The
+monomial models also read <code>model.use_positional_embedding</code>, but not
+<code>model.input_embedding_type</code>.</p>
 <hr />
 <h2 id="5-lexeryaml-schema-real">5. <code>lexer.yaml</code> schema (real)</h2>
 <pre><code class="language-yaml">vocab:
@@ -570,7 +572,10 @@ number_policy:
   digit_group: 1        # 0 = whole numbers; d &gt;= 1 = groups of d digits (1 = each digit)
   allow_float: false    # defaults to true when omitted
 
-strict: true            # raise on unknown character; false emits &lt;unk&gt; instead
+strict: true            # raise on unknown character; false only defers the failure
+                        # (the lexer writes &quot;&lt;unk&gt;&quot;, which is not in the vocabulary;
+                        # validate_*_tokens reports it at load time, otherwise the
+                        # tokenizer raises in the DataLoader)
 include_base_vocab: true
 </code></pre>
 <p><strong>Polynomial tasks</strong> (<code>groebner</code>, <code>border</code>): <code>digit_group: 1</code>, misc includes
@@ -592,7 +597,7 @@ include_base_vocab: true
   term_sampling: &quot;uniform&quot;
 
 problem_generator:       # forwarded to the task's generator class
-  num_polynomials: 2     # parity uses: n: 7
+  num_polynomials: 2     # parity uses: n: 5 (toy); scaling sets it with --n
 
 dataset:                 # forwarded to DatasetPipeline
   save_dir: &quot;../data/QQ&quot;
@@ -719,7 +724,7 @@ or missing arguments raise when the trainer is built.</p>
 <td>Experiments</td>
 <td>toy, scaling (n∈{5,7,10}), ablation</td>
 <td>toy, scaling, ablation (degrevlex/lex)</td>
-<td>toy, finite_field (GF 5/7/11/17/31), ablation</td>
+<td>toy, finite_field (any prime via <code>--p</code>, default GF7), ablation (model size)</td>
 </tr>
 <tr>
 <td>Algorithm</td>
@@ -735,8 +740,8 @@ or missing arguments raise when the trainer is built.</p>
 <li><strong>groebner</strong>: QQ samples with ≥3-digit numerator/denominator rejected
   (<code>_has_large_rational_coefficients</code>, threshold 100). <code>--training_order lex</code>
   recomputes the basis in a lex ring at load time.</li>
-<li><strong>border</strong>: requires a 0-dimensional ideal (<code>ideal.dimension() == 0</code>), retried up
-  to 100 seeds; <code>BorderBasisCalculator</code> does L-stable span → optimal order ideal via
+<li><strong>border</strong>: requires a 0-dimensional ideal (<code>ideal.dimension() == 0</code>), redrawn up
+  to 100 times per seed; <code>BorderBasisCalculator</code> does L-stable span → optimal order ideal via
   <code>scipy.optimize.milp</code> → basis transformation; uses <code>sortedcontainers.SortedList</code>.</li>
 </ul>
 <p>The <code>scripts/train.py</code> of each experiment is a thin <code>click</code> wrapper:
@@ -748,9 +753,10 @@ or missing arguments raise when the trainer is built.</p>
 <p>Same layout as a real task, with <code>TODO</code>s. The runnable, consistent pattern:</p>
 <ul>
 <li><code>core/generator.py::TaskGenerator(**params)</code> with <code>__call__(seed)</code> (raises until filled).</li>
-<li><code>core/parser.py::TaskParser.process_sample(source)</code> — only for JSON Lines input
-  (<code>dataset.save_json: true</code> → <code>*_data.jsonl</code>) or load-time transformations; DatasetWriter
-  no longer writes pickle.</li>
+<li><code>core/parser.py::TaskParser.process_sample(source)</code> — only for load-time
+  transformations, or to control how <code>*_data.jsonl</code> values become strings (calt's
+  default JSONL loader joins list elements with a space); plain text and JSONL both
+  load without it. DatasetWriter no longer writes pickle.</li>
 <li><code>core/train.py::run_training(cfg, dryrun=False)</code> — the <code>TaskParser</code> lines are commented
   out; plain text needs no parser.</li>
 <li><code>experiments/toy/scripts/generate.py</code> — builds <code>TaskGenerator(**cfg.problem_generator)</code>
@@ -793,7 +799,8 @@ modules, edit the three configs, then <code>generate.py → train.py --dryrun �
      load data.yaml → set_seed(root_seed)
      (poly tasks) PolynomialSampler(**sampler) ; &lt;Task&gt;Generator(sampler, **problem_generator)
      DatasetPipeline.from_config(cfg.dataset, instance_generator=gen).run()
-       for seed in 0..N-1 (parallel, n_jobs): problem,answer = gen(seed)
+       for i in 0..N-1 (parallel, n_jobs): seed = sha256(f&quot;{root_seed}_{split}_{i}&quot;)[:16 bytes]
+                                            problem,answer = gen(seed)
        serialize → &quot;&lt;input&gt; # &lt;output&gt;&quot; → train_raw.txt / test_raw.txt (+ *_stats.yaml)
 
 2. TRAIN

@@ -1,7 +1,8 @@
 """Train the border basis model for the toy experiment.
 
 If the lexer.yaml referenced in train.yaml is in C/E expanded format, the
-data_config (--data_config_path) is required to rebuild the source ring.
+data config (--data_config_path, defaulting to ../configs/data.yaml) is
+needed to rebuild the source ring.
 """
 
 import sys
