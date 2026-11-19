@@ -1,0 +1,44 @@
+# Section 5.5, input representation: standard token embedding.
+#
+# The point of the comparison is that everything except the embedding is held
+# fixed, so this file differs from configs/GF7/train.yaml only in
+# `model_type` and in the training budget: 32 epochs for both arms,
+# instead of the per-task budget the baseline tables use. That is also why the
+# numbers here do not match the baseline tables (see the note in the README).
+
+model:
+  model_type: generic
+  num_encoder_layers: 6
+  num_encoder_heads: 8
+  num_decoder_layers: 6
+  num_decoder_heads: 8
+  d_model: 512
+  encoder_ffn_dim: 2048
+  decoder_ffn_dim: 2048
+  max_sequence_length: 1024
+
+train:
+  save_dir: ./results/GF7_repr_standard
+  num_train_epochs: 32
+  learning_rate: 0.0003
+  weight_decay: 0.0
+  warmup_ratio: 0.0
+  batch_size: 16
+  test_batch_size: 16
+  lr_scheduler_type: linear
+  max_grad_norm: 1.0
+  optimizer: adamw_torch
+  num_workers: 4
+  seed: 42
+  wandb:
+    project: calt-issac26
+    group: gf7_polynomial_reduction_repr
+    name: gf7_polynomial_reduction_repr_standard
+    no_wandb: False
+
+data:
+  train_dataset_path: ./data/GF7/train_raw.txt
+  test_dataset_path: ./data/GF7/test_raw.txt
+  lexer_config: ./configs/GF7/lexer.yaml
+  validate_train_tokens: true
+  validate_test_tokens: true
