@@ -58,17 +58,33 @@ PostFn = Callable[[str, str], tuple[str, str]]
 # Hook loading                                                                 #
 # --------------------------------------------------------------------------- #
 
+def _hook_file_is_missing(error: ModuleNotFoundError, module_name: str) -> bool:
+    """True if `error` says the hook module itself (or its package) is absent.
+
+    A hook file that exists but imports a missing module (e.g. a typo such as
+    `import numpyy`) raises ModuleNotFoundError for that other module; that is
+    a bug in the hook and must not be mistaken for "no hook".
+    """
+    missing = error.name
+    return missing is not None and (
+        module_name == missing or module_name.startswith(missing + ".")
+    )
+
+
 def _try_import_postprocess(module_name: str) -> PostFn | None:
     """Import `<module_name>.postprocess` if it exists; return None otherwise.
 
     Raises a clear error if the file exists but the function is malformed
-    (wrong name, wrong signature, wrong return type) instead of silently
-    skipping the hook.
+    (wrong name, wrong signature, wrong return type) or the file fails to
+    import, instead of silently skipping the hook.
     """
     try:
         mod = importlib.import_module(module_name)
-    except ModuleNotFoundError:
-        return None
+    except ModuleNotFoundError as e:
+        if _hook_file_is_missing(e, module_name):
+            return None
+        e.add_note(f"Raised while importing the user hook `{module_name}`.")
+        raise
     fn = getattr(mod, "postprocess", None)
     if fn is None or not callable(fn):
         raise AttributeError(
@@ -160,6 +176,11 @@ def user_postprocessor_hash_contribution(task_pkg: str) -> bytes:
     for module_name in ("shared.base_postprocessor", f"{task_pkg}.core.postprocessor"):
         try:
             mod = importlib.import_module(module_name)
+        except ModuleNotFoundError as e:
+            if _hook_file_is_missing(e, module_name):
+                continue  # no hook in this slot → contribute nothing
+            raise
+        try:
             # Invalidate linecache for this file so inspect.getsource picks up
             # post-edit content rather than returning a stale cached source.
             src_file = inspect.getsourcefile(mod)
@@ -170,8 +191,8 @@ def user_postprocessor_hash_contribution(task_pkg: str) -> bytes:
             h.update(b"\x00")
             h.update(src.encode())
             h.update(b"\x00")
-        except (ModuleNotFoundError, OSError, TypeError):
-            # Module absent OR source unavailable → contribute nothing for this slot
+        except (OSError, TypeError):
+            # Source unavailable → contribute nothing for this slot
             continue
     return h.digest()
 
